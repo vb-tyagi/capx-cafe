@@ -13,29 +13,27 @@ import { layer6Audit } from './layer6.ts';
 
 export function runGauntlet(post: DraftPost, ctx: GauntletContext): GauntletResult {
   const results: LayerResult[] = [];
-  let verdict: Verdict = Verdict.PASS;
-  const push = (r: LayerResult): void => {
-    results.push(r);
-    verdict = worst(verdict, r.verdict);
-  };
 
   const l1 = layer1Eligibility(ctx);
-  push(l1);
+  results.push(l1);
 
   let scheduledAtMs: number | undefined;
   if (l1.verdict !== Verdict.BLOCK) {
     const l2 = layer2Rate(ctx);
-    push(l2);
+    results.push(l2);
     scheduledAtMs = l2.data?.scheduledAtMs as number | undefined;
     if (l2.verdict !== Verdict.BLOCK) {
-      push(layer3Quality(ctx, post));
-      push(layer4Authenticity(ctx, post));
-      push(layer5Monitoring(ctx));
+      results.push(layer3Quality(ctx, post));
+      results.push(layer4Authenticity(ctx, post));
+      results.push(layer5Monitoring(ctx));
     }
   }
 
   const l6 = layer6Audit(ctx, post, results);
-  results.push(l6); // audit is informational; it never changes the verdict
+  results.push(l6);
+
+  // Layer 6 (audit) is always PASS, so it never changes the verdict.
+  const verdict = results.reduce<Verdict>((acc, r) => worst(acc, r.verdict), Verdict.PASS);
 
   const reviewedMode = ctx.loop?.autonomy === Autonomy.USER_REVIEWED;
   const trainingWheels = (ctx.loop?.trainingWheelsRemaining ?? 0) > 0;

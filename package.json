@@ -4,11 +4,26 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.12.0",
-  "engines": { "node": ">=22.6" },
+  "engines": {
+    "node": ">=22.6"
+  },
   "scripts": {
     "test": "node --experimental-strip-types --test packages/*/test/*.test.ts",
     "test:credits": "node --experimental-strip-types --test packages/credits/test/*.test.ts",
-    "test:guardrails": "node --experimental-strip-types --test packages/guardrails/test/*.test.ts"
+    "test:guardrails": "node --experimental-strip-types --test packages/guardrails/test/*.test.ts",
+    "guard": "node tools/boundary-guard.mjs",
+    "guard:test": "node --test tools/boundary-guard.test.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "node tools/boundary-guard.mjs && node --experimental-strip-types --test packages/*/test/*.test.ts && node --test tools/boundary-guard.test.mjs && tsc -p tsconfig.json --noEmit"
   },
-  "workspaces": ["packages/*", "services/*", "apps/*"]
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
+  "devDependencies": {
+    "@types/node": "26.1.1",
+    "prisma": "7.8.0",
+    "typescript": "7.0.2"
+  }
 }

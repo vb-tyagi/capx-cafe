@@ -32,9 +32,14 @@ prisma/            — closed Postgres schema (multi-tenant, RLS)
 Requires Node ≥ 22.6 (runs `.ts` natively via type-stripping — no build step for the pure packages).
 
 ```bash
-npm test              # run all package unit tests
-npm run test:credits
-npm run test:guardrails
+pnpm install               # dev toolchain (typescript, prisma, node types)
+docker compose up -d       # local Postgres (:5433) + Redis (:6380)
+pnpm run verify            # boundary-guard + all unit tests + guard self-tests + typecheck
+pnpm run guard             # AGPL open/closed boundary guard only
+pnpm test                  # unit tests only (native TS, no build)
+pnpm exec prisma validate  # validate the closed DB schema
 ```
 
-`@capx/guardrails` and `@capx/credits` are **dependency-free** and fully unit-tested — they are the parts of the product that need zero external API keys, so they ship first.
+- **Dev port:** the web/BFF runs on **4343** (capx 43xx convention; see `.env.example`).
+- `@capx/guardrails`, `@capx/credits`, `@capx/loops`, `@capx/config` are **dependency-free** and unit-tested — the parts needing zero external keys, so they ship first.
+- **CI** (`.github/workflows/ci.yml`) runs the same `verify` gate on every push/PR.

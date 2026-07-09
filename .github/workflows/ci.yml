@@ -6,17 +6,27 @@ on:
   pull_request:
 
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: '22.22.3'
-      - name: Unit tests (pure packages — native TS, no install needed)
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: AGPL boundary guard (open/closed)
+        run: node tools/boundary-guard.mjs
+
+      - name: Unit tests (native TS, no build step)
         run: node --experimental-strip-types --test packages/*/test/*.test.ts
 
-  # Follow-ups wired in docs/BUILD-PLAN.md P0:
-  #  - typecheck: pnpm -r tsc --noEmit
-  #  - boundary-guard: dependency-cruiser (fail if @capx/* leaks into the fork / fork source imported closed-side)
-  #  - service tests (Vitest) once services/* land
+      - name: Boundary-guard self-tests
+        run: node --test tools/boundary-guard.test.mjs
+
+      - name: Typecheck
+        run: pnpm exec tsc -p tsconfig.json --noEmit

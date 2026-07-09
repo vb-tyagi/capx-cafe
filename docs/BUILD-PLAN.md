@@ -37,6 +37,8 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 
 ## P0 — Foundation, AGPL Boundary & Data Spine
 
+> ✅ **Foundation DONE & verified (2026-07-10):** monorepo skeleton · `@capx/core` + `@capx/config` + `@capx/platform-client` · CI-enforced **AGPL boundary-guard** (self-tested) · Prisma schema **CLI-validated** + `rls.sql` + local `docker-compose` (Postgres 5433 / Redis 6380) · dev port **4343** · `verify` gate = boundary-guard + **39 unit tests** + guard tests + **typecheck**, all green. Deferred to the service phases (P3–P5) where they naturally live: the NestJS service skeletons, the BullMQ pipeline run, and the pre-publish HMAC webhook.
+
 **Goal.** Stand up the two-repo split, the closed pnpm+Turborepo monorepo skeleton, a **dual-side** CI-enforced AGPL boundary guard, shared core/config packages, the multi-tenant Prisma schema with fail-closed row-level security, and the full test/CI/local-stack/IaC plane — all with zero external keys. Dev ports allocated in the **43xx block** and documented per project convention.
 
 ### Epics & Tasks
