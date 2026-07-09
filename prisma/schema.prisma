@@ -1,0 +1,259 @@
+// capx-culture — CLOSED-side database (proprietary monorepo).
+// The open Postiz fork owns its OWN Postgres (OAuth tokens, platform channels, published posts);
+// this schema references those only by opaque ids (platformChannelId / platformPostId).
+// Multi-tenant isolation is enforced by Postgres ROW-LEVEL SECURITY policies applied in a raw
+// SQL migration (fail-closed: default deny, policy keys on workspace_id = current_setting('app.workspace')).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Tier {
+  SOLO
+  TEAM
+  ORG
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  CREATOR
+  VIEWER
+}
+
+enum Platform {
+  X
+  LINKEDIN
+}
+
+enum TweetType {
+  TEXT
+  GRAPHIC
+  ESSAY
+}
+
+enum Autonomy {
+  AUTONOMOUS
+  USER_REVIEWED
+}
+
+enum AccountStanding {
+  GOOD
+  FLAGGED
+  SUSPENDED
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  HELD_FOR_REVIEW
+  PUBLISHED
+  BLOCKED
+  FAILED
+}
+
+enum Verdict {
+  PASS
+  HOLD
+  REGENERATE
+  BLOCK
+}
+
+enum LoopOutcome {
+  PUBLISHED
+  HELD_FOR_REVIEW
+  REGENERATE
+  BLOCKED
+  INSUFFICIENT_CREDITS
+}
+
+model Workspace {
+  id           String         @id @default(cuid())
+  name         String
+  tier         Tier           @default(SOLO)
+  createdAt    DateTime       @default(now())
+  memberships  Membership[]
+  handles      Handle[]
+  loops        Loop[]
+  posts        Post[]
+  creditAccount CreditAccount?
+  creditTxns   CreditTransaction[]
+  guardrailEvents GuardrailEvent[]
+  invites      Invite[]
+  brandKits    BrandKit[]
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  createdAt    DateTime     @default(now())
+  memberships  Membership[]
+  verification Verification?
+}
+
+model Membership {
+  id          String    @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        Role      @default(CREATOR)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+}
+
+/// Closed-side handle record. Holds eligibility signals; NEVER the OAuth token (that lives in the fork).
+model Handle {
+  id                String          @id @default(cuid())
+  workspaceId       String
+  platform          Platform
+  username          String
+  /// opaque id of the channel in the fork's DB
+  platformChannelId String          @unique
+  verified          Boolean         @default(false)
+  ageDays           Int             @default(0)
+  standing          AccountStanding @default(GOOD)
+  connectedAt       DateTime        @default(now())
+  workspace         Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  loops             Loop[]
+  posts             Post[]
+
+  @@unique([workspaceId, platform, username])
+  @@index([workspaceId])
+}
+
+model Loop {
+  id                      String    @id @default(cuid())
+  workspaceId             String
+  handleId                String
+  timeOfDayMinutes        Int
+  daysOfWeek              Int[]
+  type                    TweetType
+  model                   String
+  category                String
+  tags                    String[]
+  brief                   String    @db.VarChar(4000)
+  styleSources            String[]
+  autonomy                Autonomy  @default(AUTONOMOUS)
+  trainingWheelsRemaining Int       @default(3)
+  active                  Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  workspace               Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  handle                  Handle    @relation(fields: [handleId], references: [id], onDelete: Cascade)
+  runs                    LoopRun[]
+
+  @@index([workspaceId])
+  @@index([handleId])
+}
+
+model LoopRun {
+  id           String      @id @default(cuid())
+  loopId       String
+  generatedText String     @db.Text
+  outcome      LoopOutcome
+  scheduledAt  DateTime?
+  postId       String?
+  createdAt    DateTime    @default(now())
+  loop         Loop        @relation(fields: [loopId], references: [id], onDelete: Cascade)
+
+  @@index([loopId])
+}
+
+model Post {
+  id             String     @id @default(cuid())
+  workspaceId    String
+  handleId       String
+  text           String     @db.Text
+  type           TweetType
+  status         PostStatus @default(DRAFT)
+  scheduledAt    DateTime?
+  costCredits    Int        @default(0)
+  slopScore      Float?
+  /// opaque id of the post in the fork's DB once published
+  platformPostId String?
+  auditId        String?
+  createdAt      DateTime   @default(now())
+  workspace      Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  handle         Handle     @relation(fields: [handleId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([handleId, scheduledAt])
+}
+
+model BrandKit {
+  id          String    @id @default(cuid())
+  workspaceId String
+  data        Json
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+}
+
+model CreditAccount {
+  id          String    @id @default(cuid())
+  workspaceId String    @unique
+  balance     Int       @default(0)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model CreditTransaction {
+  id             String   @id @default(cuid())
+  workspaceId    String
+  kind           String // charge | grant | topup | reversal
+  action         String?
+  credits        Int // negative for charge, positive for grant/topup
+  frontedMicroUsd Int    @default(0)
+  note           String?
+  createdAt      DateTime @default(now())
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+}
+
+/// Immutable audit of every L1–L6 decision (append-only; split from GDPR-erasable PII).
+model GuardrailEvent {
+  id          String   @id @default(cuid())
+  workspaceId String
+  postId      String?
+  loopId      String?
+  verdict     Verdict
+  layerData   Json
+  model       String?
+  styleSources String[]
+  approvedBy  String?
+  createdAt   DateTime @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  workspaceId String
+  email       String
+  code        String    @unique
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+}
+
+/// Medium-gate identity proof for the whitelist.
+model Verification {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  method     String
+  status     String    @default("pending")
+  proof      Json?
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.3'
+      - name: Unit tests (pure packages — native TS, no install needed)
+        run: node --experimental-strip-types --test packages/*/test/*.test.ts
+
+  # Follow-ups wired in docs/BUILD-PLAN.md P0:
+  #  - typecheck: pnpm -r tsc --noEmit
+  #  - boundary-guard: dependency-cruiser (fail if @capx/* leaks into the fork / fork source imported closed-side)
+  #  - service tests (Vitest) once services/* land

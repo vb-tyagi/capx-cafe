@@ -16,12 +16,15 @@ Compliance-first, invite-only tooling to **launch and manage** Twitter/X + Linke
 
 ```
 packages/
-  core/        @capx/core       — shared domain types & constants
-  guardrails/  @capx/guardrails — the six-layer anti-slop engine (the moat)
-  credits/     @capx/credits    — pay-per-use credit ledger + cost metering
-services/      — NestJS closed services (identity, loops, guardrail-api, credits-api) [scaffold]
-apps/          — Next.js web app / BFF [scaffold]
-prisma/        — Postgres schema (multi-tenant, RLS) [scaffold]
+  core/            @capx/core            — shared domain types & constants
+  guardrails/      @capx/guardrails      — the six-layer anti-slop engine (the moat)
+  credits/         @capx/credits         — pay-per-use credit ledger + cost metering
+  platform-client/ @capx/platform-client — arm's-length seam to the open platform (+ Fake)
+  loops/           @capx/loops           — Loop tick: the publish chokepoint (gauntlet+credits+publish)
+services/          — NestJS closed services (identity, loops, guardrail-api, credits-api) [scaffold]
+apps/              — Next.js web app / BFF [scaffold]
+prisma/            — closed Postgres schema (multi-tenant, RLS)
+.github/           — CI (runs the package tests)
 ```
 
 ## Dev
