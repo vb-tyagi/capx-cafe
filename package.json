@@ -1,0 +1,14 @@
+{
+  "name": "capx-culture",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.0",
+  "engines": { "node": ">=22.6" },
+  "scripts": {
+    "test": "node --experimental-strip-types --test packages/*/test/*.test.ts",
+    "test:credits": "node --experimental-strip-types --test packages/credits/test/*.test.ts",
+    "test:guardrails": "node --experimental-strip-types --test packages/guardrails/test/*.test.ts"
+  },
+  "workspaces": ["packages/*", "services/*", "apps/*"]
+}
