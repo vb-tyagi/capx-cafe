@@ -1,5 +1,7 @@
 # capx-culture — Final Mega-Sprint Build Plan (v2, review-hardened)
 
+> **Status update (2026-07-10):** ⚖️→✅ **AGPL open-core boundary legally validated** (lawyer sign-off). The two-repo, network-only, arm's-length boundary is approved. This flips the P9 "AGPL sign-off" gate to **done** and makes the P0 **CI boundary-guard** the priority — it is now the mechanism that keeps you inside what counsel blessed. Remaining AGPL obligations are mechanical: publish the fork's corresponding source, add a NOTICE file, preserve Postiz attribution.
+
 ## Intro
 
 capx-culture Phase 1 is a compliance-first, invite-only tool for creators and teams to launch and manage Twitter/X + LinkedIn presences, whose headline product is **LOOPS** — AI recurring-posting protected by a **six-layer anti-slop gauntlet**. The moat is simple to say and hard to copy: *"we keep your account alive and your content non-embarrassing."*

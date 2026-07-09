@@ -30,7 +30,7 @@
 | + | **Anti-slop framework** | Locked — see §9 |
 
 **Live action items (not blockers, don't forget):**
-- ⚖️ **Lawyer confirms the open/closed AGPL boundary** holds (your closed services must be genuinely separate works) + comply with AGPL (publish platform source, keep notices).
+- ✅ **AGPL open-core boundary — legally validated (lawyer sign-off, 2026-07-10).** The two-repo, network-only approach is approved. **Now a build task, not a legal one:** implement + maintain the boundary (CI boundary-guard) and the AGPL compliance mechanics (publish the fork's source, add a NOTICE file, keep Postiz attribution).
 - 🔍 **Verify exact Twitter API rates in the live Developer Console** before finalizing credit prices — current rates are from secondary sources.
 - 🤝 **Tight feedback loop with first 5 users** — your chosen substitute for formal validation.
 
@@ -177,7 +177,7 @@ Every Loop post — and every scheduled post — runs this gauntlet before reach
 |---|---|
 | OAuth/account connection, scheduling, publish engine, calendar/queue UI, multi-platform adapters (X, LinkedIn), analytics ingestion | **Loops engine** (brief→tweet, style calibration, orchestration) • **AI content generation / giga-chad-agency** • **credit/billing + ledger** • **anti-slop guardrail scoring** • **whitelist/identity** |
 
-Closed services **call the open platform over its API** — they are *never* compiled into the fork. Counsel must bless this boundary.
+Closed services **call the open platform over its API** — they are *never* compiled into the fork. ✅ Counsel **validated this boundary (2026-07-10)**; the CI boundary-guard enforces it on every build.
 
 **Recommended stack (revisit at scaffold):** open platform inherits Postiz's stack (Node/TS); closed services in your team's preferred stack • **Postgres** w/ row-level security (multi-tenant) • **Redis + BullMQ** for the publisher/Loop scheduler (retry, rate-limit-aware backoff, jitter) • **cloud KMS** token vault • **S3-compatible** media • cloud region **US** (GDPR-ready).
 
@@ -205,7 +205,7 @@ Closed services **call the open platform over its API** — they are *never* com
 | Account suspensions damaging trust | High | Anti-slop gauntlet (§9); official OAuth only; warm-up throttle |
 | **Autonomous Loops flagged as inauthentic** | High | Automated gauntlet always runs; mandatory auto-pause monitoring (§9 L5); training wheels |
 | **Twitter reviews/limits our OAuth app** (AI/bot scrutiny) | High | Tracked risk + fallback plan; clean compliance posture; audit trail (§9 L6) |
-| **AGPL boundary contaminating closed IP** | High | Boundary discipline (C8); counsel sign-off; closed services never inside the fork |
+| **AGPL boundary contaminating closed IP** | High → **Low** | ✅ Lawyer-validated (2026-07-10); boundary discipline (C8); CI boundary-guard enforces it; closed services never inside the fork |
 | Whitelist abused to farm handles | Med | Medium verification; 3-handle cap; duplicate detection; abuse monitoring |
 | Credit-model revenue volatility / thin plain-post margin | Med | Markup weighted to expensive actions; revisit auto-refill/hybrid if needed |
 | Style-mimicry → impersonation | Med | Calibration-not-cloning; influence caps; user attestation; labeling |
@@ -240,7 +240,7 @@ Closed services **call the open platform over its API** — they are *never* com
 3. **Exact credit prices** (pending Console rate verification).
 4. **LinkedIn** confirmed as second platform (revisit if audience data says otherwise).
 5. **Depth of giga-chad-agency hooks** in the composer/Loops interface.
-6. **AGPL open/closed boundary** — final legal sign-off.
+6. ~~**AGPL open/closed boundary** — final legal sign-off.~~ ✅ **Done — legally validated 2026-07-10.**
 
 ---
 

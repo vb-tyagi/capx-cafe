@@ -10,7 +10,7 @@ Compliance-first, invite-only tooling to **launch and manage** Twitter/X + Linke
 |---|---|
 | OAuth/account connection, scheduling, publishing, platform adapters, calendar UI | Loops engine, AI content generation, **credit ledger**, **anti-slop guardrails**, identity/whitelist |
 
-**Boundary rule:** closed services call the open platform over its API and are **never** compiled into the fork. Counsel must bless this line before shipping.
+**Boundary rule:** closed services call the open platform over its API and are **never** compiled into the fork. ✅ Counsel validated this boundary (2026-07-10); CI enforces it.
 
 ## Monorepo layout
 
