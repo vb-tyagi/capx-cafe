@@ -10,4 +10,7 @@ export const appEnvSchema: EnvSchema = {
   PLATFORM_API_URL: { type: 'url', required: true, description: "open Postiz fork API (arm's-length)" },
   PLATFORM_HMAC_SECRET: { type: 'string', required: true, description: 'HMAC for fork<->closed webhooks' },
   KMS_KEY_ID: { type: 'string', required: true, description: 'closed-side secrets key (KMS)' },
+  PLATFORM_MODE: { type: 'string', default: 'fake', description: "'fake' (dev) | 'http' (real capx-cafe)" },
+  PLATFORM_SERVICE_TOKEN: { type: 'string', required: false, description: 'capx-cafe API key / service token' },
+  PLATFORM_POSTS_PATH: { type: 'string', default: '/api/posts', description: 'Postiz public API: /public/v1/posts' },
 };

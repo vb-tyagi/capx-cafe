@@ -43,11 +43,22 @@ pnpm dev                                           # fork API + UI
 ```
 
 ## Then wire it
-Inject `new HttpPlatformClient(process.env.PLATFORM_API_URL)` into canteen instead of
-`FakePlatformClient`. Real posting also needs X/LinkedIn OAuth apps (**P8**, external keys).
+canteen depends only on the `PlatformClient` interface, so wiring is an **env change**, not a code change:
+```ts
+import { createPlatformClient } from '@capx/platform-client';
+const platform = createPlatformClient({
+  mode: process.env.PLATFORM_MODE as 'fake' | 'http', // 'fake' (default) | 'http'
+  baseUrl: process.env.PLATFORM_API_URL,
+  serviceToken: process.env.PLATFORM_SERVICE_TOKEN,   // capx-cafe API key
+  postsPath: process.env.PLATFORM_POSTS_PATH,         // '/public/v1/posts' for Postiz's public API
+});
+```
+Set `PLATFORM_MODE=http` + the token to go live. Real posting also needs X/LinkedIn OAuth apps
+(**P8**, external keys).
 
 ## Status
-- ✅ HTTP seam built + verified (suite 61/61).
-- ✅ Fork cloned locally (`../capx-cafe`), AGPL `NOTICE` added, `origin` renamed to `upstream`
-  (no accidental pushes to Postiz).
-- ⬜ Live run of the fork + real `/public/v1/posts` mapping + OAuth — **P8** (needs keys).
+- ✅ HTTP seam built + verified (suite 64/64) — now **configurable** (posts path + auth header) with a
+  `createPlatformClient` factory that flips Fake↔Http from `PLATFORM_MODE`.
+- ✅ Fork cloned locally (`../capx-cafe`), AGPL `NOTICE` added, `origin` renamed to `upstream`, and a
+  **mirror boundary-guard** added to the fork (`tools/capx-boundary-guard.mjs`, 710 files clean).
+- ⬜ Live run of the fork + real `/public/v1/posts` mapping + OAuth — **P8** (needs keys). See the run guide.

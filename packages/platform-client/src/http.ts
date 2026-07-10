@@ -1,5 +1,7 @@
 // The REAL seam to capx-cafe (the open Postiz fork), over HTTP. Boundary-safe: this is CLOSED
 // code that *calls* the open fork's API — it never imports fork source. Swaps in for FakePlatformClient.
+// The posts path + auth header are configurable so it can target either a thin capx adapter route
+// (default `/api/posts`) or Postiz's public API directly (`/public/v1/posts`, raw API-key header).
 import type { PlatformClient, PublishRequest, PublishResult } from './index.ts';
 
 interface FetchResponseLike {
@@ -24,26 +26,38 @@ export class PlatformError extends Error {
 
 export interface HttpPlatformClientOptions {
   fetchImpl?: FetchLike;
-  /** bearer/HMAC service token for the closed↔fork channel */
+  /** bearer/HMAC/API-key for the closed↔fork channel */
   serviceToken?: string;
+  /** default '/api/posts'; Postiz public API is '/public/v1/posts' */
+  postsPath?: string;
+  /** default 'authorization' */
+  authHeaderName?: string;
+  /** default (t) => `Bearer ${t}`; Postiz-style is (t) => t (raw key) */
+  authHeaderValue?: (token: string) => string;
 }
 
 export class HttpPlatformClient implements PlatformClient {
   private readonly baseUrl: string;
   private readonly fetchImpl: FetchLike;
   private readonly serviceToken?: string;
+  private readonly postsPath: string;
+  private readonly authHeaderName: string;
+  private readonly authHeaderValue: (token: string) => string;
 
   constructor(baseUrl: string, options: HttpPlatformClientOptions = {}) {
     this.baseUrl = baseUrl.replace(/\/+$/, '');
     this.fetchImpl = options.fetchImpl ?? (globalThis as { fetch: FetchLike }).fetch;
     this.serviceToken = options.serviceToken;
+    this.postsPath = options.postsPath ?? '/api/posts';
+    this.authHeaderName = options.authHeaderName ?? 'authorization';
+    this.authHeaderValue = options.authHeaderValue ?? ((t) => `Bearer ${t}`);
   }
 
   async publish(req: PublishRequest): Promise<PublishResult> {
     const headers: Record<string, string> = { 'content-type': 'application/json' };
-    if (this.serviceToken) headers.authorization = `Bearer ${this.serviceToken}`;
+    if (this.serviceToken) headers[this.authHeaderName] = this.authHeaderValue(this.serviceToken);
 
-    const res = await this.fetchImpl(`${this.baseUrl}/api/posts`, {
+    const res = await this.fetchImpl(`${this.baseUrl}${this.postsPath}`, {
       method: 'POST',
       headers,
       body: JSON.stringify({

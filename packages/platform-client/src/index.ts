@@ -32,3 +32,4 @@ export class FakePlatformClient implements PlatformClient {
 }
 
 export * from './http.ts';
+export * from './factory.ts';
