@@ -30,3 +30,5 @@ export class FakePlatformClient implements PlatformClient {
     return { platformPostId: `fake-post-${this.seq}`, scheduledAtMs: req.scheduledAtMs };
   }
 }
+
+export * from './http.ts';
