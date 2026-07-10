@@ -9,8 +9,9 @@
   },
   "scripts": {
     "test": "node --experimental-strip-types --test packages/*/test/*.test.ts",
-    "test:credits": "node --experimental-strip-types --test packages/credits/test/*.test.ts",
-    "test:guardrails": "node --experimental-strip-types --test packages/guardrails/test/*.test.ts",
+    "test:casserole": "node --experimental-strip-types --test packages/casserole/test/*.test.ts",
+    "test:counter": "node --experimental-strip-types --test packages/counter/test/*.test.ts",
+    "test:canteen": "node --experimental-strip-types --test packages/canteen/test/*.test.ts",
     "guard": "node tools/boundary-guard.mjs",
     "guard:test": "node --test tools/boundary-guard.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",

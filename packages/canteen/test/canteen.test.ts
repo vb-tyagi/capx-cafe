@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { runLoopTick, actionsForDraft } from '../src/index.ts';
 import { FakePlatformClient } from '../../platform-client/src/index.ts';
-import { CreditLedger, preflightCost } from '../../credits/src/index.ts';
-import type { GauntletContext } from '../../guardrails/src/index.ts';
+import { CreditLedger, preflightCost } from '../../counter/src/index.ts';
+import type { GauntletContext } from '../../casserole/src/index.ts';
 import { Tier, Platform, TweetType, Autonomy, AccountStanding } from '../../core/src/index.ts';
 import type { Handle, DraftPost, LoopConfig } from '../../core/src/index.ts';
 

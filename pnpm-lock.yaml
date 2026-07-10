@@ -18,15 +18,15 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
+  packages/canteen: {}
+
+  packages/casserole: {}
+
   packages/config: {}
 
   packages/core: {}
 
-  packages/credits: {}
-
-  packages/guardrails: {}
-
-  packages/loops: {}
+  packages/counter: {}
 
   packages/platform-client: {}
 

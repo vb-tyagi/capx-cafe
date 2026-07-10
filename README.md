@@ -2,13 +2,13 @@
 
 Compliance-first, invite-only tooling to **launch and manage** Twitter/X + LinkedIn presences, with an AI recurring-posting feature (**Loops**) guarded by a six-layer **anti-slop framework** — the moat.
 
-> Product spec: [docs/phase-1-prd.md](docs/phase-1-prd.md) · Build plan: [docs/BUILD-PLAN.md](docs/BUILD-PLAN.md)
+> Product spec: [docs/phase-1-prd.md](docs/phase-1-prd.md) · Build plan: [docs/BUILD-PLAN.md](docs/BUILD-PLAN.md) · Product map: [docs/PRODUCT-MAP.md](docs/PRODUCT-MAP.md)
 
 ## Architecture — open-core
 
-| 🔓 Open platform (AGPL — forked Postiz, separate repo) | 🔒 Closed services (this monorepo — proprietary) |
+| 🔓 **capx-cafe** — open (AGPL, forked Postiz, separate repo) | 🔒 Closed products (this monorepo — proprietary) |
 |---|---|
-| OAuth/account connection, scheduling, publishing, platform adapters, calendar UI | Loops engine, AI content generation, **credit ledger**, **anti-slop guardrails**, identity/whitelist |
+| X + LinkedIn posting, scheduling, analytics, calendar UI; holds the OAuth tokens | **capx-canteen** (Loops) · **capx-chef** (AI content gen) · **capx-casserole** (anti-slop guard) · **capx-counter** (credits) · **capx-conductor** (identity/whitelist) |
 
 **Boundary rule:** closed services call the open platform over its API and are **never** compiled into the fork. ✅ Counsel validated this boundary (2026-07-10); CI enforces it.
 
@@ -17,14 +17,15 @@ Compliance-first, invite-only tooling to **launch and manage** Twitter/X + Linke
 ```
 packages/
   core/            @capx/core            — shared domain types & constants
-  guardrails/      @capx/guardrails      — the six-layer anti-slop engine (the moat)
-  credits/         @capx/credits         — pay-per-use credit ledger + cost metering
-  platform-client/ @capx/platform-client — arm's-length seam to the open platform (+ Fake)
-  loops/           @capx/loops           — Loop tick: the publish chokepoint (gauntlet+credits+publish)
-services/          — NestJS closed services (identity, loops, guardrail-api, credits-api) [scaffold]
+  casserole/       @capx/casserole       — capx-casserole: anti-slop six-layer guard (the moat)
+  counter/         @capx/counter         — capx-counter: pay-per-use credit ledger + metering
+  canteen/         @capx/canteen         — capx-canteen: Loops publish chokepoint (guard+credits+publish)
+  platform-client/ @capx/platform-client — arm's-length seam to capx-cafe (the open fork) (+ Fake)
+  config/          @capx/config          — fail-fast env validation
+services/          — closed services: capx-conductor (identity), capx-chef (AI gen) [scaffold]
 apps/              — Next.js web app / BFF [scaffold]
 prisma/            — closed Postgres schema (multi-tenant, RLS)
-.github/           — CI (runs the package tests)
+.github/           — CI (verify gate)
 ```
 
 ## Dev
@@ -41,5 +42,5 @@ pnpm exec prisma validate  # validate the closed DB schema
 ```
 
 - **Dev port:** the web/BFF runs on **4343** (capx 43xx convention; see `.env.example`).
-- `@capx/guardrails`, `@capx/credits`, `@capx/loops`, `@capx/config` are **dependency-free** and unit-tested — the parts needing zero external keys, so they ship first.
+- `@capx/casserole`, `@capx/counter`, `@capx/canteen`, `@capx/config` are **dependency-free** and unit-tested — the parts needing zero external keys, so they ship first.
 - **CI** (`.github/workflows/ci.yml`) runs the same `verify` gate on every push/PR.

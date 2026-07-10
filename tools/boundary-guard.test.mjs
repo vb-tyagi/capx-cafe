@@ -4,7 +4,7 @@ import { findViolations } from './boundary-guard.mjs';
 
 test('clean files pass', () => {
   const v = findViolations([
-    { path: 'packages/loops/src/orchestrator.ts', content: "import { runGauntlet } from '../../guardrails/src/index.ts';" },
+    { path: 'packages/canteen/src/orchestrator.ts', content: "import { runGauntlet } from '../../casserole/src/index.ts';" },
     { path: 'packages/core/package.json', content: '{"name":"@capx/core","dependencies":{}}' },
   ]);
   assert.equal(v.length, 0);

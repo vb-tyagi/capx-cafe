@@ -1,5 +1,5 @@
 {
-  "name": "@capx/credits",
+  "name": "@capx/counter",
   "version": "0.1.0",
   "private": true,
   "type": "module",
