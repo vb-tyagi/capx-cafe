@@ -11,7 +11,7 @@ The named products, their boundaries, and how they interact. Hospitality theme: 
 | **capx-canteen** | **Loops** — scheduled AI recurring posting. **2nd most AI-heavy.** | 🔒 CLOSED | `@capx/canteen` | orchestrator built + tested |
 | **capx-casserole** | Anti-spam / anti-AI-slop **six-layer guard**. The **mandatory chokepoint**. | 🔒 CLOSED | `@capx/casserole` | built + tested (19 tests) |
 | **capx-counter** | Credits / billing / metering (pay at the counter). | 🔒 CLOSED | `@capx/counter` | built + tested (10 tests) |
-| **capx-conductor** | Identity / whitelist / tenancy / roles — directs who gets on. | 🔒 CLOSED | `services/conductor` | not built (P2) |
+| **capx-conductor** | Identity / whitelist / tenancy / roles — directs who gets on. | 🔒 CLOSED | `@capx/conductor` (+ future `services/conductor`) | ✅ engine built + tested (12 tests) |
 
 **Not products (shared plumbing):** `@capx/core` (domain types), `@capx/config` (env validation), `@capx/platform-client` — the **"waiter"** that carries orders between the kitchen and capx-cafe.
 

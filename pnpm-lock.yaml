@@ -22,6 +22,8 @@ importers:
 
   packages/casserole: {}
 
+  packages/conductor: {}
+
   packages/config: {}
 
   packages/core: {}

@@ -18,6 +18,9 @@ export type Autonomy = (typeof Autonomy)[keyof typeof Autonomy];
 export const AccountStanding = { GOOD: 'GOOD', FLAGGED: 'FLAGGED', SUSPENDED: 'SUSPENDED' } as const;
 export type AccountStanding = (typeof AccountStanding)[keyof typeof AccountStanding];
 
+export const Role = { OWNER: 'OWNER', MANAGER: 'MANAGER', CREATOR: 'CREATOR', VIEWER: 'VIEWER' } as const;
+export type Role = (typeof Role)[keyof typeof Role];
+
 export const Verdict = { PASS: 'PASS', HOLD: 'HOLD', REGENERATE: 'REGENERATE', BLOCK: 'BLOCK' } as const;
 export type Verdict = (typeof Verdict)[keyof typeof Verdict];
 

@@ -113,6 +113,8 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 
 ## P2 — Identity, Whitelist Gate & Tenancy
 
+> 🟡 **Engine shipped (2026-07-10):** `@capx/conductor` is the pure authorization core — role/permission engine, invite + Medium-gate whitelist, the 3-handle cap, scoped kill switches (feeding capx-casserole L1), and the request `gate` returning a tenant scope for RLS. 12 tests green + typecheck clean. Remaining P2 (needs infra/keys): the NestJS service + Next.js BFF auth shell, passwordless sessions, and the security-logging + edge-throttling controls.
+
 **Goal.** Ship the closed authorization authority: passwordless sessions, operator invites + Medium verification gate, workspaces/roles, the 3-handle-per-identity cap, scoped kill switches, abuse signals, and the Next.js BFF auth shell — the invite-only front door and single source of authorization truth. ⚠ REVIEW-FIX: security-logging controls and edge throttling are **live from this phase**, since sessions/capability-JWTs are handled here.
 
 ### Epics & Tasks
