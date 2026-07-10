@@ -21,9 +21,10 @@ packages/
   counter/         @capx/counter         — capx-counter: pay-per-use credit ledger + metering
   canteen/         @capx/canteen         — capx-canteen: Loops publish chokepoint (guard+credits+publish)
   conductor/       @capx/conductor       — capx-conductor: identity/whitelist/roles/tenancy gate
+  chef/            @capx/chef            — capx-chef: AI content generation (ContentProvider + mock)
   platform-client/ @capx/platform-client — arm's-length seam to capx-cafe (the open fork) (+ Fake)
   config/          @capx/config          — fail-fast env validation
-services/          — closed service wrappers + capx-chef (AI gen) [scaffold]
+services/          — closed service wrappers (NestJS) [scaffold]
 apps/              — Next.js web app / BFF [scaffold]
 prisma/            — closed Postgres schema (multi-tenant, RLS)
 .github/           — CI (verify gate)
@@ -43,5 +44,6 @@ pnpm exec prisma validate  # validate the closed DB schema
 ```
 
 - **Dev port:** the web/BFF runs on **4343** (capx 43xx convention; see `.env.example`).
-- `@capx/casserole`, `@capx/counter`, `@capx/canteen`, `@capx/conductor`, `@capx/config` are **dependency-free** and unit-tested — the parts needing zero external keys, so they ship first.
+- `@capx/casserole`, `@capx/counter`, `@capx/canteen`, `@capx/conductor`, `@capx/chef`, `@capx/config` are **dependency-free** and unit-tested — the parts needing zero external keys, so they ship first.
+- **The full autonomous-Loop pipeline runs end-to-end keyless:** brief → capx-chef (mock) → capx-casserole → capx-counter → capx-cafe (Fake) — see `packages/canteen/test/e2e.test.ts`.
 - **CI** (`.github/workflows/ci.yml`) runs the same `verify` gate on every push/PR.

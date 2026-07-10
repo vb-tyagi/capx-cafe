@@ -7,7 +7,7 @@ The named products, their boundaries, and how they interact. Hospitality theme: 
 | Product | Role | Source | Package / repo | Status |
 |---|---|---|---|---|
 | **capx-cafe** | X + LinkedIn posting, scheduling, management, analytics, calendar/composer UI. Holds the OAuth tokens; does the actual posting. | 🔓 **OPEN** (AGPL) | fork of **Postiz** — *separate repo* | not forked yet (P7); reached via `@capx/platform-client` (Fake) |
-| **capx-chef** | AI **content generation** engine + its own AI guardrails/enablement (drafts, graphics, voice/style). **Most AI-heavy.** | 🔒 CLOSED | `services/chef` (+ future `@capx/chef`) | not built (Phase 2 / "giga-chad-agency") |
+| **capx-chef** | AI **content generation** engine + its own AI guardrails/enablement (drafts, graphics, voice/style). **Most AI-heavy.** | 🔒 CLOSED | `@capx/chef` (+ future `services/chef`) | 🟡 abstraction + mock provider built & tested (7 tests, incl. full brief→publish end-to-end); real LLMs slot into the same `ContentProvider` (Phase 2) |
 | **capx-canteen** | **Loops** — scheduled AI recurring posting. **2nd most AI-heavy.** | 🔒 CLOSED | `@capx/canteen` | orchestrator built + tested |
 | **capx-casserole** | Anti-spam / anti-AI-slop **six-layer guard**. The **mandatory chokepoint**. | 🔒 CLOSED | `@capx/casserole` | built + tested (19 tests) |
 | **capx-counter** | Credits / billing / metering (pay at the counter). | 🔒 CLOSED | `@capx/counter` | built + tested (10 tests) |
