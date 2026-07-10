@@ -258,6 +258,8 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 
 ## P7 — Postiz Fork Integration (open platform, local)
 
+> 🟡 **Started (2026-07-10):** Postiz forked locally to `../capx-cafe` (separate repo, AGPL-3.0), `NOTICE` + attribution added, `origin` renamed to `upstream`. The real **`HttpPlatformClient`** seam is built and verified against a live local HTTP server (61/61 suite). Remaining P7/P8: run the fork locally (`docker compose -f docker-compose.dev.yaml up`), map the seam to Postiz's real `POST /public/v1/posts`, network-isolate the fork, add the mirror boundary-guard in the fork repo, and confirm the fork as sole token custodian. See [CAPX-CAFE.md](CAPX-CAFE.md).
+
 **Goal.** Stand up the AGPL Postiz fork locally, apply the KMS envelope patch + AGPL NOTICE/attribution, add a stable public-API facade, **network-isolate the fork**, install the **mirror boundary guard inside the fork repo**, make the fork the **single token custodian**, and swap every Fake adapter for real HTTP/webhook against the running local fork — proving the arm's-length open/closed boundary end-to-end without any external OAuth keys.
 
 ### Epics & Tasks
