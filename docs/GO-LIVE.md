@@ -18,16 +18,15 @@ Two folders are involved:
 
 ## Part 1 — Start capx-cafe (the posting app) locally
 
+> ⚠️ **zsh users:** paste commands **without** trailing `# comments` — zsh doesn't treat `#` as a
+> comment on the command line and will error (or feed the text into the command). All blocks below
+> are comment-free on purpose. (Or run `setopt interactive_comments` once to enable `#` comments.)
+
+Install first (a few minutes — big app), then start its databases, then create its env file:
 ```bash
 cd /Users/tyagicapx/v-my-apps/capx-cafe
-
-# 1. install (first time is a few minutes — it's a big app)
 pnpm install
-
-# 2. start its databases (Postgres + Redis + admin UIs)
-pnpm run dev:docker          # = docker compose -f docker-compose.dev.yaml up -d
-
-# 3. create its env file
+pnpm run dev:docker
 cp .env.example .env
 ```
 
@@ -87,7 +86,7 @@ point of capx-conductor's whitelist + capx-casserole's guard.
 
 ```bash
 cd /Users/tyagicapx/v-my-apps/capx-culture
-cp .env.example .env.local   # if you don't have one yet
+cp .env.example .env.local
 ```
 Edit `.env.local`:
 ```env
@@ -119,10 +118,7 @@ and calls Postiz's `PostsService.createPost`. Keeps the closed side unchanged; k
 
 ## Sanity checks
 ```bash
-# closed brain still green:
 cd /Users/tyagicapx/v-my-apps/capx-culture && pnpm run verify
-
-# boundary enforced from both sides:
 node tools/boundary-guard.mjs .
 node /Users/tyagicapx/v-my-apps/capx-cafe/tools/capx-boundary-guard.mjs /Users/tyagicapx/v-my-apps/capx-cafe
 ```
