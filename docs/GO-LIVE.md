@@ -41,14 +41,23 @@ BACKEND_INTERNAL_URL="http://localhost:3000"
 STORAGE_PROVIDER="local"
 ```
 
-Then run the app:
+Then run the app. Run **backend + frontend + orchestrator** (skip the `extension` app — it needs
+port 8081 and isn't required). The `PATH=...` prefix is required because this repo uses
+`node-linker=hoisted`, so the `dotenv` binary lives in the **root** `node_modules/.bin`:
 ```bash
-pnpm run dev
+PATH="$PWD/node_modules/.bin:$PATH" pnpm run --filter ./apps/backend --filter ./apps/frontend --filter ./apps/orchestrator --parallel dev
 ```
 - UI: **http://localhost:4200**
 - API: **http://localhost:3000**  (note: Postiz defaults to port 3000)
 
+If you see `EADDRINUSE` on 3000/4200 from a previous crashed run, clear it first:
+```bash
+lsof -ti tcp:3000 tcp:4200 | xargs kill -9
+```
+
 Create your account in the UI (first user) and log in.
+
+*(The plain `pnpm run dev` also works but includes the extension app, which fails if port 8081 is busy.)*
 
 ---
 
