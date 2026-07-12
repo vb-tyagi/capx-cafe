@@ -32,7 +32,7 @@ cp .env.example .env
 
 Now open `/Users/tyagicapx/v-my-apps/capx-cafe/.env` and set at least these:
 ```env
-DATABASE_URL="postgresql://postiz-user:postiz-password@localhost:5432/postiz-db-local"
+DATABASE_URL="postgresql://postiz-local:postiz-local-pwd@localhost:5432/postiz-db-local"
 REDIS_URL="redis://localhost:6379"
 JWT_SECRET="<any long random string>"
 FRONTEND_URL="http://localhost:4200"
