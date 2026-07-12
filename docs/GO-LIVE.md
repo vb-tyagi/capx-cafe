@@ -36,8 +36,8 @@ DATABASE_URL="postgresql://postiz-user:postiz-password@localhost:5432/postiz-db-
 REDIS_URL="redis://localhost:6379"
 JWT_SECRET="<any long random string>"
 FRONTEND_URL="http://localhost:4200"
-NEXT_PUBLIC_BACKEND_URL="http://localhost:3000"
-BACKEND_INTERNAL_URL="http://localhost:3000"
+NEXT_PUBLIC_BACKEND_URL="http://localhost:3006"
+BACKEND_INTERNAL_URL="http://localhost:3006"
 STORAGE_PROVIDER="local"
 ```
 
@@ -48,7 +48,7 @@ port 8081 and isn't required). The `PATH=...` prefix is required because this re
 PATH="$PWD/node_modules/.bin:$PATH" pnpm run --filter ./apps/backend --filter ./apps/frontend --filter ./apps/orchestrator --parallel dev
 ```
 - UI: **http://localhost:4200**
-- API: **http://localhost:3000**  (note: Postiz defaults to port 3000)
+- API: **http://localhost:3006**  (note: Postiz defaults to port 3000)
 
 If you see `EADDRINUSE` on 3000/4200 from a previous crashed run, clear it first:
 ```bash
@@ -100,7 +100,7 @@ cp .env.example .env.local
 Edit `.env.local`:
 ```env
 PLATFORM_MODE=http
-PLATFORM_API_URL=http://localhost:3000
+PLATFORM_API_URL=http://localhost:3006
 PLATFORM_SERVICE_TOKEN=<the capx-cafe Public API key from Part 3>
 PLATFORM_POSTS_PATH=/public/v1/posts
 ```
