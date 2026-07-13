@@ -1,4 +1,4 @@
-// capx-conductor — the 3-handle cap (min of tier allowance and the hard global cap).
+// capx-captain — the 3-handle cap (min of tier allowance and the hard global cap).
 import type { Tier } from '../../core/src/index.ts';
 import { TIER_LIMITS, HANDLE_CAP } from '../../core/src/index.ts';
 

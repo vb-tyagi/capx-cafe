@@ -1,4 +1,4 @@
-// capx-conductor — invite-only whitelist + the Medium identity gate.
+// capx-captain — invite-only whitelist + the Medium identity gate.
 export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
 export type InviteStatus = 'pending' | 'accepted' | 'revoked';
 

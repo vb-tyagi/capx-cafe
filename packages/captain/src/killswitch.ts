@@ -1,4 +1,4 @@
-// capx-conductor — kill switches. resolveKillSwitch() produces the exact { global, handle }
+// capx-captain — kill switches. resolveKillSwitch() produces the exact { global, handle }
 // shape that capx-casserole's L1 gauntlet layer consumes, so a pause here stops posting there.
 export interface KillSwitchRegistry {
   global: boolean;

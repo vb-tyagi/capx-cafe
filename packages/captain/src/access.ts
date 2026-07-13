@@ -1,4 +1,4 @@
-// capx-conductor — the gate on every request: kill switch → whitelist → membership → role → (handle cap).
+// capx-captain — the gate on every request: kill switch → whitelist → membership → role → (handle cap).
 // Returns a tenantScope used to scope Postgres RLS (`set_config('app.workspace_id', tenantScope)`).
 import type { Role, Tier } from '../../core/src/index.ts';
 import { can, Action } from './roles.ts';

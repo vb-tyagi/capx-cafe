@@ -1,4 +1,4 @@
-// capx-conductor — role/permission engine. Rank-based so higher roles inherit lower permissions;
+// capx-captain — role/permission engine. Rank-based so higher roles inherit lower permissions;
 // non-hierarchical restrictions (e.g. billing = Owner only) fall out of the minimum-rank table.
 import type { Role } from '../../core/src/index.ts';
 
