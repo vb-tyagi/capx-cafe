@@ -1,3 +1,5 @@
+> **⚠️ Naming update (2026-07-14):** this guide predates the repo rotation. Here **"capx-cafe" = the Postiz fork**, now the sibling repo **`../capx-conductor`** (run all fork commands from there). The closed monorepo (formerly "capx-culture") is now **this** repo, `capx-cafe`. Authoritative current fork run + handling: **`docs/STATE.md` §8**.
+
 # capx-culture — Go-Live Guide (the steps that need YOU)
 
 Everything buildable without external accounts is done and tested. The remaining work needs a

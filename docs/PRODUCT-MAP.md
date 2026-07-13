@@ -1,41 +1,30 @@
-# capx — Product Map
+# Product Map (updated 2026-07-14 — post-split + naming rotation)
 
-The named products, their boundaries, and how they interact. Hospitality theme: a **café** out front (public), a proprietary **kitchen** behind it, and every order passing the **casserole** (quality) before it's served.
+Two independent products came out of the original build:
 
-## The products
+| Product | What | Repo |
+|---|---|---|
+| **culture** | Independent full UI product (Assisted Launch → Management → Loops). **Zero "capx".** | `../culture` (sibling — separate brand, own git, clean `@culture/*` copies). *Not covered here.* |
+| **capx-cafe** | Umbrella for the **agent-native / plugin** track. **Scope OPEN.** | `capx-cafe/` (this repo) — see `STATE.md` + `PLUGIN-ARCHITECTURE.md`. |
 
-| Product | Role | Source | Package / repo | Status |
-|---|---|---|---|---|
-| **capx-cafe** | X + LinkedIn posting, scheduling, management, analytics, calendar/composer UI. Holds the OAuth tokens; does the actual posting. | 🔓 **OPEN** (AGPL) | fork of **Postiz** — *separate repo* (`../capx-cafe`) | 🟡 forked locally + AGPL NOTICE + **HttpPlatformClient** seam built & verified; live run + real `/public/v1/posts` mapping pending (P8). See [docs/CAPX-CAFE.md](CAPX-CAFE.md) |
-| **capx-chef** | AI **content generation** engine + its own AI guardrails/enablement (drafts, graphics, voice/style). **Most AI-heavy.** | 🔒 CLOSED | `@capx/chef` (+ future `services/chef`) | 🟡 abstraction + mock provider built & tested (7 tests, incl. full brief→publish end-to-end); real LLMs slot into the same `ContentProvider` (Phase 2) |
-| **capx-canteen** | **Loops** — scheduled AI recurring posting. **2nd most AI-heavy.** | 🔒 CLOSED | `@capx/canteen` | orchestrator built + tested |
-| **capx-casserole** | Anti-spam / anti-AI-slop **six-layer guard**. The **mandatory chokepoint**. | 🔒 CLOSED | `@capx/casserole` | built + tested (19 tests) |
-| **capx-counter** | Credits / billing / metering (pay at the counter). | 🔒 CLOSED | `@capx/counter` | built + tested (10 tests) |
-| **capx-conductor** | Identity / whitelist / tenancy / roles — directs who gets on. | 🔒 CLOSED | `@capx/conductor` (+ future `services/conductor`) | ✅ engine built + tested (12 tests) |
+## Inside the capx-cafe umbrella (hospitality theme)
 
-**Not products (shared plumbing):** `@capx/core` (domain types), `@capx/config` (env validation), `@capx/platform-client` — the **"waiter"** that carries orders between the kitchen and capx-cafe.
+| Component | Role | Source | Where |
+|---|---|---|---|
+| **capx-conductor** | X/LinkedIn posting, scheduling, analytics, UI — the **posting engine**. Holds OAuth tokens; does the actual posting. | 🔓 OPEN (AGPL) — Postiz fork | `../capx-conductor` (sibling repo) |
+| **capx-chef** | AI content generation (abstraction + mock; real LLMs later). | 🔒 CLOSED | `@capx/chef` |
+| **capx-canteen** | **Loops** — scheduled recurring posting; the publish chokepoint. | 🔒 CLOSED | `@capx/canteen` |
+| **capx-casserole** | Six-layer anti-slop guard — the mandatory chokepoint (**the moat**). | 🔒 CLOSED | `@capx/casserole` |
+| **capx-counter** | Credits / metering. | 🔒 CLOSED | `@capx/counter` |
+| **capx-captain** | Identity / whitelist / roles / tenancy / kill-switch (**was `conductor`**). | 🔒 CLOSED | `@capx/captain` |
 
-## The one hard boundary
+**Shared plumbing (not products):** `@capx/core` (types), `@capx/config` (env), `@capx/platform-client` — the **"waiter"** seam to capx-conductor.
 
-**Only capx-cafe is open.** Every other product is closed and talks to capx-cafe **only over its HTTP API through the `platform-client` seam** — never compiled into the fork. This is the AGPL open/closed line, **legally validated 2026-07-10**, and enforced on every build by `tools/boundary-guard.mjs`.
+## The one hard boundary (AGPL)
+Only **capx-conductor** (the fork) is open (AGPL). Every closed component talks to it **only over HTTP** through `platform-client` — never compiled into the fork. **Lawyer-validated 2026-07-10.** Enforced by `tools/boundary-guard.mjs` (closed side) + a mirror guard inside the fork.
 
-## How they interact
-
-**A Loop post (autonomous):**
-```
-capx-canteen  →  capx-chef   →  capx-casserole  →  capx-counter  →  ⟨waiter⟩  →  capx-cafe
- (Loop fires)    (draft)         (guard: pass/         (meter/charge)   HTTP API      (publish)
-                                  hold/regen/block)
-```
-capx-casserole is the mandatory chokepoint — **nothing reaches capx-cafe unguarded**. (Proven by the chokepoint tests in `@capx/canteen`.)
-
-**A manual post (typed into capx-cafe's own UI):** capx-cafe's pre-publish webhook calls **capx-casserole** (allow / hold / deny) *before* it posts — so even open-side content passes the closed guard.
-
-**Cross-cutting:**
-- **capx-conductor** gates who/what on every request (whitelist + 3-handle cap + tenancy).
-- **capx-counter** meters capx-chef (AI gen) + capx-canteen (posting) + capx-cafe reads (analytics).
-- **capx-casserole** is shared by capx-canteen, capx-chef, and capx-cafe's webhook.
+## ⚠️ How they interact — CONTINGENT on the open Option A/B decision
+The original SaaS flow was: *Loop fires → capx-chef drafts → capx-casserole guards → capx-counter meters → ⟨waiter⟩ → capx-conductor publishes*; manual posts pass casserole via a pre-publish webhook. **The plugin pivot (STATE.md §4–§7) changes this** — the harness's own model may replace chef, counter may die (BYO-X-app), the publish target becomes the X API or a thin chokepoint. **Do not treat the old flow as locked** — it depends on the unmade Option A vs B decision (STATE.md §5.1).
 
 ## Naming index
-
-café (the public storefront) · chef (cooks the content) · canteen (recurring service = Loops) · casserole (quality control) · counter (where you pay) · conductor (directs who boards).
+café → the umbrella · **conductor → the posting engine (fork)** · chef → content · canteen → recurring (Loops) · casserole → quality guard · counter → pay · **captain → who boards (identity)**.
