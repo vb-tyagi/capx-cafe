@@ -116,3 +116,74 @@ export interface AccountHealth {
   replyRatioAnomaly: boolean;
   platformFlags: number; // count of platform warnings / locks
 }
+
+// ---- Option B chokepoint primitives (P1) ----
+// Model the hosted chokepoint's server-side surface (vault / session / lane / kill-switch / outbox).
+// The agent-co-resident MCP server holds only a SessionHandle — NEVER a token. See docs/P1-CHOKEPOINT.md.
+
+export const Lane = { BYO: 'BYO', CAPX_APP: 'CAPX_APP' } as const;
+export type Lane = (typeof Lane)[keyof typeof Lane];
+
+/** The live revocation signal casserole L1 consumes. Resolved server-side before every send. */
+export interface KillSwitch {
+  global: boolean;
+  handle: boolean;
+}
+
+/**
+ * The short-TTL credential the agent-co-resident MCP server holds. It is NOT an X token — it only
+ * authorizes calls to the chokepoint and is revocable. The signed bearer string is opaque to the
+ * client; these are the claims the chokepoint validates.
+ */
+export interface SessionHandle {
+  /** hash of the allowlisted email (no PII). Identity key across vault / kill-list / audit. */
+  emailHash: string;
+  issuedAt: number; // epoch ms
+  expiresAt: number; // epoch ms
+}
+
+/** Result of validating a SessionHandle against the allowlist + cached grace window. */
+export interface SessionValidation {
+  valid: boolean;
+  /** true when past expiry but within the cached grace window. */
+  inGrace: boolean;
+  expiresAt: number;
+}
+
+/**
+ * Server-side reference to a connected X account — connection METADATA only, NEVER a token.
+ * The ciphertext token lives in the vault, reachable only via the vault module's withToken().
+ */
+export interface XConnectionRef {
+  vaultRef: string;
+  emailHash: string;
+  xUserId: string;
+  username: string;
+  lane: Lane;
+  standing: AccountStanding;
+}
+
+export const OutboxState = {
+  PENDING: 'PENDING',
+  SENDING: 'SENDING',
+  SENT: 'SENT',
+  PUBLISH_FAILED: 'PUBLISH_FAILED',
+} as const;
+export type OutboxState = (typeof OutboxState)[keyof typeof OutboxState];
+
+/**
+ * A durable send job. The idempotencyKey makes a retried worker tick at-most-once for charging and
+ * is the basis for best-effort de-dup at the X boundary (X has no native idempotency key).
+ */
+export interface OutboxJob {
+  id: string;
+  idempotencyKey: string;
+  emailHash: string;
+  vaultRef: string;
+  text: string;
+  aiGenerated: boolean;
+  lane: Lane;
+  state: OutboxState;
+  scheduledAtMs: number;
+  createdAtMs: number;
+}

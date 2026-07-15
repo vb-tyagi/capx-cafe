@@ -10,8 +10,8 @@ import {
 
 export function layer1Eligibility(ctx: GauntletContext): LayerResult {
   const layer = GuardrailLayer.L1_ELIGIBILITY;
-  if (ctx.killSwitch?.global) return { layer, verdict: Verdict.BLOCK, reasons: ['global kill switch active'] };
-  if (ctx.killSwitch?.handle) return { layer, verdict: Verdict.BLOCK, reasons: ['handle kill switch active'] };
+  if (ctx.killSwitch.global) return { layer, verdict: Verdict.BLOCK, reasons: ['global kill switch active'] };
+  if (ctx.killSwitch.handle) return { layer, verdict: Verdict.BLOCK, reasons: ['handle kill switch active'] };
 
   const reasons: string[] = [];
   if (ctx.loop) {

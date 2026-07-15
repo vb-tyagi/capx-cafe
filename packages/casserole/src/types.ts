@@ -6,6 +6,7 @@ import type {
   LoopConfig,
   PostHistoryItem,
   AccountHealth,
+  KillSwitch,
 } from '@capx/core';
 
 export interface LayerResult {
@@ -29,7 +30,12 @@ export interface GauntletContext {
   now: number;
   /** max AI/scheduled posts per 24h across ALL loops + manual (closes the multi-loop loophole). */
   accountDailyCeiling: number;
-  killSwitch?: { global: boolean; handle: boolean };
+  /**
+   * REQUIRED (§6 hardening): the live revocation signal. The chokepoint always populates it from the
+   * live kill-list; making it non-optional turns an omitted kill-switch into a compile error rather
+   * than a silent L1 no-op. The gate additionally throws at runtime as defense-in-depth.
+   */
+  killSwitch: KillSwitch;
 }
 
 export interface GauntletResult {
