@@ -238,10 +238,16 @@ Minimal self-host = BYO-only (no capx secret, no MoR, no counter — lane A user
   `PASS && !requiresHumanReview`; `publish_failed` on a throwing adapter. casserole L2 manual-spacing
   exemption + test. 9 gate tests. `pnpm verify` green (101). *(recent-post cache feeding ctx.history is
   S7; P1 gate passes `[]`.)*
-- **NEXT — S4** (hosted-callback PKCE OAuth + real x-adapter, BYO lane): `/oauth/start` (verifier + S256
-  + CSRF state + pending row) and `/oauth/callback` (state-validate, account-binding confirm, token
-  exchange, KMS-encrypt, vault write) against a mock X IdP; the vault-backed `x-adapter`
-  (`vaultRef → withToken → POST /2/tweets`) replacing `FakePlatformClient`; crash-consistent refresh
-  rotation → `needs-reauth`. First real HTTP surface; `PostgresStore` + `.sql` migrations land here.
-- **REMAINING:** S5 (MCP server + grown chokepoint-client, 3 tools) · S6 (lane B + counter seam +
-  prompt-injection red-team) · S7 (durable outbox poller + recent-post cache + self-host single-flag proof).
+- **2026-07-15 — S4 ✅ DONE** (all offline via injected exchange/identity/poster). S4a hosted-callback
+  PKCE OAuth with session-bound confirm (commit `7bad657`). S4b vault-backed `XAdapter`
+  (`vaultRef → withToken → POST /2/tweets`; blocked post never decrypts) (commit `a56c4a0`). S4c
+  crash-consistent, serialized refresh → `needs-reauth` (commit `f70549d`). S4d HTTP service —
+  transport-agnostic router (healthz/session/oauth-*/whoami/post_now/admin-revoke) + `node:http` adapter
+  + `createInMemoryChokepoint` composition root (commit `b24a574`). `pnpm verify` green (122).
+  *(Still deferred: `PostgresStore` driver + `.sql` migrations — the whole service boots over
+  `InMemoryStore`; Postgres swaps in at the port. Real X endpoints wire into the injected seams at S5/GA.)*
+- **NEXT — S5** (MCP server): `ChokepointClient` (typed HTTP client over injected fetch) + host-agnostic
+  config (`mergeSources`) + the 3 tool handlers (`connect_x`/`whoami`/`post_now`) — all offline-testable —
+  then the `@modelcontextprotocol/sdk` stdio binding + cross-harness config snippets.
+- **REMAINING:** S6 (lane B + counter seam + prompt-injection red-team) · S7 (durable outbox poller +
+  recent-post cache into `ctx.history` + self-host single-flag proof).
