@@ -5,10 +5,11 @@ import type { VaultStore, VaultRow } from '../vault/index.ts';
 import type { SealedToken } from '../vault/crypto.ts';
 import type { AdmissionStore } from '../admission/index.ts';
 import type { OutboxStore } from '../outbox/index.ts';
+import type { PendingStore, PendingConnection } from '../oauth/index.ts';
 import { OutboxState } from '@capx/core';
 import type { OutboxJob } from '@capx/core';
 
-export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore {
+export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, PendingStore {
   // vault
   readonly #vault = new Map<string, VaultRow>(); // vaultRef -> row
   readonly #vaultByEmail = new Map<string, string>(); // emailHash -> vaultRef
@@ -19,6 +20,8 @@ export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore {
   // outbox
   readonly #outbox = new Map<string, OutboxJob>(); // id -> job
   readonly #outboxByIdem = new Map<string, string>(); // idempotencyKey -> id
+  // oauth pending
+  readonly #pending = new Map<string, PendingConnection>(); // pendingId(state) -> pending
 
   // ---- VaultStore ----
   async put(row: VaultRow): Promise<void> {
@@ -72,5 +75,16 @@ export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore {
     const job = this.#outbox.get(id);
     if (!job) throw new Error(`outbox: no job ${id}`);
     this.#outbox.set(id, { ...job, state });
+  }
+
+  // ---- PendingStore ----
+  async putPending(p: PendingConnection): Promise<void> {
+    this.#pending.set(p.pendingId, p);
+  }
+  async getPending(pendingId: string): Promise<PendingConnection | null> {
+    return this.#pending.get(pendingId) ?? null;
+  }
+  async deletePending(pendingId: string): Promise<void> {
+    this.#pending.delete(pendingId);
   }
 }
