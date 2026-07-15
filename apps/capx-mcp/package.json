@@ -4,16 +4,22 @@
   "private": true,
   "type": "module",
   "description": "The agent-co-resident MCP server (stdio). Exposes connect_x / whoami / post_now. Holds NO X token and NO secret — only a short-TTL session handle + non-secret ~/.capx/config.json. Assume-compromised posture. See docs/P1-CHOKEPOINT.md.",
-  "bin": { "capx-mcp": "./src/index.ts" },
-  "exports": { ".": "./src/index.ts" },
+  "bin": {
+    "capx-mcp": "./src/server.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "test": "node --experimental-strip-types --test src/**/*.test.ts",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "start": "node --experimental-strip-types src/index.ts"
+    "start": "node --experimental-strip-types src/server.ts"
   },
   "dependencies": {
-    "@capx/core": "workspace:*",
     "@capx/config": "workspace:*",
-    "@capx/platform-client": "workspace:*"
+    "@capx/core": "workspace:*",
+    "@capx/platform-client": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "4.4.3"
   }
 }
