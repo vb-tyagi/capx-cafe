@@ -226,8 +226,22 @@ Minimal self-host = BYO-only (no capx secret, no MoR, no counter — lane A user
   tests (commit `7db8dc3`). Core: added `Lane`, `KillSwitch`, `SessionHandle`, `SessionValidation`,
   `XConnectionRef`, `OutboxState`, `OutboxJob`. `GauntletContext.killSwitch` made **required** (review fix
   #8); layer1 tightened; 3 ctx factories updated (commit `fab5d1a`). `pnpm verify` green (69).
-- **NEXT — S2** (vault + admission + minimal outbox on one Postgres): AES-256-GCM envelope encrypt/decrypt
-  behind a KMS interface (local-key driver), session issue/validate + grace, kill-list emitting
-  `resolveKillSwitch` `{global,handle}`, `/admin/revoke`, MoR ingest **stubbed**, and the minimal outbox
-  primitive (`sending/sent` + idempotency + per-handle advisory lock) pulled forward here (de-circularizes
-  S3/S6 per review fix #2). Introduces the first external dep (`pg`); crypto is Node built-in.
+- **2026-07-15 — S2 ✅ DONE** (all against an `InMemoryStore` so `verify` needs no Postgres; the
+  `PostgresStore` + `.sql` migrations land when the server boots at S3/S4). S2a: AES-256-GCM envelope
+  crypto + `Kms`/`LocalKeyKms` (commit `b8a1187`). S2b: `Vault` (put/getMetadata-never-decrypts/withToken/
+  rotate) over a `VaultStore` port + `InMemoryStore` (commit `314d6c4`). S2c: `HmacSessionSigner` (TTL +
+  grace), `Admission` (allowlist + kill-list reusing `captain.resolveKillSwitch`, revoke, MoR-stub),
+  `KeyedMutex` (per-handle lock), `Outbox` (idempotent enqueue) (commit `0dbec48`). `pnpm verify` green (91).
+- **2026-07-15 — S3 ✅ DONE** (commit `00e7704`). `PublishGate.postNow` = server-side port of
+  `runLoopTick`: admit → resolve connection server-side → per-handle lock → `normalizeDraft` (URL-regex
+  `hasLink` + X weighted-length) → `runGauntlet` (killSwitch required) → send via the x-adapter only on
+  `PASS && !requiresHumanReview`; `publish_failed` on a throwing adapter. casserole L2 manual-spacing
+  exemption + test. 9 gate tests. `pnpm verify` green (101). *(recent-post cache feeding ctx.history is
+  S7; P1 gate passes `[]`.)*
+- **NEXT — S4** (hosted-callback PKCE OAuth + real x-adapter, BYO lane): `/oauth/start` (verifier + S256
+  + CSRF state + pending row) and `/oauth/callback` (state-validate, account-binding confirm, token
+  exchange, KMS-encrypt, vault write) against a mock X IdP; the vault-backed `x-adapter`
+  (`vaultRef → withToken → POST /2/tweets`) replacing `FakePlatformClient`; crash-consistent refresh
+  rotation → `needs-reauth`. First real HTTP surface; `PostgresStore` + `.sql` migrations land here.
+- **REMAINING:** S5 (MCP server + grown chokepoint-client, 3 tools) · S6 (lane B + counter seam +
+  prompt-injection red-team) · S7 (durable outbox poller + recent-post cache + self-host single-flag proof).
