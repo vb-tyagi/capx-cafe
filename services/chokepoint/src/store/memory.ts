@@ -6,10 +6,11 @@ import type { SealedToken } from '../vault/crypto.ts';
 import type { AdmissionStore } from '../admission/index.ts';
 import type { OutboxStore } from '../outbox/index.ts';
 import type { PendingStore, PendingConnection } from '../oauth/index.ts';
+import type { MeteringStore } from '../metering/index.ts';
 import { OutboxState } from '@capx/core';
 import type { OutboxJob } from '@capx/core';
 
-export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, PendingStore {
+export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore {
   // vault
   readonly #vault = new Map<string, VaultRow>(); // vaultRef -> row
   readonly #vaultByEmail = new Map<string, string>(); // emailHash -> vaultRef
@@ -22,6 +23,8 @@ export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, P
   readonly #outboxByIdem = new Map<string, string>(); // idempotencyKey -> id
   // oauth pending
   readonly #pending = new Map<string, PendingConnection>(); // pendingId(state) -> pending
+  // metering (lane B): posts per emailHash per day
+  readonly #metering = new Map<string, number>(); // `${emailHash}:${dayIndex}` -> count
 
   // ---- VaultStore ----
   async put(row: VaultRow): Promise<void> {
@@ -91,5 +94,14 @@ export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, P
   }
   async deletePending(pendingId: string): Promise<void> {
     this.#pending.delete(pendingId);
+  }
+
+  // ---- MeteringStore ----
+  async postsToday(emailHash: string, dayIndex: number): Promise<number> {
+    return this.#metering.get(`${emailHash}:${dayIndex}`) ?? 0;
+  }
+  async recordPost(emailHash: string, dayIndex: number): Promise<void> {
+    const key = `${emailHash}:${dayIndex}`;
+    this.#metering.set(key, (this.#metering.get(key) ?? 0) + 1);
   }
 }

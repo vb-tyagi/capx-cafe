@@ -3,13 +3,14 @@
 // per-handle lock -> normalizes the draft -> runs casserole with a REQUIRED live kill-switch -> hands
 // off to the x-adapter ONLY when verdict===PASS && !requiresHumanReview. Nothing here decrypts a token
 // (that is the x-adapter/vault). Manual post_now runs with ctx.loop undefined (spacing-exempt). See §4.
-import { Verdict, Platform } from '@capx/core';
+import { Verdict, Platform, Lane } from '@capx/core';
 import type { Handle } from '@capx/core';
 import { runGauntlet } from '@capx/casserole';
 import type { GauntletContext } from '@capx/casserole';
 import type { PlatformClient } from '@capx/platform-client';
 import type { Admission } from '../admission/index.ts';
 import type { Vault } from '../vault/index.ts';
+import type { Metering } from '../metering/index.ts';
 import { KeyedMutex } from '../outbox/mutex.ts';
 import { normalizeDraft } from './draft.ts';
 
@@ -36,6 +37,7 @@ export interface GateDeps {
   client: PlatformClient; // S3: FakePlatformClient; S4: the vault-backed x-adapter
   now: () => number;
   mutex?: KeyedMutex;
+  metering?: Metering; // lane-B (capx-app) cost cap; unused on the BYO lane
 }
 
 /** A manual per-day cap (the loop 1/day + 5-min spacing do not apply to manual posts). */
@@ -47,6 +49,7 @@ export class PublishGate {
   readonly #client: PlatformClient;
   readonly #now: () => number;
   readonly #mutex: KeyedMutex;
+  readonly #metering?: Metering;
 
   constructor(deps: GateDeps) {
     this.#admission = deps.admission;
@@ -54,6 +57,7 @@ export class PublishGate {
     this.#client = deps.client;
     this.#now = deps.now;
     this.#mutex = deps.mutex ?? new KeyedMutex();
+    this.#metering = deps.metering;
   }
 
   async postNow(input: PostNowInput): Promise<PostResult> {
@@ -116,8 +120,22 @@ export class PublishGate {
         return { outcome: 'regenerate', verdict: g.verdict, requiresHumanReview: false, finalReasons: g.finalReasons };
       }
 
-      // 6. SEND via the x-adapter (lane A: no counter; lane B metering is P4). channelId = vaultRef:
-      //    the adapter maps it to the vaulted token server-side (S4). The token never crosses this gate.
+      // 6. METER (lane B only) — capx eats the capx-app-lane X cost, so cap it. Meter ACTUAL sends:
+      //    checked after casserole PASS, before the call. BYO lane is uncapped (user pays X directly).
+      if (conn.lane === Lane.CAPX_APP && this.#metering) {
+        const m = await this.#metering.check(emailHash, now);
+        if (!m.allowed) {
+          return {
+            outcome: 'rejected',
+            verdict: g.verdict,
+            requiresHumanReview: false,
+            finalReasons: [...g.finalReasons, `capx-app daily cap reached (${m.used}/${m.cap})`],
+          };
+        }
+      }
+
+      // 7. SEND via the x-adapter. channelId = vaultRef: the adapter maps it to the vaulted token
+      //    server-side (S4). The token never crosses this gate.
       try {
         const pub = await this.#client.publish({
           channelId: vaultRef,
@@ -125,6 +143,7 @@ export class PublishGate {
           scheduledAtMs: g.scheduledAtMs ?? now,
           aiLabel: norm.draft.aiGenerated,
         });
+        if (conn.lane === Lane.CAPX_APP && this.#metering) await this.#metering.record(emailHash, now);
         return {
           outcome: 'published',
           verdict: g.verdict,
