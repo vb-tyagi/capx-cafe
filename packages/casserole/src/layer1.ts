@@ -6,7 +6,7 @@ import {
   TIER_LIMITS,
   AccountStanding,
   LOOP_MIN_ACCOUNT_AGE_DAYS,
-} from '../../core/src/index.ts';
+} from '@capx/core';
 
 export function layer1Eligibility(ctx: GauntletContext): LayerResult {
   const layer = GuardrailLayer.L1_ELIGIBILITY;

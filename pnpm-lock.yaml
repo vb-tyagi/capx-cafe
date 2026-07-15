@@ -18,21 +18,92 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
-  packages/canteen: {}
+  apps/capx-mcp:
+    dependencies:
+      '@capx/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@capx/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@capx/platform-client':
+        specifier: workspace:*
+        version: link:../../packages/platform-client
 
-  packages/casserole: {}
+  packages/canteen:
+    dependencies:
+      '@capx/casserole':
+        specifier: workspace:*
+        version: link:../casserole
+      '@capx/chef':
+        specifier: workspace:*
+        version: link:../chef
+      '@capx/core':
+        specifier: workspace:*
+        version: link:../core
+      '@capx/counter':
+        specifier: workspace:*
+        version: link:../counter
+      '@capx/platform-client':
+        specifier: workspace:*
+        version: link:../platform-client
 
-  packages/chef: {}
+  packages/captain:
+    dependencies:
+      '@capx/core':
+        specifier: workspace:*
+        version: link:../core
 
-  packages/conductor: {}
+  packages/casserole:
+    dependencies:
+      '@capx/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/chef:
+    dependencies:
+      '@capx/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/config: {}
 
   packages/core: {}
 
-  packages/counter: {}
+  packages/counter:
+    dependencies:
+      '@capx/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/platform-client: {}
+
+  services/chokepoint:
+    dependencies:
+      '@capx/canteen':
+        specifier: workspace:*
+        version: link:../../packages/canteen
+      '@capx/captain':
+        specifier: workspace:*
+        version: link:../../packages/captain
+      '@capx/casserole':
+        specifier: workspace:*
+        version: link:../../packages/casserole
+      '@capx/chef':
+        specifier: workspace:*
+        version: link:../../packages/chef
+      '@capx/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@capx/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@capx/counter':
+        specifier: workspace:*
+        version: link:../../packages/counter
+      '@capx/platform-client':
+        specifier: workspace:*
+        version: link:../../packages/platform-client
 
 packages:
 

@@ -6,7 +6,7 @@ import type {
   LoopConfig,
   PostHistoryItem,
   AccountHealth,
-} from '../../core/src/index.ts';
+} from '@capx/core';
 
 export interface LayerResult {
   layer: GuardrailLayer;

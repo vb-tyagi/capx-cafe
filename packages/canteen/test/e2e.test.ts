@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { runLoopFromBrief } from '../src/index.ts';
-import { MockContentProvider } from '../../chef/src/index.ts';
-import type { GenerationRequest } from '../../chef/src/index.ts';
-import { FakePlatformClient } from '../../platform-client/src/index.ts';
-import { CreditLedger } from '../../counter/src/index.ts';
-import type { GauntletContext } from '../../casserole/src/index.ts';
-import { Tier, Platform, TweetType, Autonomy, AccountStanding } from '../../core/src/index.ts';
-import type { Handle, LoopConfig } from '../../core/src/index.ts';
+import { MockContentProvider } from '@capx/chef';
+import type { GenerationRequest } from '@capx/chef';
+import { FakePlatformClient } from '@capx/platform-client';
+import { CreditLedger } from '@capx/counter';
+import type { GauntletContext } from '@capx/casserole';
+import { Tier, Platform, TweetType, Autonomy, AccountStanding } from '@capx/core';
+import type { Handle, LoopConfig } from '@capx/core';
 
 const NOW = 1_700_000_000_000;
 const HOUR = 3_600_000;
