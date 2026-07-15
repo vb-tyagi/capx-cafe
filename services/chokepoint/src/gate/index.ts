@@ -11,6 +11,7 @@ import type { PlatformClient } from '@capx/platform-client';
 import type { Admission } from '../admission/index.ts';
 import type { Vault } from '../vault/index.ts';
 import type { Metering } from '../metering/index.ts';
+import type { RecentPosts } from '../recent/index.ts';
 import { KeyedMutex } from '../outbox/mutex.ts';
 import { normalizeDraft } from './draft.ts';
 
@@ -38,6 +39,7 @@ export interface GateDeps {
   now: () => number;
   mutex?: KeyedMutex;
   metering?: Metering; // lane-B (capx-app) cost cap; unused on the BYO lane
+  recentPosts?: RecentPosts; // per-handle history feeding casserole L2/L3 (dedup + ceiling)
 }
 
 /** A manual per-day cap (the loop 1/day + 5-min spacing do not apply to manual posts). */
@@ -50,6 +52,7 @@ export class PublishGate {
   readonly #now: () => number;
   readonly #mutex: KeyedMutex;
   readonly #metering?: Metering;
+  readonly #recent?: RecentPosts;
 
   constructor(deps: GateDeps) {
     this.#admission = deps.admission;
@@ -58,6 +61,7 @@ export class PublishGate {
     this.#now = deps.now;
     this.#mutex = deps.mutex ?? new KeyedMutex();
     this.#metering = deps.metering;
+    this.#recent = deps.recentPosts;
   }
 
   async postNow(input: PostNowInput): Promise<PostResult> {
@@ -86,7 +90,9 @@ export class PublishGate {
       if (norm.problems.length) return { outcome: 'rejected', finalReasons: norm.problems };
 
       // 4. CTX — manual (no loop => spacing-exempt); killSwitch REQUIRED (populated live).
-      //    history/health come from the recent-post cache; that wiring lands at S7, so P1 passes [].
+      //    history comes from the per-handle recent-post cache (read inside the lock) so casserole
+      //    L2 (daily ceiling) + L3 (near-duplicate dedup) enforce on real history.
+      const history = this.#recent ? await this.#recent.recent(emailHash, now) : [];
       const killSwitch = await this.#admission.resolveKillSwitch(emailHash, conn.xUserId);
       const handle: Handle = {
         id: conn.xUserId,
@@ -101,7 +107,7 @@ export class PublishGate {
       const ctx: GauntletContext = {
         tier: 'SOLO',
         handle,
-        history: [],
+        history,
         now,
         accountDailyCeiling: MANUAL_DAILY_CEILING,
         killSwitch,
@@ -144,6 +150,8 @@ export class PublishGate {
           aiLabel: norm.draft.aiGenerated,
         });
         if (conn.lane === Lane.CAPX_APP && this.#metering) await this.#metering.record(emailHash, now);
+        // record into the recent-post cache (still inside the lock) so the next post dedups against it.
+        if (this.#recent) await this.#recent.record(emailHash, { text: norm.draft.text, postedAt: now });
         return {
           outcome: 'published',
           verdict: g.verdict,

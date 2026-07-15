@@ -7,10 +7,11 @@ import type { AdmissionStore } from '../admission/index.ts';
 import type { OutboxStore } from '../outbox/index.ts';
 import type { PendingStore, PendingConnection } from '../oauth/index.ts';
 import type { MeteringStore } from '../metering/index.ts';
+import type { RecentPostStore } from '../recent/index.ts';
 import { OutboxState } from '@capx/core';
-import type { OutboxJob } from '@capx/core';
+import type { OutboxJob, PostHistoryItem } from '@capx/core';
 
-export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore {
+export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore, RecentPostStore {
   // vault
   readonly #vault = new Map<string, VaultRow>(); // vaultRef -> row
   readonly #vaultByEmail = new Map<string, string>(); // emailHash -> vaultRef
@@ -25,6 +26,8 @@ export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, P
   readonly #pending = new Map<string, PendingConnection>(); // pendingId(state) -> pending
   // metering (lane B): posts per emailHash per day
   readonly #metering = new Map<string, number>(); // `${emailHash}:${dayIndex}` -> count
+  // recent-post cache: per-handle post history for casserole L2/L3
+  readonly #recent = new Map<string, PostHistoryItem[]>(); // emailHash -> items
 
   // ---- VaultStore ----
   async put(row: VaultRow): Promise<void> {
@@ -103,5 +106,15 @@ export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, P
   async recordPost(emailHash: string, dayIndex: number): Promise<void> {
     const key = `${emailHash}:${dayIndex}`;
     this.#metering.set(key, (this.#metering.get(key) ?? 0) + 1);
+  }
+
+  // ---- RecentPostStore ----
+  async recentPosts(emailHash: string, sinceMs: number): Promise<PostHistoryItem[]> {
+    return (this.#recent.get(emailHash) ?? []).filter((p) => p.postedAt >= sinceMs);
+  }
+  async recordRecentPost(emailHash: string, item: PostHistoryItem): Promise<void> {
+    const list = this.#recent.get(emailHash) ?? [];
+    list.push(item);
+    this.#recent.set(emailHash, list);
   }
 }
