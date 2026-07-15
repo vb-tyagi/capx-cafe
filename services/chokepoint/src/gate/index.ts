@@ -71,6 +71,9 @@ export class PublishGate {
     if (!vaultRef) return { outcome: 'rejected', finalReasons: ['no connected X account — run connect_x first'] };
     const conn = await this.#vault.getMetadata(vaultRef);
     if (!conn) return { outcome: 'rejected', finalReasons: ['connection metadata missing'] };
+    if (await this.#vault.needsReauth(vaultRef)) {
+      return { outcome: 'rejected', finalReasons: ['connection needs re-auth — run connect_x again'] };
+    }
 
     // Serialize the read-history -> gauntlet -> send critical section per handle (review fix #5).
     return this.#mutex.run(emailHash, async () => {

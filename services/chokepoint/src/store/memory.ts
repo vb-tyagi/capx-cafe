@@ -40,6 +40,11 @@ export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, P
     if (!row) throw new Error(`vault: no row ${vaultRef}`);
     this.#vault.set(vaultRef, { ...row, access, refresh, refreshRotatedAt: rotatedAt });
   }
+  async markNeedsReauth(vaultRef: string): Promise<void> {
+    const row = this.#vault.get(vaultRef);
+    if (!row) throw new Error(`vault: no row ${vaultRef}`);
+    this.#vault.set(vaultRef, { ...row, needsReauth: true });
+  }
 
   // ---- AdmissionStore ----
   async isAllowlisted(emailHash: string): Promise<boolean> {

@@ -16,6 +16,8 @@ export interface VaultRow {
   access: SealedToken;
   refresh: SealedToken;
   refreshRotatedAt: number;
+  /** set when a refresh was rejected by X (invalid_grant) — the connection is dead until re-auth. */
+  needsReauth: boolean;
 }
 
 /** Persistence port for the vault (implemented by InMemoryStore now, PostgresStore at S3/S4). */
@@ -24,6 +26,7 @@ export interface VaultStore {
   getByRef(vaultRef: string): Promise<VaultRow | null>;
   getByEmailHash(emailHash: string): Promise<VaultRow | null>;
   updateTokens(vaultRef: string, access: SealedToken, refresh: SealedToken, rotatedAt: number): Promise<void>;
+  markNeedsReauth(vaultRef: string): Promise<void>;
 }
 
 export interface ConnectionTokens {
@@ -56,7 +59,7 @@ export class Vault {
       sealToken(tokens.access, this.#kms),
       sealToken(tokens.refresh, this.#kms),
     ]);
-    await this.#store.put({ vaultRef, ...meta, access, refresh, refreshRotatedAt: this.#now() });
+    await this.#store.put({ vaultRef, ...meta, access, refresh, refreshRotatedAt: this.#now(), needsReauth: false });
     return vaultRef;
   }
 
@@ -91,12 +94,31 @@ export class Vault {
     return fn(access);
   }
 
-  /** Rotate tokens after an OAuth refresh. Crash-consistency is the store's responsibility (S4). */
+  /** Rotate tokens after an OAuth refresh. The store commit is the atomic crash-consistency point. */
   async rotate(vaultRef: string, tokens: ConnectionTokens): Promise<void> {
     const [access, refresh] = await Promise.all([
       sealToken(tokens.access, this.#kms),
       sealToken(tokens.refresh, this.#kms),
     ]);
     await this.#store.updateTokens(vaultRef, access, refresh, this.#now());
+  }
+
+  /** True when the connection has been flagged dead (refresh rejected) and must be re-authorized. */
+  async needsReauth(vaultRef: string): Promise<boolean> {
+    const row = await this.#store.getByRef(vaultRef);
+    return row ? row.needsReauth : false;
+  }
+
+  /** Flag the connection dead (invalid_grant) — surfaced to the user as needs-reauth, never silent. */
+  async markNeedsReauth(vaultRef: string): Promise<void> {
+    await this.#store.markNeedsReauth(vaultRef);
+  }
+
+  /** Like withToken, but for the refresh token (used only by the Refresher, serialized per handle). */
+  async withRefreshToken<T>(vaultRef: string, fn: (refreshToken: string) => Promise<T>): Promise<T> {
+    const row = await this.#store.getByRef(vaultRef);
+    if (!row) throw new Error(`vault: no connection for ref ${vaultRef}`);
+    const refresh = await openToken(row.refresh, this.#kms);
+    return fn(refresh);
   }
 }
