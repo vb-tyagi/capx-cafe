@@ -97,8 +97,10 @@ test('recent posts: record + filter by since', async () => {
   assert.deepEqual((await store.recentPosts('h', 0)).map((p) => p.text), ['old', 'new']);
 });
 
-// Real Postgres validation — runs only when a DB URL is provided (docker compose up first).
-//   CHOKEPOINT_TEST_DB_URL=postgres://chokepoint:pw@localhost:5442/chokepoint pnpm --filter @capx/chokepoint test
+// Real Postgres validation — runs only when a DB URL is provided. Bring the DB up first:
+//   docker compose -f services/chokepoint/docker-compose.yml up -d postgres
+//   CHOKEPOINT_TEST_DB_URL=postgres://chokepoint:chokepoint-local-pwd@localhost:5442/chokepoint \
+//     node --experimental-strip-types --test services/chokepoint/test/postgres.test.ts
 test('real Postgres round-trip (guarded by CHOKEPOINT_TEST_DB_URL)', { skip: !process.env.CHOKEPOINT_TEST_DB_URL }, async () => {
   const { createPgPool } = await import('../src/store/pg-pool.ts');
   const pool = createPgPool(process.env.CHOKEPOINT_TEST_DB_URL as string);
