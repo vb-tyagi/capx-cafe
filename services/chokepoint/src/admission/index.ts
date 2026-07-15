@@ -36,6 +36,11 @@ export class Admission {
     return this.#signer.issue(emailHash, now);
   }
 
+  /** Is this email-hash on the license allowlist? (Gate for issuing a session at /session.) */
+  async isAllowlisted(emailHash: string): Promise<boolean> {
+    return this.#store.isAllowlisted(emailHash);
+  }
+
   /** License gate: valid signature -> usable (live | in-grace) -> allowlisted -> not globally killed. */
   async admit(bearer: string, now: number): Promise<AdmissionResult> {
     const v = this.#signer.verify(bearer, now);
