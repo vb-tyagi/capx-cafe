@@ -1,6 +1,7 @@
 # capx as an Agent-Harness Plugin — Architecture Decision Doc
 
 **Status:** Draft v1 — from a 6-agent research + design + adversarial-review pass (2026-07-13)
+**Update (2026-07-14):** §5 **DECIDED — Option B** (thin hosted chokepoint). Same day, round 2: **ALL remaining decisions locked — the canonical decision log is `STATE.md` §5.** Highlights: two lanes both now (slim `counter` revives); X-only v1, creators soon; fork cold-archived; legal = ship-gate (`docs/LEGAL-BRIEF.md`); full BYO wizard early; **hosted-callback OAuth only** (no on-device tokens — supersedes §3's loopback design); license checks folded into the chokepoint (the separate edge fn is dropped). §7's phases are superseded by **STATE.md §10**.
 **Question:** re-engineer capx from a hosted SaaS into a Claude Code / Codex / Cursor plugin — minimal login UI, everything after connect happens inside the agent session, and no central user database.
 
 ---
@@ -29,7 +30,7 @@
 | **capx-cafe (Postiz fork, AGPL)** | **KILL** | Posting/scheduling/OAuth/analytics move on-device or to the thin chokepoint. **Killing the fork dissolves the entire AGPL boundary problem** — no forked copyleft code to host, so the lawyer-validated HTTP boundary + both CI boundary-guards + the constraint all become moot. (Note: in the repo the fork is a *doc + a running local clone* — cheap to excise — but this also means the analytics/multi-platform/UI value credited to it was never built.) |
 | **casserole (L1–L6 guardrail)** | **KEEP — but it is NOT standalone** | The crown jewel. *Correction from code review:* casserole L1 consumes a real-time `{global, handle}` **kill-switch** input (today produced by conductor). It ships as the guardrail gate, but for it to enforce anything it must (a) be the *only* path to the credential (§4) and (b) receive a live kill-signal (§4/§5). "Zero changes" was wrong. |
 | **canteen ("Loops"/runLoopTick)** | **TRANSFORM** | Loop concept survives as `create_loop`. Rewrite the tick: `guardrail → credit-preflight → publish` becomes `guardrail → publish` (credit step deleted). Publish target moves from Postiz to the X API / chokepoint. |
-| **counter (credit ledger)** | **KILL (mostly)** | Built to absorb + bill X API cost. Under BYO, the user pays X directly → nothing to meter. **Caveat:** if you add a capx-owned *trial lane*, a slim cost/rate-awareness survives for that lane only. |
+| **counter (credit ledger)** | **TRANSFORM → slim** *(decided 2026-07-14)* | Built to absorb + bill X API cost. BYO lane: user pays X → nothing to meter. The caveat became the decision: the **capx-app creator lane** (STATE §5.2) revives a slim counter now — per-user metering + cost caps for that lane only. |
 | **conductor (identity/whitelist/roles/tenancy/kill-switch)** | **TRANSFORM → shrink hard** | Multi-tenant DB dies. Survives as stateless logic: invite-whitelist → signed token / allowlist-of-hashes; 3-handle cap → a (soft) signed claim; **kill-switch → must become a hosted kill-list lookup if revocation matters (§4).** Roles/tenant-gate deleted. |
 | **chef (AI gen + mock)** | **TRANSFORM → demote** | The harness's own model is the content engine now. chef → prompt templates/skills; mock survives for tests only. |
 | **platform-client (Fake/Http seam)** | **KEEP + REPOINT** | Cleanest reuse. `HttpPlatformClient` → `XApiClient` (or points at the chokepoint). `FakePlatformClient` stays as the test double. |
@@ -68,6 +69,8 @@ You'd be placing a **live posting credential in the same session as an autonomou
 
 ## 5. The core decision (yours to make)
 
+> ✅ **DECIDED 2026-07-14: Option B.** Kept: no user DB, BYO billing, agent-native, minimal UI. Conceded: one thin, stateless, self-hostable chokepoint. Build implication: token residency changes at `connect_x` (vault hand-off, not keychain) — revise §7 P1 accordingly; §7 P3's Option-A branch is dead.
+
 The four hard truths all point the same way. You genuinely cannot have **{unbypassable guardrail + reliable scheduling + instant kill + token-never-server-side}** *and* **{zero server / token purely local}**. Pick the trade:
 
 | | **Option A — Pure local (your original vision)** | **Option B — Thin hosted chokepoint (recommended)** |
@@ -89,12 +92,17 @@ If you insist on Option A, that's legitimate — but then capx must be **markete
 ## 6. Other serious findings (fix before GA)
 
 - **BYO-X-app is an onboarding cliff for non-developers.** Registering a Native app + Developer Agreement + pinned callback + Client ID is a developer wall in front of a *creator* tool. Mitigate with a **guided wizard** (screenshots, deep links, pre-filled callback) and an optional capx-app **trial lane** (which resurrects a slim counter for that lane). Get **legal sign-off** on: the proxy using the user's token to post, and `create_loop` automated posting (X "automation" enforcement zone).
+  → **Resolved 2026-07-14:** full guided wizard early (P1–P2, chokepoint-hosted page + in-flow preflight) **and** a permanent capx-app *creator lane* (registration-free — "trial" was a euphemism). Legal brief drafted: `docs/LEGAL-BRIEF.md`. (STATE §5.2/§5.4/§5.6.)
 - **Cross-harness "identical behavior" breaks at capx's value points** — headless/SSH/devcontainer/WSL (common for Cursor/Codex) have **no system browser** (loopback consent fails) and **no keychain** (silent-fallback trap). Advertise identical *tool surface*, **tiered capabilities**: detect desktop-vs-headless, degrade to an env-token path + relay-scheduling. Don't hard-pin one port.
+  → **Resolved 2026-07-14 by hosted-callback OAuth (STATE §5.7):** no local browser, keychain, or port needed anywhere — consent from any device's browser; headless just prints the URL. Identical tool surface holds for real; detection only picks auto-open vs print-URL.
 - **No-DB monetization teeth are soft against developers** (your audience can bypass a client-side signed handle-cap). Put real teeth where they bind: BYO-app (abusers burn their *own* X account) + short `/verify` TTL with a cached grace window.
+  → **Resolved 2026-07-14:** enforcement moved server-side into the chokepoint (allowlist/license/handle-cap/kill-list checked pre-send); the separate offline-verify edge fn is dropped (STATE §5.8). Client-side bypass now gets you nothing — the chokepoint won't post for you.
 
 ---
 
 ## 7. Phased build plan
+
+> **Superseded 2026-07-14** — the canonical revised plan is **STATE.md §10**: the chokepoint moves to P1 (hosted-callback OAuth requires it before `connect_x`), the wizard lands P1–P2, both lanes build now, P3 becomes scheduling. Kept below for reference.
 
 - **P0 — Excise the fork.** Delete capx-cafe + both boundary-guards + AGPL docs; re-license clean. (AGPL problem gone.)
 - **P1 — Local OAuth + keychain + `XApiClient`.** loopback+PKCE `connect_x`, atomic on-device refresh, keychain store (fail-loud), `whoami` + `post_now` with casserole wired in. *Milestone: a whitelisted user connects X and posts, zero auth server.*
@@ -109,7 +117,7 @@ If you insist on Option A, that's legitimate — but then capx must be **markete
 
 ## 8. Open decisions for you
 
-1. **§5 — Option A (pure local, guardrail advisory, no real scheduler) vs Option B (thin hosted chokepoint, guardrail enforced, real scheduler).** Everything downstream depends on this.
-2. **BYO-app only, or add a capx-app trial lane** (which brings back a slim counter + cost caps)?
-3. **Scope honesty:** is capx now explicitly a **developer-audience, X-only** assistant? (Killing the fork forecloses analytics/multi-platform/UI unless the chokepoint hosts them.)
-4. **Legal:** sign-off on proxy-uses-user-token + automated `create_loop` posting under X's Developer Agreement.
+1. **§5 — Option A vs Option B.** ✅ **DECIDED 2026-07-14: Option B** (thin hosted chokepoint, guardrail enforced, real scheduler).
+2. **BYO-app only, or a capx-app lane?** ✅ **DECIDED 2026-07-14: two lanes, both now** — BYO (devs) + capx-app (creators, permanent); slim counter revives (STATE §5.2).
+3. **Scope honesty:** ✅ **DECIDED 2026-07-14: X-only v1, creators soon**; analytics/multi-platform = chokepoint-roadmap later-items (STATE §5.3).
+4. **Legal:** ✅ **DECIDED 2026-07-14: ship-gate, not build-gate**; counsel brief at `docs/LEGAL-BRIEF.md` (STATE §5.4).

@@ -35,13 +35,18 @@ scheduling / management happens **inside their agent session**, driven by the ha
 ## 4. The Track-2 direction (from `docs/PLUGIN-ARCHITECTURE.md`)
 - **Packaging:** one stdio MCP server working across Claude Code + Codex + Cursor; Claude-Code skills as optional sugar. **BYO-X-app** (user brings their own X developer app → they pay X, no capx API cost/token-custody).
 - **Confirmed serverless (verified by research):** the whole **OAuth + refresh runs 100% on-device** (public PKCE client, `127.0.0.1` loopback, no secret — X's own `xurl` CLI proves it); **DB-less monetization** via merchant-of-record license keys + offline-verified Ed25519 tokens.
+  - *(2026-07-14: the research stands, but the chosen design moved both into the chokepoint — hosted-callback OAuth (§5.7) and folded license checks (§5.8). The on-device flow and the offline edge fn are NOT being built.)*
 - **The four things that break "zero server"** (each wants a thin server): reliable scheduling (laptop-off), an *unbypassable* guardrail, instant abuse revocation, keeping the token out of the co-resident agent's reach.
 
-## 5. 🔴 OPEN decisions — UNMADE, decide in the fresh session (do not assume)
-1. **THE core decision: Option A (pure-local — token in local keychain, guardrail *advisory*/bypassable, best-effort scheduling) vs Option B (one thin, stateless, self-hostable hosted chokepoint — guardrail *enforced* at the X boundary, real scheduling laptop-off, real kill-switch; token in an encrypted server vault; still NO multi-tenant user DB). Recommended: B.** *(User was asked and deferred — still open. Everything downstream depends on it.)*
-2. **BYO-X-app only, or add a capx-app trial lane** (which revives a slim `counter` for cost caps)?
-3. **Scope honesty:** is this now a developer-audience, **X-only** assistant? (Killing the fork forecloses analytics/multi-platform/UI unless the chokepoint hosts them.)
-4. **Legal:** sign-off on a proxy posting with the user's token + automated recurring posting under X's Developer Agreement.
+## 5. Decisions — ALL ✅ LOCKED in the 2026-07-14 decision round (do not re-litigate)
+1. **✅ Option B** — one thin, stateless, **self-hostable** hosted chokepoint: guardrail **enforced** at the X boundary, real scheduling laptop-off, real kill-switch; token in an encrypted server vault; still **NO** multi-tenant user DB. Option A (pure-local: token in keychain, guardrail advisory, best-effort scheduling) rejected — it makes the §6 flaw permanent.
+2. **✅ Two lanes, both built now** — **BYO-X-app** (developer lane) *and* a **capx-owned-app lane** (the creator lane — not a "trial": creators never register dev apps). Revives a **slim `counter`** now (per-user metering + cost caps on the capx lane). Action items: register + pay for capx's own X app. Shared-app ToS blast radius is mitigated by chokepoint-enforced casserole + per-handle caps + kill-switch.
+3. **✅ Scope: X-only v1, creators soon** — the build is X-only, but creator expansion is a near-term commitment (this drove decisions 2 and 6). Analytics / multi-platform = explicit chokepoint-roadmap later-items, not v1 promises.
+4. **✅ Legal = ship-gate, not build-gate** — build proceeds in parallel with counsel review; nothing auto-posts beyond the founder's own accounts before written sign-off. Counsel brief: `docs/LEGAL-BRIEF.md` (BYO token-custody question = novel; capx-app scheduler model = conventional; X Automation Rules for `create_loop`; consumer ToS/privacy for the creator lane).
+5. **✅ Fork: cold-archive** — stop the Docker stack, `pg_dump` the dev schema to a shelf file, keep `../capx-conductor` cold on disk (own git repo, zero upkeep); excise the monorepo AGPL apparatus at P0; delete volumes only after the chokepoint posts for real.
+6. **✅ Onboarding: full BYO wizard early (P1–P2)** — hosted guided page (screenshots, deep links, pre-filled callback — the chokepoint serves it) + in-flow preflight validation with specific fix messages. The creator lane needs no wizard (no registration at all).
+7. **✅ OAuth: hosted-callback only** — the chokepoint holds the PKCE verifier + HTTPS callback; consent works from any browser on any device; **the token never touches the user's machine** — no keychain, no pinned port, no loopback flow at all. Cross-harness promise = identical tool surface; capability detection only picks auto-open-browser vs print-URL.
+8. **✅ License verification folds into the chokepoint** — MoR webhooks → allowlist of email hashes + subscription state; short-TTL session creds with a cached grace window. The separate Ed25519 offline edge fn (an Option-A artifact) is dropped. MoR pick (Lemon Squeezy vs Polar) deferred to a P4 bake-off; creator-lane pricing must cover capx's metered X API cost.
 
 ## 6. 🔴 The critical flaw to get right (if this direction proceeds)
 "The harness writes, casserole decides what ships" is **false in a pure-local design**: a live X token in the
@@ -50,9 +55,12 @@ or malware — they can post directly and **bypass casserole entirely**. The cre
 **only** through the casserole chokepoint (→ points at Option B: a hosted publish proxy where the token never
 lands next to the agent). This is the single thing that makes-or-breaks the thesis.
 
+**✅ Resolved by §5.1 + §5.7 (2026-07-14):** with hosted-callback OAuth the token *only ever exists* in the
+chokepoint's vault — it never touches the user's machine — and every publish passes casserole at the X boundary.
+
 ## 7. Keep / Kill / Transform (what the plugin pivot implies — NOT yet executed)
-KEEP: **casserole** (the moat; but it needs a live kill-switch input + to be the only path to the credential).
-TRANSFORM: **canteen** (Loops: drop the credit step → guardrail→publish), **platform-client** (→ direct X client / chokepoint), **captain** (shrink to a stateless whitelist/allowlist + soft handle-cap), **chef** (demote — the harness model generates; mock stays for tests). KILL (if the pivot is taken): **capx-conductor/Postiz fork** (dissolves the whole AGPL boundary problem), **counter** (BYO = user pays X). *None of this is done — it's contingent on the §5.1 decision.*
+KEEP: **casserole** (the moat; gets its live kill-switch input and runs at the chokepoint's X boundary — the only path to the credential).
+TRANSFORM: **canteen** (Loops: guardrail→publish; metering step only on the capx-app lane), **platform-client** (→ chokepoint client), **captain** (shrink to stateless whitelist/allowlist + handle-cap, enforced chokepoint-side), **chef** (demote — the harness model generates; mock stays for tests), **counter** (slim revival NOW — per-user metering + cost caps for the capx-app lane, §5.2). KILL: **capx-conductor/Postiz fork** (cold-archive per §5.5 — dissolves the whole AGPL boundary problem). *None of this is executed yet — all §5 decisions are locked (2026-07-14); the revised phase plan is §10.*
 
 ## 8. capx-conductor (the fork) — careful handling & next steps
 - **Location:** `../capx-conductor` (renamed from the old `capx-cafe` folder). Own git repo, `upstream` = Postiz.
@@ -65,11 +73,16 @@ TRANSFORM: **canteen** (Loops: drop the credit step → guardrail→publish), **
 ## 9. Docs in this repo
 - `PLUGIN-ARCHITECTURE.md` — Track-2 direction + open decisions (current).
 - `PRODUCT-MAP.md` — named products + boundaries (updated to the rotation).
-- `CAPX-CAFE.md`, `GO-LIVE.md` — the fork's integration + run guide (paths updated to `../capx-conductor`).
+- `CAPX-CAFE.md`, `GO-LIVE.md` — the fork's integration + run guide (paths updated to `../capx-conductor`; historical once §5.5's cold-archive executes).
+- `LEGAL-BRIEF.md` — counsel brief for the two-lane posting compliance sign-off (§5.4; the ship-gate).
 - `BUILD-PLAN.md` — the original monorepo mega-sprint plan (capx-branded, historical; predates the plugin pivot).
 - *(The product PRD moved to `../culture` — it's the culture product's spec.)*
 
-## 10. Next steps
-1. **Make the §5.1 decision (Option A vs B)** — nothing else in Track-2 should be built until this is settled.
-2. Then follow PLUGIN-ARCHITECTURE §7 (P0 excise-or-keep fork → P1 local OAuth + `XApiClient` → P2 MCP server + cross-harness → P3 chokepoint/scheduling → P4 monetization → P5 plugin sugar).
-3. Get the legal sign-off (§5.4) before any automated posting ships.
+## 10. Next steps — the REVISED phase plan (under the locked §5 decisions; supersedes PLUGIN-ARCHITECTURE §7)
+- **P0 — Cold-archive the fork + AGPL excision.** From `../capx-conductor`: dev servers are already down; `docker compose down` (keep volumes for now), `pg_dump` the dev schema to a shelf file. In this repo: remove the boundary-guard from `verify`, mark fork docs historical. In parallel from day one: register the capx-owned X app (§5.2) + send `docs/LEGAL-BRIEF.md` to counsel (§5.4).
+- **P1 — Chokepoint core + connect + first post.** Vault, hosted-callback PKCE OAuth (both lanes), allowlist/license check, kill-list, **casserole enforced at the publish boundary**; MCP `connect_x` / `whoami` / `post_now`. The BYO wizard (hosted guided page + preflight validation) starts landing here (§5.6). *Note the ordering consequence of §5.7: the chokepoint must exist before `connect_x` — it moved from P3 to P1.*
+- **P2 — Cross-harness packaging + creator lane.** One stdio MCP server (`npx @capx/mcp`), Claude/Cursor/Codex config snippets, print-URL fallback for headless; capx-app lane live with slim `counter` metering + per-lane caps; wizard completed.
+- **P3 — Scheduling + loops.** Job queue, `create_loop` (guardrail → publish), exact-time laptop-off, `max_lateness` (never auto-post stale), delete-after-send.
+- **P4 — Monetization.** MoR bake-off (Lemon Squeezy vs Polar) + webhooks → allowlist; pricing (creator lane covers metered X API cost; BYO lane costs capx nothing).
+- **P5 — Claude Code plugin sugar.** Marketplace `plugin.json`, slash commands, `userConfig`.
+- **Ship-gate (standing):** no automated posting for anyone beyond the founder's own accounts until legal sign-off (§5.4).
