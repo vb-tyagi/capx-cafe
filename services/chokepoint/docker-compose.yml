@@ -1,0 +1,46 @@
+# capx chokepoint — self-host stack: worker + ONE Postgres (NO Redis in P1).
+# The entire P1 stateful surface (vault + hashed allowlist + kill-list + audit + outbox +
+# recent-post cache) lives in this one Postgres. See docs/P1-CHOKEPOINT.md §1/§8.
+#
+# Distinct Compose project name so this never collides with the closed-side root compose
+# or the cold-archived fork's `capx-cafe` project.
+name: capx-chokepoint
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: capx-chokepoint-postgres
+    environment:
+      POSTGRES_USER: chokepoint
+      POSTGRES_PASSWORD: chokepoint-local-pwd
+      POSTGRES_DB: chokepoint
+    ports:
+      # host 5442 -> container 5432 (distinct host port; closed-side + fork already use Postgres)
+      - "5442:5432"
+    volumes:
+      - chokepoint-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chokepoint"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: services/chokepoint/Dockerfile
+    container_name: capx-chokepoint-worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      CAPX_DEPLOY_MODE: self-host          # disables lane B (capx-app) as configuration, never a code fork
+      CHOKEPOINT_PORT: "4477"
+      VAULT_DB_URL: postgres://chokepoint:chokepoint-local-pwd@postgres:5432/chokepoint
+      # self-host also requires (see §8): OAUTH_CALLBACK_URL (public HTTPS), KMS_KEY_ID (or local key),
+      # SESSION_SIGNING_KEY, and a seeded hashed allowlist. Placeholders — set real values before boot.
+    ports:
+      - "4477:4477"
+
+volumes:
+  chokepoint-postgres:

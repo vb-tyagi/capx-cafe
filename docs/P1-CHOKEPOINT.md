@@ -114,7 +114,7 @@ reaches the credential), not a claim that the gauntlet blocks all malicious-but-
 | 3 | **OAuth account-binding / login-CSRF** (major) | §3 step 6: bind `xUserId` to the initiating session via a session-nonce only that MCP session holds; require it to confirm the specific `pending_id`; a relayed consent URL can't write another identity's vault row. |
 | 4 | **Refresh-rotation "cannot brick" is false** — X one-time refresh token (major) | Replace with **crash-consistent + auto-reauth**: persist `rotation-in-progress` marker before the X call, commit the new refresh token atomically; on restart with a dangling marker, try the new token, else mark connection `needs-reauth` and surface via `whoami`. Never claim atomicity across the X call. |
 | 5 | **Recent-post cache race** — concurrent `post_now` both read empty history, both pass spacing (major) | **Per-handle advisory lock** (`pg_advisory_xact_lock` / `SELECT … FOR UPDATE` on the vault row) around read-history → runGauntlet → send → write-cache. Concurrency test added to S3. |
-| 6 | **L2 5-min spacing blocks legit manual posts** (major) | **OPEN DECISION — see §10.** Default: manual `post_now` is exempt from the loop-spacing rule (that rule is for autonomous loops); manual posts still get kill-switch + anti-slop + a manual daily ceiling + length. Pending founder confirm. |
+| 6 | **L2 5-min spacing blocks legit manual posts** (major) | **✅ DECIDED (2026-07-15): manual `post_now` is EXEMPT** from the L2 5-min loop-spacing rule (it is a loop/autonomy rule). Manual posts still get kill-switch + anti-slop + a manual daily ceiling + weighted-length. Implemented in the gate's ctx builder (a manual-mode flag relaxes L2 spacing/loop-cap); covered by an S3 test. |
 | 7 | **"One-flag" self-host hides a public-HTTPS-callback requirement** (major) | §8 states it honestly: self-host needs a public HTTPS callback (domain+TLS or tunnel) registered in the self-hoster's own X app, plus KMS/vault-DB/session-key/seeded-allowlist. "One code path, one mode flag" stays; "compose up + one URL = done" retired. |
 | 8 | **`killSwitch` stays type-optional** (major) | Make `GauntletContext.killSwitch` a **required** field in `@capx/core` (S1), so omission is a compile error; keep the runtime throw as defense-in-depth; lint-forbid direct `runGauntlet` outside the gate module. |
 | 9 | counter not drop-in reuse (minor) | Reclassified as a P4 transform (ledger `|null` short-circuit + idempotency-key + atomic compare-and-deduct + refund kind). |
@@ -195,8 +195,9 @@ Minimal self-host = BYO-only (no capx secret, no MoR, no counter — lane A user
 
 ## 10. Open decisions (proposed defaults; ★ = wants a founder call)
 
-1. **★ Manual-post spacing:** does the L2 5-min minimum spacing apply to manual `post_now`? *Proposed:* **no** —
-   manual posts are exempt from loop-spacing; they keep kill-switch + anti-slop + a manual daily ceiling + length.
+1. **✅ DECIDED (2026-07-15) — Manual-post spacing:** the L2 5-min minimum spacing does **NOT** apply to manual
+   `post_now`. Manual posts are exempt from loop-spacing; they keep kill-switch + anti-slop + a manual daily
+   ceiling + weighted-length. (Gate passes a manual-mode flag that relaxes L2 spacing/loop-cap.)
 2. **X length semantics:** *Proposed:* P1 = standard 280 with X **weighted-length** (t.co URLs = 23); premium
    long tweets **out of P1 scope.**
 3. **Recent-post history source:** *Proposed:* P1 = chokepoint's own recent-post cache only (posts made through
@@ -208,3 +209,25 @@ Minimal self-host = BYO-only (no capx secret, no MoR, no counter — lane A user
 6. **Prisma tree:** P1 **must NOT** migrate or seed `prisma/schema.prisma` / `rls.sql` / `seed.sql` — only the
    handle-keyed vault/allowlist migrations are created. (Accidental reuse would resurrect the user DB Option B forbids.)
 7. **No-PII hard rule:** no PII / profile / engagement fields ever added to vault or allowlist tables.
+
+---
+
+## 11. Build log
+
+- **2026-07-15 — S0 STARTED (partial).** ✅ Scaffolded `services/chokepoint/` (package.json, tsconfig,
+  src/index.ts + src/server.ts stubs, Dockerfile, docker-compose = worker + Postgres, README) and
+  `apps/capx-mcp/` (package.json, tsconfig, src/index.ts stub, README). Confirmed `pnpm verify` stayed
+  green (64 tests) — the new `services/`+`apps/` dirs sit outside the root verify globs, so they're inert.
+  Ports chosen: chokepoint HTTP **4477**, self-host Postgres host **5442** (confirm free before first bind).
+  - ⏳ **PENDING (blocked on a sustained Bash safety-classifier outage — can't run `pnpm install`/`node --test`/`tsc`/`git`):**
+    the verify-gated S0 core — (a) add `@capx/*: workspace:*` deps to each consumer package.json
+    (canteen: core+casserole+counter+platform-client+chef; captain/casserole/chef/counter: core;
+    platform-client/config/core: none), (b) repoint all **53** cross-package imports (`../../<pkg>/src/index.ts`
+    → `@capx/<pkg>`) across **24** files, (c) split `@capx/config` into server vs client schemas, then
+    `pnpm install` + `pnpm verify`.
+  - **RESUME STEPS when Bash is back:** (1) `rm packages/casserole/test/_resolve_probe.test.ts` (parked
+    neutralized probe); (2) do the repoint above; (3) `pnpm install` then `pnpm verify`. **Resolution risk to
+    confirm first:** whether `node --experimental-strip-types` resolves the pnpm-symlinked `@capx/core`
+    specifier — expected to work because pnpm symlinks resolve to a realpath OUTSIDE `node_modules` (dodging
+    `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`); if Node throws it, `git checkout` the repoint and fall
+    back to tsconfig `paths` for typecheck while keeping relative runtime imports. (4) Commit S0, then S1.
