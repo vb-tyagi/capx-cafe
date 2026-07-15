@@ -3,7 +3,7 @@
 // per-handle lock -> normalizes the draft -> runs casserole with a REQUIRED live kill-switch -> hands
 // off to the x-adapter ONLY when verdict===PASS && !requiresHumanReview. Nothing here decrypts a token
 // (that is the x-adapter/vault). Manual post_now runs with ctx.loop undefined (spacing-exempt). See §4.
-import { Verdict, Platform, Lane } from '@capx/core';
+import { Verdict, Platform, Lane, OutboxState } from '@capx/core';
 import type { Handle } from '@capx/core';
 import { runGauntlet } from '@capx/casserole';
 import type { GauntletContext } from '@capx/casserole';
@@ -12,6 +12,7 @@ import type { Admission } from '../admission/index.ts';
 import type { Vault } from '../vault/index.ts';
 import type { Metering } from '../metering/index.ts';
 import type { RecentPosts } from '../recent/index.ts';
+import type { Outbox } from '../outbox/index.ts';
 import { KeyedMutex } from '../outbox/mutex.ts';
 import { normalizeDraft } from './draft.ts';
 
@@ -40,6 +41,7 @@ export interface GateDeps {
   mutex?: KeyedMutex;
   metering?: Metering; // lane-B (capx-app) cost cap; unused on the BYO lane
   recentPosts?: RecentPosts; // per-handle history feeding casserole L2/L3 (dedup + ceiling)
+  outbox?: Outbox; // durable at-most-once send: idempotent on idempotencyKey
 }
 
 /** A manual per-day cap (the loop 1/day + 5-min spacing do not apply to manual posts). */
@@ -53,6 +55,7 @@ export class PublishGate {
   readonly #mutex: KeyedMutex;
   readonly #metering?: Metering;
   readonly #recent?: RecentPosts;
+  readonly #outbox?: Outbox;
 
   constructor(deps: GateDeps) {
     this.#admission = deps.admission;
@@ -62,6 +65,7 @@ export class PublishGate {
     this.#mutex = deps.mutex ?? new KeyedMutex();
     this.#metering = deps.metering;
     this.#recent = deps.recentPosts;
+    this.#outbox = deps.outbox;
   }
 
   async postNow(input: PostNowInput): Promise<PostResult> {
@@ -85,6 +89,15 @@ export class PublishGate {
 
     // Serialize the read-history -> gauntlet -> send critical section per handle (review fix #5).
     return this.#mutex.run(emailHash, async () => {
+      // 2b. IDEMPOTENCY — a retried post_now with the same key that already SENT short-circuits here,
+      //     before re-evaluation, so a network retry never double-posts (the mutex makes this race-free).
+      if (this.#outbox) {
+        const prior = await this.#outbox.find(input.idempotencyKey);
+        if (prior && prior.state === OutboxState.SENT) {
+          return { outcome: 'published', requiresHumanReview: false, finalReasons: ['idempotent replay — already posted'] };
+        }
+      }
+
       // 3. DRAFT — real hasLink + X weighted-length preflight.
       const norm = normalizeDraft(input.text, { aiGenerated: input.aiGenerated ?? false });
       if (norm.problems.length) return { outcome: 'rejected', finalReasons: norm.problems };
@@ -140,8 +153,26 @@ export class PublishGate {
         }
       }
 
-      // 7. SEND via the x-adapter. channelId = vaultRef: the adapter maps it to the vaulted token
-      //    server-side (S4). The token never crosses this gate.
+      // 7. SEND via the x-adapter, durably. Enqueue PENDING -> SENDING -> (SENT | PUBLISH_FAILED).
+      //    channelId = vaultRef: the adapter maps it to the vaulted token server-side (S4). The token
+      //    never crosses this gate.
+      let jobId: string | null = null;
+      if (this.#outbox) {
+        const enq = await this.#outbox.enqueue({
+          id: input.idempotencyKey,
+          idempotencyKey: input.idempotencyKey,
+          emailHash,
+          vaultRef,
+          text: norm.draft.text,
+          aiGenerated: norm.draft.aiGenerated,
+          lane: conn.lane,
+          state: OutboxState.PENDING,
+          scheduledAtMs: g.scheduledAtMs ?? now,
+          createdAtMs: now,
+        });
+        jobId = enq.job.id;
+        await this.#outbox.markSending(jobId);
+      }
       try {
         const pub = await this.#client.publish({
           channelId: vaultRef,
@@ -149,6 +180,7 @@ export class PublishGate {
           scheduledAtMs: g.scheduledAtMs ?? now,
           aiLabel: norm.draft.aiGenerated,
         });
+        if (this.#outbox && jobId) await this.#outbox.markSent(jobId);
         if (conn.lane === Lane.CAPX_APP && this.#metering) await this.#metering.record(emailHash, now);
         // record into the recent-post cache (still inside the lock) so the next post dedups against it.
         if (this.#recent) await this.#recent.record(emailHash, { text: norm.draft.text, postedAt: now });
@@ -160,6 +192,7 @@ export class PublishGate {
           platformPostId: pub.platformPostId,
         };
       } catch {
+        if (this.#outbox && jobId) await this.#outbox.markFailed(jobId);
         return {
           outcome: 'publish_failed',
           verdict: g.verdict,

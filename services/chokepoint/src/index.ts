@@ -33,6 +33,7 @@ import { XAdapter, type XPoster } from './xclient/index.ts';
 import { PublishGate } from './gate/index.ts';
 import { Metering } from './metering/index.ts';
 import { RecentPosts } from './recent/index.ts';
+import { Outbox } from './outbox/index.ts';
 import { createService } from './server/router.ts';
 
 export interface ChokepointConfig {
@@ -66,7 +67,8 @@ export function createInMemoryChokepoint(cfg: ChokepointConfig) {
   const oauth = new OAuthFlow(store, cfg.oauth);
   const metering = cfg.capxAppDailyCap !== undefined ? new Metering(store, cfg.capxAppDailyCap) : undefined;
   const recentPosts = new RecentPosts(store);
-  const gate = new PublishGate({ admission, vault, client: new XAdapter({ vault, post: cfg.xPost }), now, metering, recentPosts });
+  const outbox = new Outbox(store);
+  const gate = new PublishGate({ admission, vault, client: new XAdapter({ vault, post: cfg.xPost }), now, metering, recentPosts, outbox });
   const refresher = new Refresher({ vault, clientId: cfg.byoDefaultClientId ?? '' });
   const service = createService({
     admission,

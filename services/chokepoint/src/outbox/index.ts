@@ -23,6 +23,11 @@ export class Outbox {
     this.#store = store;
   }
 
+  /** Look up a job by idempotency key (null if never enqueued). */
+  find(idempotencyKey: string): Promise<OutboxJob | null> {
+    return this.#store.findByIdempotencyKey(idempotencyKey);
+  }
+
   /** Insert PENDING, or return the existing job if this idempotencyKey was already enqueued. */
   async enqueue(job: OutboxJob): Promise<EnqueueResult> {
     const existing = await this.#store.findByIdempotencyKey(job.idempotencyKey);
