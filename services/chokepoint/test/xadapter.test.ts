@@ -45,7 +45,7 @@ test('XAdapter on an unknown vaultRef throws (no connection)', async () => {
 });
 
 test('httpXPoster sends a Bearer POST /2/tweets and parses the id', async () => {
-  const calls: Array<{ url: string; headers: Record<string, string>; body: string }> = [];
+  const calls: Array<{ url: string; headers: Record<string, string>; body?: string }> = [];
   const fetchImpl: FetchLike = async (url, init) => {
     calls.push({ url, headers: init.headers, body: init.body });
     return { ok: true, status: 200, json: async () => ({ data: { id: '99' } }), text: async () => '' };

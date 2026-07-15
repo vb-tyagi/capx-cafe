@@ -17,6 +17,7 @@ export * from './oauth/pkce.ts';
 export * from './oauth/index.ts';
 export * from './oauth/refresh.ts';
 export * from './xclient/index.ts';
+export * from './xclient/x-api.ts';
 export * from './gate/index.ts';
 export * from './gate/draft.ts';
 export * from './server/router.ts';
