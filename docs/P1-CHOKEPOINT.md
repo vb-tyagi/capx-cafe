@@ -214,20 +214,20 @@ Minimal self-host = BYO-only (no capx secret, no MoR, no counter — lane A user
 
 ## 11. Build log
 
-- **2026-07-15 — S0 STARTED (partial).** ✅ Scaffolded `services/chokepoint/` (package.json, tsconfig,
-  src/index.ts + src/server.ts stubs, Dockerfile, docker-compose = worker + Postgres, README) and
-  `apps/capx-mcp/` (package.json, tsconfig, src/index.ts stub, README). Confirmed `pnpm verify` stayed
-  green (64 tests) — the new `services/`+`apps/` dirs sit outside the root verify globs, so they're inert.
-  Ports chosen: chokepoint HTTP **4477**, self-host Postgres host **5442** (confirm free before first bind).
-  - ⏳ **PENDING (blocked on a sustained Bash safety-classifier outage — can't run `pnpm install`/`node --test`/`tsc`/`git`):**
-    the verify-gated S0 core — (a) add `@capx/*: workspace:*` deps to each consumer package.json
-    (canteen: core+casserole+counter+platform-client+chef; captain/casserole/chef/counter: core;
-    platform-client/config/core: none), (b) repoint all **53** cross-package imports (`../../<pkg>/src/index.ts`
-    → `@capx/<pkg>`) across **24** files, (c) split `@capx/config` into server vs client schemas, then
-    `pnpm install` + `pnpm verify`.
-  - **RESUME STEPS when Bash is back:** (1) `rm packages/casserole/test/_resolve_probe.test.ts` (parked
-    neutralized probe); (2) do the repoint above; (3) `pnpm install` then `pnpm verify`. **Resolution risk to
-    confirm first:** whether `node --experimental-strip-types` resolves the pnpm-symlinked `@capx/core`
-    specifier — expected to work because pnpm symlinks resolve to a realpath OUTSIDE `node_modules` (dodging
-    `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`); if Node throws it, `git checkout` the repoint and fall
-    back to tsconfig `paths` for typecheck while keeping relative runtime imports. (4) Commit S0, then S1.
+- **2026-07-15 — S0 ✅ DONE.** Scaffolded `services/chokepoint/` + `apps/capx-mcp/` (commit `893ba33`).
+  Repointed all 53 cross-package imports `../../<pkg>/src/index.ts` → `@capx/<pkg>` across 24 files, each
+  consumer declaring real `@capx/*` workspace deps (commit `923c188`). **Resolution risk RESOLVED
+  empirically:** `node --experimental-strip-types` resolves `@capx/core` via the pnpm symlink whose realpath
+  is `packages/core` (outside `node_modules`), so `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING` never fires.
+  Ports: chokepoint HTTP **4477**, self-host Postgres host **5442**. `pnpm verify` green (64). Config split
+  folded into S1.
+- **2026-07-15 — S1 ✅ DONE.** Config: `secret?`/`oneOf`/`httpsOnly` on `EnvVarSpec` + `mergeSources`
+  layered resolver; replaced dead `appEnvSchema` with `serverEnvSchema` + thin `clientEnvSchema`; 9 config
+  tests (commit `7db8dc3`). Core: added `Lane`, `KillSwitch`, `SessionHandle`, `SessionValidation`,
+  `XConnectionRef`, `OutboxState`, `OutboxJob`. `GauntletContext.killSwitch` made **required** (review fix
+  #8); layer1 tightened; 3 ctx factories updated (commit `fab5d1a`). `pnpm verify` green (69).
+- **NEXT — S2** (vault + admission + minimal outbox on one Postgres): AES-256-GCM envelope encrypt/decrypt
+  behind a KMS interface (local-key driver), session issue/validate + grace, kill-list emitting
+  `resolveKillSwitch` `{global,handle}`, `/admin/revoke`, MoR ingest **stubbed**, and the minimal outbox
+  primitive (`sending/sent` + idempotency + per-handle advisory lock) pulled forward here (de-circularizes
+  S3/S6 per review fix #2). Introduces the first external dep (`pg`); crypto is Node built-in.
