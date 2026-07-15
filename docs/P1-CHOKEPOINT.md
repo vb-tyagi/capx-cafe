@@ -261,10 +261,23 @@ Minimal self-host = BYO-only (no capx secret, no MoR, no counter — lane A user
   (single local key, BYO-only, no cloud KMS / capx app / MoR — same composition root). verify **142**.
 
 ## ✅ P1 COMPLETE (2026-07-15)
-All slices S0–S7 built, verified, committed on `track2/decision-lock-and-p0`. `pnpm verify` green at **142
-tests + tsc**. The Option-B thesis is real and adversarially tested: casserole runs at the X boundary, the
-token lives only in the chokepoint vault, the kill-switch is a live pre-send check, and the co-resident MCP
-holds no secret. **Deferred to GA (not P1):** the `PostgresStore` driver + `.sql` migrations (service runs
-over `InMemoryStore`; port-swap only), real X endpoint wiring into the injected seams (needs the registered
-X apps + legal sign-off, `docs/LEGAL-BRIEF.md`), and the scheduled/laptop-off outbox POLLER (the durable
-primitive + idempotency exist; the cron drainer is P3).
+All slices S0–S7 built, verified, committed on `track2/decision-lock-and-p0`. The Option-B thesis is real and
+adversarially tested: casserole runs at the X boundary, the token lives only in the chokepoint vault, the
+kill-switch is a live pre-send check, and the co-resident MCP holds no secret.
+
+### Post-P1 (GA hardening) — done since
+- **`PostgresStore` + `migrations/001_init.sql`** — production driver for every port; verified against
+  pg-mem (offline, in `verify`) AND **real Postgres 17** (guarded integration test, `ok`). `createChokepoint`
+  is store-agnostic; InMemory ↔ Postgres is a port-swap.
+- **Real X API v2 wiring** — `httpTokenExchange` / `httpRefreshExchange` / `httpIdentity` (+ existing
+  `httpXPoster`) fill the injected seams; unit-tested with mock fetch.
+- **`serve.ts`** — the deployable binary (env → Postgres+migrations → real X → HTTP). **Booted against real
+  Postgres**: `/healthz` ok, `/session` unallowlisted → 403 through the full HTTP→router→admission→pg path.
+
+`pnpm verify` green at **153 tests + tsc** (1 skipped = the guarded real-pg test; run it with a DB up).
+
+### Still remaining before GA
+- **Scheduling / `create_loop` (P3)** — exact-time, laptop-off posting via an outbox POLLER (the durable
+  primitive + idempotency exist; the cron drainer + loop tool do not).
+- **External gates (not code):** legal sign-off (`docs/LEGAL-BRIEF.md`) before any automated posting; register
+  the two X apps (capx-app lane + BYO) to get live creds; then a live end-to-end connect+post against real X.
