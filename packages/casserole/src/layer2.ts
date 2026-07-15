@@ -38,7 +38,9 @@ export function layer2Rate(ctx: GauntletContext): LayerResult {
     const loopToday = recent.filter((p) => p.loopId === ctx.loop!.id);
     if (loopToday.length >= 1) reasons.push('loop already posted in the last 24h (max 1/day)');
   }
-  if (ctx.history.some((p) => Math.abs(now - p.postedAt) < MIN_SPACING_MS)) {
+  // Manual posts (no loop) are EXEMPT from the 5-min spacing (decided 2026-07-15): it is a loop/
+  // autonomy rule, not a manual-posting rule. Manual posts keep the daily ceiling + anti-slop + length.
+  if (ctx.loop && ctx.history.some((p) => Math.abs(now - p.postedAt) < MIN_SPACING_MS)) {
     reasons.push('another post within the minimum spacing window');
   }
 

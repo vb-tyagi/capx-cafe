@@ -150,6 +150,19 @@ test('global kill switch blocks everything', () => {
   assert.equal(res.verdict, Verdict.BLOCK);
 });
 
+test('manual post (no loop) is exempt from the 5-min spacing rule', () => {
+  const recent = { text: 'an earlier unrelated note', postedAt: NOW - 60_000 }; // 1 min ago
+  // a LOOP post 1 min after a recent post is blocked by spacing...
+  const looped = runGauntlet(makePost(), makeCtx({ history: [recent] }));
+  assert.ok(looped.finalReasons.some((r) => r.includes('spacing')));
+  // ...but a MANUAL post (no loop) is not.
+  const manual = runGauntlet(
+    makePost({ loopId: undefined }),
+    makeCtx({ loop: undefined, history: [recent] }),
+  );
+  assert.ok(!manual.finalReasons.some((r) => r.includes('spacing')));
+});
+
 test('more than 3 style profiles is blocked (cloning risk)', () => {
   const res = runGauntlet(makePost({ styleSources: ['@a', '@b', '@c', '@d'] }), makeCtx());
   assert.equal(res.verdict, Verdict.BLOCK);
