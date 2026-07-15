@@ -1,0 +1,61 @@
+#!/usr/bin/env -S node --experimental-strip-types
+// The chokepoint server binary — the deployable entry. Reads serverEnvSchema, opens the ONE Postgres
+// (runs migrations), wires the REAL X endpoints into the injected seams, and serves the HTTP surface.
+// All logic is createChokepoint/createHttpServer (tested); this is thin, un-unit-tested I/O wiring.
+import { parseEnv, serverEnvSchema } from '@capx/config';
+import { createChokepoint, PostgresStore, runMigrations, createHttpServer } from './index.ts';
+import type { TokenExchange } from './index.ts';
+import { createPgPool } from './store/pg-pool.ts';
+import { httpTokenExchange, httpIdentity } from './xclient/x-api.ts';
+import { httpXPoster, type FetchLike } from './xclient/index.ts';
+
+const realFetch: FetchLike = async (url, init) => {
+  const r = await fetch(url, { method: init.method, headers: init.headers, body: init.body });
+  return { ok: r.ok, status: r.status, json: () => r.json(), text: () => r.text() };
+};
+
+async function main(): Promise<void> {
+  const env = parseEnv(serverEnvSchema);
+  const s = (k: string): string => String(env[k]);
+  const callbackUrl = s('OAUTH_CALLBACK_URL');
+  const capxClientId = env.X_CLIENT_ID !== undefined ? String(env.X_CLIENT_ID) : undefined;
+  const capxClientSecret = env.X_CLIENT_SECRET !== undefined ? String(env.X_CLIENT_SECRET) : undefined;
+
+  const pool = createPgPool(s('VAULT_DB_URL'));
+  await runMigrations(pool);
+  const store = new PostgresStore(pool);
+
+  // capx-app (confidential) exchange injects the SERVER-held secret when the client is capx's own app;
+  // BYO (public) clients carry no secret. Lane B (capx-app) only exists when both id + secret are set.
+  const baseExchange = httpTokenExchange(realFetch, { redirectUri: callbackUrl });
+  const tokenExchange: TokenExchange =
+    capxClientId && capxClientSecret
+      ? (p) => baseExchange(p.clientId === capxClientId ? { ...p, clientSecret: capxClientSecret } : p)
+      : baseExchange;
+
+  const cp = createChokepoint(store, {
+    masterKeyBase64: s('KMS_KEY_ID'),
+    signingKey: s('SESSION_SIGNING_KEY'),
+    adminKey: s('ADMIN_API_KEY'),
+    oauth: {
+      authorizeEndpoint: 'https://twitter.com/i/oauth2/authorize',
+      redirectUri: callbackUrl,
+      scope: 'tweet.read tweet.write users.read offline.access',
+    },
+    tokenExchange,
+    identity: httpIdentity(realFetch),
+    xPost: httpXPoster(realFetch),
+    byoDefaultClientId: capxClientId,
+    now: () => Date.now(),
+  });
+
+  const port = Number(env.CHOKEPOINT_PORT);
+  createHttpServer(cp.service).listen(port, () => {
+    process.stdout.write(`capx-chokepoint listening on :${port} (deploy=${s('CAPX_DEPLOY_MODE')})\n`);
+  });
+}
+
+main().catch((e: unknown) => {
+  process.stderr.write(`capx-chokepoint fatal: ${e instanceof Error ? e.message : String(e)}\n`);
+  process.exit(1);
+});

@@ -17,6 +17,7 @@ test('self-host env validates with a local key and NO hosted-only secrets', () =
     VAULT_DB_URL: 'postgres://localhost:5442/chokepoint',
     KMS_KEY_ID: LocalKeyKms.generateMasterKey(),
     SESSION_SIGNING_KEY: 'local-signing-key',
+    ADMIN_API_KEY: 'local-admin-key',
     OAUTH_CALLBACK_URL: 'https://selfhost.example/oauth/callback',
     // no X_CLIENT_ID / X_CLIENT_SECRET / MOR_WEBHOOK_SECRET — BYO-only self-host
   });

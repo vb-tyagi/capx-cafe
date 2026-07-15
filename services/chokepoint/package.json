@@ -7,10 +7,14 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "bin": {
+    "capx-chokepoint": "./src/serve.ts"
+  },
   "scripts": {
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "dev": "node --experimental-strip-types --watch src/server.ts"
+    "start": "node --experimental-strip-types src/serve.ts",
+    "dev": "node --experimental-strip-types --watch src/serve.ts"
   },
   "dependencies": {
     "@capx/canteen": "workspace:*",

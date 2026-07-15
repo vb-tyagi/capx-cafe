@@ -15,6 +15,7 @@ const SERVER_FULL: Record<string, string> = {
   VAULT_DB_URL: 'postgres://chokepoint:pw@localhost:5442/chokepoint',
   KMS_KEY_ID: 'kms-1',
   SESSION_SIGNING_KEY: 'sign-key',
+  ADMIN_API_KEY: 'admin-key',
   OAUTH_CALLBACK_URL: 'https://capx.example/oauth/callback',
 };
 

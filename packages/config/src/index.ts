@@ -13,6 +13,7 @@ export const serverEnvSchema: EnvSchema = {
   VAULT_DB_URL: { type: 'url', required: true, description: 'the ONE Postgres: token vault + hashed allowlist + kill-list + audit + outbox + recent-post cache' },
   KMS_KEY_ID: { type: 'string', required: true, secret: true, description: 'envelope-encryption key for the X-token vault (cloud KMS hosted / local key self-host)' },
   SESSION_SIGNING_KEY: { type: 'string', required: true, secret: true, description: 'signs short-TTL session handles' },
+  ADMIN_API_KEY: { type: 'string', required: true, secret: true, description: 'x-admin-key for POST /admin/revoke' },
   OAUTH_CALLBACK_URL: { type: 'url', required: true, httpsOnly: true, description: 'hosted HTTPS callback (same redirect_uri for both lanes)' },
   X_CLIENT_ID: { type: 'string', required: false, description: 'capx-app (lane B) OAuth2 client id; absent for BYO-only / self-host' },
   X_CLIENT_SECRET: { type: 'string', required: false, secret: true, description: 'capx-app (lane B) confidential secret; HOSTED-ONLY, never in the open-source image' },
