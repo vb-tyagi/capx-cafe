@@ -81,12 +81,14 @@ TRANSFORM: **canteen** (Loops: guardrail→publish; metering step only on the ca
 - `PRODUCT-MAP.md` — named products + boundaries (updated to the rotation).
 - `CAPX-CAFE.md`, `GO-LIVE.md` — the fork's integration + run guide (paths updated to `../capx-conductor`; historical once §5.5's cold-archive executes).
 - `LEGAL-BRIEF.md` — counsel brief for the two-lane posting compliance sign-off (§5.4; the ship-gate).
+- `P1-CHOKEPOINT.md` — the P1 architecture + build spec (designed + adversarially reviewed 2026-07-15; supersedes PLUGIN-ARCHITECTURE §7's P1 sketch).
 - `BUILD-PLAN.md` — the original monorepo mega-sprint plan (capx-branded, historical; predates the plugin pivot).
 - *(The product PRD moved to `../culture` — it's the culture product's spec.)*
 
 ## 10. Next steps — the REVISED phase plan (under the locked §5 decisions; supersedes PLUGIN-ARCHITECTURE §7)
 - **P0 — Cold-archive the fork + AGPL excision.** From `../capx-conductor`: dev servers are already down; `docker compose down` (keep volumes for now), `pg_dump` the dev schema to a shelf file. In this repo: remove the boundary-guard from `verify`, mark fork docs historical. In parallel from day one: register the capx-owned X app (§5.2) + send `docs/LEGAL-BRIEF.md` to counsel (§5.4).
 - **P1 — Chokepoint core + connect + first post.** Vault, hosted-callback PKCE OAuth (both lanes), allowlist/license check, kill-list, **casserole enforced at the publish boundary**; MCP `connect_x` / `whoami` / `post_now`. The BYO wizard (hosted guided page + preflight validation) starts landing here (§5.6). *Note the ordering consequence of §5.7: the chokepoint must exist before `connect_x` — it moved from P3 to P1.*
+  - **✅ DESIGNED + adversarially reviewed (2026-07-15) → canonical build spec: [`docs/P1-CHOKEPOINT.md`](P1-CHOKEPOINT.md).** Two deployables (`apps/capx-mcp` credential-free + `services/chokepoint`) + one Postgres (no Redis in P1) + repointed `@capx/*`. Review returned `holds:false` (2 blockers + 6 majors + 5 minors) → all fixes folded into the spec (X-has-no-idempotency double-post reconciliation; build-order de-circularized; OAuth account-binding; crash-consistent refresh→needs-reauth; per-handle advisory lock; `killSwitch` made required; honest self-host + guardrail-is-quality-not-intent framing). Build order = S0…S7. **7 open decisions in §10 (1 wants a founder call: manual-post spacing).**
 - **P2 — Cross-harness packaging + creator lane.** One stdio MCP server (`npx @capx/mcp`), Claude/Cursor/Codex config snippets, print-URL fallback for headless; capx-app lane live with slim `counter` metering + per-lane caps; wizard completed.
 - **P3 — Scheduling + loops.** Job queue, `create_loop` (guardrail → publish), exact-time laptop-off, `max_lateness` (never auto-post stale), delete-after-send.
 - **P4 — Monetization.** MoR bake-off (Lemon Squeezy vs Polar) + webhooks → allowlist; pricing (creator lane covers metered X API cost; BYO lane costs capx nothing).
