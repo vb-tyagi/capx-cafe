@@ -21,20 +21,30 @@ export * from './gate/index.ts';
 export * from './gate/draft.ts';
 export * from './server/router.ts';
 export * from './server/http.ts';
+export * from './store/postgres.ts'; // pg-free driver (SqlPool only); real pool factory is ./store/pg-pool.ts
 
 import { InMemoryStore } from './store/memory.ts';
 import { LocalKeyKms } from './vault/kms.ts';
 import { Vault } from './vault/index.ts';
+import type { VaultStore } from './vault/index.ts';
 import { HmacSessionSigner } from './admission/session.ts';
 import { Admission } from './admission/index.ts';
+import type { AdmissionStore } from './admission/index.ts';
 import { OAuthFlow, type OAuthConfig, type TokenExchange, type IdentityFetch } from './oauth/index.ts';
+import type { PendingStore } from './oauth/index.ts';
 import { Refresher } from './oauth/refresh.ts';
 import { XAdapter, type XPoster } from './xclient/index.ts';
 import { PublishGate } from './gate/index.ts';
 import { Metering } from './metering/index.ts';
+import type { MeteringStore } from './metering/index.ts';
 import { RecentPosts } from './recent/index.ts';
+import type { RecentPostStore } from './recent/index.ts';
 import { Outbox } from './outbox/index.ts';
+import type { OutboxStore } from './outbox/index.ts';
 import { createService } from './server/router.ts';
+
+/** A store implementing every chokepoint port (InMemoryStore and PostgresStore both satisfy it). */
+export type ChokepointStore = VaultStore & AdmissionStore & OutboxStore & PendingStore & MeteringStore & RecentPostStore;
 
 export interface ChokepointConfig {
   masterKeyBase64: string; // KMS_KEY_ID
@@ -52,9 +62,12 @@ export interface ChokepointConfig {
   now?: () => number;
 }
 
-/** Composition root: build the full service over the in-memory store. Deterministic when `now` is set. */
-export function createInMemoryChokepoint(cfg: ChokepointConfig) {
-  const store = new InMemoryStore();
+/**
+ * Composition root — build the full service over ANY store (the InMemory or Postgres driver, or any
+ * other ChokepointStore). Everything above the port is identical; the store is the only swap. Real X
+ * integration stays injected. Deterministic when `now` is set.
+ */
+export function createChokepoint(store: ChokepointStore, cfg: ChokepointConfig) {
   const kms = new LocalKeyKms(cfg.masterKeyBase64);
   const now = cfg.now ?? (() => Date.now());
   const vault = new Vault(store, kms, now);
@@ -82,4 +95,10 @@ export function createInMemoryChokepoint(cfg: ChokepointConfig) {
     byoDefaultClientId: cfg.byoDefaultClientId,
   });
   return { service, store, vault, admission, oauth, gate, refresher };
+}
+
+/** Build the service over the in-memory store (dev / tests / self-host evaluation — no DB). */
+export function createInMemoryChokepoint(cfg: ChokepointConfig) {
+  const store = new InMemoryStore();
+  return { ...createChokepoint(store, cfg), store };
 }
