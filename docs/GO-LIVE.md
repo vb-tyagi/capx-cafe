@@ -1,3 +1,5 @@
+> **🗄️ HISTORICAL (P0, 2026-07-14):** the Postiz fork is **cold-archived** (STATE §5.1/§5.5 — Option B chokepoint replaces it). This go-live path is **not the current direction**; kept for reference and in case the cold-archive is ever reversed. The live plan is **STATE §10**.
+>
 > **⚠️ Naming update (2026-07-14):** this guide predates the repo rotation. Here **"capx-cafe" = the Postiz fork**, now the sibling repo **`../capx-conductor`** (run all fork commands from there). The closed monorepo (formerly "capx-culture") is now **this** repo, `capx-cafe`. Authoritative current fork run + handling: **`docs/STATE.md` §8**.
 
 # capx-culture — Go-Live Guide (the steps that need YOU)

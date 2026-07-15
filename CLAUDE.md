@@ -22,5 +22,7 @@ This repo is the monorepo (formerly `capx-culture`, renamed). **Sibling repos:**
 - Unchanged packages: `casserole` (guardrail), `canteen` (loops), `counter` (credits), `chef` (content), `config`, `core`, `platform-client`.
 
 ## Dev
-Node ≥ 22.6. `pnpm run verify` = AGPL boundary-guard + 64 unit tests + guard self-tests + typecheck (all green).
+Node ≥ 22.6. `pnpm run verify` = 64 unit tests + typecheck (all green). The AGPL boundary-guard was
+unwired from `verify` at P0 (fork cold-archived — STATE §5.5), but `tools/boundary-guard.mjs` and the
+`pnpm guard` / `guard:test` scripts stay on disk, re-armable in one line if the fork ever un-archives.
 The fork runs from `../capx-conductor` (see `docs/GO-LIVE.md`); its Docker Compose project is pinned to `capx-cafe`.

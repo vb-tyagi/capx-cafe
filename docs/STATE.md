@@ -27,7 +27,7 @@ scheduling / management happens **inside their agent session**, driven by the ha
 | casserole, canteen, counter, chef, config, core, platform-client | *(unchanged)* | closed engines |
 
 ## 3. Current state (verified)
-- **Monorepo:** 8 packages; `pnpm run verify` green = **boundary-guard (clean) + 64 unit tests + 4 guard self-tests + typecheck**.
+- **Monorepo:** 8 packages; `pnpm run verify` green = **64 unit tests + typecheck**. *(P0, 2026-07-14: the AGPL boundary-guard + its 4 self-tests were unwired from `verify` — fork cold-archived per §5.5. `tools/boundary-guard.mjs` + `pnpm guard`/`guard:test` remain on disk, re-armable.)*
   - casserole (six-layer anti-slop guard), canteen (Loops orchestrator + the publish chokepoint), counter (credit ledger), captain (identity/whitelist/roles/tenancy/kill-switch), chef (AI-gen abstraction + mock), platform-client (`FakePlatformClient` + `HttpPlatformClient`), config, core.
   - Also present (from the SaaS era): `prisma/` (closed multi-tenant schema + RLS), `tools/boundary-guard.mjs`, `.github/ci`, `docker-compose.yml` (Postgres/Redis for the closed side — distinct from the fork's stack).
 - **Fork (`../capx-conductor`):** complete (6 apps, libraries, node_modules, .env), Docker containers were up (project pinned `capx-cafe`), **its dev servers were killed** during the repo reshuffle — restart per `docs/GO-LIVE.md`.
@@ -63,6 +63,12 @@ KEEP: **casserole** (the moat; gets its live kill-switch input and runs at the c
 TRANSFORM: **canteen** (Loops: guardrail→publish; metering step only on the capx-app lane), **platform-client** (→ chokepoint client), **captain** (shrink to stateless whitelist/allowlist + handle-cap, enforced chokepoint-side), **chef** (demote — the harness model generates; mock stays for tests), **counter** (slim revival NOW — per-user metering + cost caps for the capx-app lane, §5.2). KILL: **capx-conductor/Postiz fork** (cold-archive per §5.5 — dissolves the whole AGPL boundary problem). *None of this is executed yet — all §5 decisions are locked (2026-07-14); the revised phase plan is §10.*
 
 ## 8. capx-conductor (the fork) — careful handling & next steps
+- **🗄️ P0 cold-archive status (2026-07-14):** decided KILL→cold-archive (§5.5). Done: stray fork frontend dev server (`next-server`, was orphaned on `:4200` since the reshuffle) **stopped**; ports 4200/3006/3002 all clear; Docker daemon is **down** so the stack isn't running; monorepo AGPL apparatus **unwired** (boundary-guard out of `verify`, fork docs banner-marked historical). **Deferred (Docker daemon down + not yet needed — volumes are safe on disk and §5.5 gates deletion to "after the chokepoint posts for real"):** the `pg_dump` shelf backup. Run it next time Docker is up, and **mandatorily** before ever deleting the volume:
+  ```sh
+  # from ../capx-conductor, with the stack up (pnpm run dev:docker):
+  docker exec postiz-postgres pg_dump -U postiz-local postiz-db-local \
+    > ../capx-cafe/docs/_archive/capx-conductor-devdb-2026-07-14.sql   # volume: capx-cafe_postgres-volume
+  ```
 - **Location:** `../capx-conductor` (renamed from the old `capx-cafe` folder). Own git repo, `upstream` = Postiz.
 - **Docker:** the Compose project name is **pinned to `capx-cafe`** (`name: capx-cafe` in `docker-compose.dev.yaml`), so the data volumes (`capx-cafe_postgres-volume`, `capx-cafe_redisinsight`, holding the dev schema / 48 tables) **stay associated after the folder rename** — no data loss. Always run compose from `../capx-conductor`.
 - **Backend port moved to `:3006`** (your `parvani`/women-gym-app owns `:3000`); frontend `:4200`, orchestrator `:3002`. DB creds are `postiz-local` / `postiz-local-pwd` (the `.env.example` shipped wrong ones — already fixed in `.env`).
