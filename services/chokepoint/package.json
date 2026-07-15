@@ -6,7 +6,7 @@
   "description": "The thin, stateless, self-hostable Option-B chokepoint: token vault + hosted-callback PKCE OAuth + admission (allowlist/session/kill-list) + x-adapter + the casserole-enforced publish gate. See docs/P1-CHOKEPOINT.md.",
   "exports": { ".": "./src/index.ts" },
   "scripts": {
-    "test": "node --experimental-strip-types --test src/**/*.test.ts",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "node --experimental-strip-types --watch src/server.ts"
   },
