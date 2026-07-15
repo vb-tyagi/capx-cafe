@@ -246,8 +246,25 @@ Minimal self-host = BYO-only (no capx secret, no MoR, no counter — lane A user
   + `createInMemoryChokepoint` composition root (commit `b24a574`). `pnpm verify` green (122).
   *(Still deferred: `PostgresStore` driver + `.sql` migrations — the whole service boots over
   `InMemoryStore`; Postgres swaps in at the port. Real X endpoints wire into the injected seams at S5/GA.)*
-- **NEXT — S5** (MCP server): `ChokepointClient` (typed HTTP client over injected fetch) + host-agnostic
-  config (`mergeSources`) + the 3 tool handlers (`connect_x`/`whoami`/`post_now`) — all offline-testable —
-  then the `@modelcontextprotocol/sdk` stdio binding + cross-harness config snippets.
-- **REMAINING:** S6 (lane B + counter seam + prompt-injection red-team) · S7 (durable outbox poller +
-  recent-post cache into `ctx.history` + self-host single-flag proof).
+- **2026-07-15 — S5 ✅ DONE.** S5a: `ChokepointClient` (typed HTTP over injected fetch) + `CapxMcp`
+  (connect_x two-phase / whoami / post_now; lazy reused bearer; stable idempotency key) + host-agnostic
+  config; true end-to-end test `CapxMcp → client → the real chokepoint` (commit `6060add`). S5b: stdio MCP
+  server on `@modelcontextprotocol/sdk` 1.29 + zod, `connect_x`/`whoami`/`post_now` registered; boots +
+  fails cleanly without `CAPX_EMAIL`; README cross-harness snippets (commit `6b0840b`). verify 127.
+- **2026-07-15 — S6 ✅ DONE.** S6a lane-B metering seam (capx-app capped, BYO uncapped; only actual sends
+  metered) (commit `b69f13d`). S6b red-team (6 scenarios: injected scam blocked, MCP-bypass still guarded,
+  stolen bearer instantly revocable, unallowlisted denied, no token in any response, global kill freezes
+  all) (commit `721bcdf`). verify 136.
+- **2026-07-15 — S7 ✅ DONE.** S7a recent-post cache → `ctx.history` (dedup + ceiling enforce at the gate;
+  the reason the per-handle lock exists) (commit `0b52356`). S7b durable post_now via the Outbox
+  (idempotent replay never double-sends; failed sends retry) (commit `6e0729d`). S7c self-host proof
+  (single local key, BYO-only, no cloud KMS / capx app / MoR — same composition root). verify **142**.
+
+## ✅ P1 COMPLETE (2026-07-15)
+All slices S0–S7 built, verified, committed on `track2/decision-lock-and-p0`. `pnpm verify` green at **142
+tests + tsc**. The Option-B thesis is real and adversarially tested: casserole runs at the X boundary, the
+token lives only in the chokepoint vault, the kill-switch is a live pre-send check, and the co-resident MCP
+holds no secret. **Deferred to GA (not P1):** the `PostgresStore` driver + `.sql` migrations (service runs
+over `InMemoryStore`; port-swap only), real X endpoint wiring into the injected seams (needs the registered
+X apps + legal sign-off, `docs/LEGAL-BRIEF.md`), and the scheduled/laptop-off outbox POLLER (the durable
+primitive + idempotency exist; the cron drainer is P3).
