@@ -23,6 +23,7 @@ const loop = (): LoopConfig => ({
 });
 const ctx = (): GauntletContext => ({
   tier: Tier.TEAM, handle: handle(), loop: loop(), history: [], now: NOW, accountDailyCeiling: 10,
+  killSwitch: { global: false, handle: false },
 });
 const genReq = (o: Partial<GenerationRequest> = {}): GenerationRequest => ({
   type: TweetType.TEXT,

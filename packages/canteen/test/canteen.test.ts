@@ -41,7 +41,7 @@ function makeLoop(o: Partial<LoopConfig> = {}): LoopConfig {
   };
 }
 function makeCtx(o: Partial<GauntletContext> = {}): GauntletContext {
-  return { tier: Tier.TEAM, handle: makeHandle(), loop: makeLoop(), history: [], now: NOW, accountDailyCeiling: 10, ...o };
+  return { tier: Tier.TEAM, handle: makeHandle(), loop: makeLoop(), history: [], now: NOW, accountDailyCeiling: 10, killSwitch: { global: false, handle: false }, ...o };
 }
 function makePost(o: Partial<DraftPost> = {}): DraftPost {
   return {
