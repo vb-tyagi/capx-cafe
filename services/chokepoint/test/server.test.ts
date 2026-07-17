@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInMemoryChokepoint, LocalKeyKms } from '../src/index.ts';
 import type { ChokepointService, ServiceRequest } from '../src/index.ts';
+import { emailHash } from '@capx/core';
 
 const NOW = 1_700_000_000_000;
 const CLEAN =
@@ -117,6 +118,31 @@ test('admin/revoke global kills posting; wrong admin key is 403', async () => {
   const r = await call(service, 'POST', '/post_now', { headers: auth(bearer), body: { text: CLEAN, idempotencyKey: 'k' } });
   assert.equal(obj(r.body).outcome, 'rejected');
   assert.match(String((obj(r.body).finalReasons as string[]).join(' ')), /global kill/);
+});
+
+test('admin/allow allowlists an email so /session works (the Phase-3 onboarding flow)', async () => {
+  const { service } = base();
+  const eh = emailHash('New.User@Capx.ai');
+
+  // wrong admin key is refused
+  assert.equal((await call(service, 'POST', '/admin/allow', { headers: { 'x-admin-key': 'wrong' }, body: { email: 'New.User@Capx.ai' } })).status, 403);
+  // not allowlisted yet -> no session
+  assert.equal((await call(service, 'POST', '/session', { body: { emailHash: eh } })).status, 403);
+
+  const ok = await call(service, 'POST', '/admin/allow', { headers: { 'x-admin-key': 'admin-secret' }, body: { email: 'New.User@Capx.ai' } });
+  assert.equal(ok.status, 200);
+  assert.equal(obj(ok.body).emailHash, eh, 'server hashes the email with the same shared rule as the MCP');
+
+  // now the user can get a session
+  assert.equal((await call(service, 'POST', '/session', { body: { emailHash: eh } })).status, 200);
+});
+
+test('admin/allow accepts a pre-computed emailHash and needs one of email|emailHash', async () => {
+  const { service } = base();
+  assert.equal((await call(service, 'POST', '/admin/allow', { headers: { 'x-admin-key': 'admin-secret' }, body: {} })).status, 400);
+  const ok = await call(service, 'POST', '/admin/allow', { headers: { 'x-admin-key': 'admin-secret' }, body: { emailHash: 'h_precomputed' } });
+  assert.equal(ok.status, 200);
+  assert.equal((await call(service, 'POST', '/session', { body: { emailHash: 'h_precomputed' } })).status, 200);
 });
 
 test('unknown route is 404', async () => {

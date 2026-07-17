@@ -1,6 +1,17 @@
 // @capx/core — shared domain types & constants.
 // NOTE: TS `enum`, namespaces, parameter-properties and decorators are intentionally
 // avoided so every file runs directly under `node --experimental-strip-types`.
+import { createHash } from 'node:crypto';
+
+/**
+ * The ONE identity-key rule, shared by the MCP client and the chokepoint allowlist. Both sides MUST
+ * derive the same hash from the same email or a user's allowlist entry silently won't match their
+ * session. Lives here (not in either side) so the two can never drift. The raw email is never stored
+ * or sent — only this hash.
+ */
+export function emailHash(email: string): string {
+  return `h_${createHash('sha256').update(email.trim().toLowerCase()).digest('hex').slice(0, 32)}`;
+}
 
 // ---- Enumerated constants (const objects + union types) ----
 export const Tier = { SOLO: 'SOLO', TEAM: 'TEAM', ORG: 'ORG' } as const;

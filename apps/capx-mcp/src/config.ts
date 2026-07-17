@@ -1,8 +1,10 @@
 // Host-agnostic client config: resolve via the layered order env -> ~/.capx/config.json -> chokepoint
 // session (mergeSources). SECRET-FREE by construction (clientEnvSchema). The email->hash is the identity
 // key shared with the chokepoint allowlist; the MCP never sends the raw email anywhere.
-import { createHash } from 'node:crypto';
 import { mergeSources, parseEnv, clientEnvSchema } from '@capx/config';
+
+// The identity-key rule lives in @capx/core so the client and the chokepoint allowlist can never drift.
+export { emailHash } from '@capx/core';
 
 export interface ClientConfig {
   chokepointUrl: string;
@@ -21,7 +23,3 @@ export function resolveClientConfig(
   };
 }
 
-/** Deterministic identity key from an email. MUST match the chokepoint's allowlist hashing. */
-export function emailHash(email: string): string {
-  return `h_${createHash('sha256').update(email.trim().toLowerCase()).digest('hex').slice(0, 32)}`;
-}

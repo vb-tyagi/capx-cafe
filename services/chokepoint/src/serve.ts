@@ -49,9 +49,12 @@ async function main(): Promise<void> {
     now: () => Date.now(),
   });
 
-  const port = Number(env.CHOKEPOINT_PORT);
+  // Most PaaS hosts (Railway/Render/Fly/Heroku) inject the port to bind as $PORT and route to it;
+  // honour that first so a deploy needs no port config, and fall back to CHOKEPOINT_PORT locally.
+  const port = Number(process.env.PORT ?? env.CHOKEPOINT_PORT);
   createHttpServer(cp.service).listen(port, () => {
-    process.stdout.write(`capx-chokepoint listening on :${port} (deploy=${s('CAPX_DEPLOY_MODE')})\n`);
+    const src = process.env.PORT ? 'PORT' : 'CHOKEPOINT_PORT';
+    process.stdout.write(`capx-chokepoint listening on :${port} (via ${src}, deploy=${s('CAPX_DEPLOY_MODE')})\n`);
   });
 }
 
