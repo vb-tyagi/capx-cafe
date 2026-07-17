@@ -1,0 +1,14 @@
+{
+  "name": "capx-cafe",
+  "owner": {
+    "name": "capx",
+    "url": "https://capx.ai"
+  },
+  "plugins": [
+    {
+      "name": "capx-cafe",
+      "source": "./plugins/capx-cafe",
+      "description": "Post and schedule to X from inside your agent. Every post passes a guardrail at the X boundary; your token never touches your machine."
+    }
+  ]
+}

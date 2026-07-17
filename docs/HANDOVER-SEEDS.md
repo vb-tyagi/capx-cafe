@@ -51,7 +51,8 @@ These are ranked by "how much time it costs when you hit it cold." Each is: **sy
 
 ## 📦 Deferred work (phase status as of 2026-07-17)
 
-**P0 ✅ · P1 ✅ · P2 ✅ (bar npm publish) · P3 ✅ · P4 ❌ · P5 ❌**
+**P0 ✅ · P1 ✅ · P2 ✅ · P3 ✅ · P4 ⏸ (deferred) · P5 ✅**  — the only thing between "built" and "anyone
+can install it" is one `npm publish` of the `capx-cafe` bundle (needs your npm login + a license choice).
 
 ### P4 — Monetization (⏸ EXPLICITLY DEFERRED 2026-07-18, at founder's call)
 Turns "founder curls `/admin/allow` per person" into "pay → in, cancel → out."
@@ -64,11 +65,20 @@ Turns "founder curls `/admin/allow` per person" into "pay → in, cancel → out
 - **Interim reality:** billing = the founder running `POST /admin/allow` by hand. Fine for a private alpha;
   a hard blocker for self-serve signups.
 
-### P5 — Claude Code plugin sugar (NOT started)
-Pure distribution polish, no new capability: `plugin.json` (marketplace), slash commands (`/capx-post`), `userConfig` (Claude Code prompts for the X Client ID instead of hand-editing `.mcp.json`).
+### P5 — Claude Code plugin sugar (✅ DONE 2026-07-18)
+Plugin built at `plugins/capx-cafe/` + marketplace at `.claude-plugin/marketplace.json`:
+- `plugin.json` manifest; `.mcp.json` launches the server via `npx -y capx-cafe`.
+- 4 slash commands: `/capx-cafe:connect | post | loop | status` (`commands/*.md`).
+- **No install-time secret prompt exists in Claude Code** (confirmed against current docs). So `CAPX_EMAIL`
+  + `X_CLIENT_ID` come from `~/.capx/config.json` (the server already reads that file layer); documented in
+  the plugin README. `CAPX_CHOKEPOINT_URL` is baked (overridable in the file for self-hosters).
+- **Gated on npm publish:** the plugin's `.mcp.json` uses `npx -y capx-cafe`, so it only works once the
+  bundle is published (foot-gun #1 recipe). Until then, the founder's local repo `.mcp.json` is the path.
+- Install: `/plugin marketplace add https://github.com/vb-tyagi/capx-cafe` → `/plugin install capx-cafe@capx-cafe`.
 
-### npm publish of `@capx-cafe/mcp` — blocked by foot-gun #1 above
-Not "just needs your npm account." Needs the bundling job first.
+### npm publish of `capx-cafe` — unblocked (bundle done), pending your npm login + license
+`pnpm --filter @capx-cafe/mcp build` → `cd apps/capx-mcp/dist && npm publish`. Pick a license first
+(currently `UNLICENSED` placeholder). This is the ONE step that makes both the plugin and `npx capx-cafe` live.
 
 ---
 
