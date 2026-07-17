@@ -1,0 +1,15 @@
+# Keep the build context small AND correct.
+# Host node_modules must NEVER enter the image: pnpm's symlinks point at host paths, so copying them
+# in produces a broken install that fails at runtime in confusing ways.
+node_modules
+**/node_modules
+
+.git
+.github
+*.log
+.DS_Store
+
+# Never bake real secrets into an image. .env.example (placeholders only) is allowed.
+.env
+.env.*
+!.env.example
