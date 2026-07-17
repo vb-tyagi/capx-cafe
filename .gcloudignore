@@ -1,0 +1,11 @@
+# What NOT to upload to Cloud Build. Mirrors .dockerignore.
+# Critical: never upload .gcp/ (the service-account key) or any real .env.
+node_modules
+**/node_modules
+.git
+.gcp
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
