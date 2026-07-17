@@ -10,23 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Do NOT pass `version:` here — the pnpm version comes from package.json "packageManager".
+      # Specifying it in both places makes action-setup fail with "Multiple versions of pnpm specified".
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.22.3'
+          node-version: '22' # >= 22.6 required for --experimental-strip-types
           cache: pnpm
+
       - run: pnpm install --frozen-lockfile
 
-      - name: AGPL boundary guard (open/closed)
-        run: node tools/boundary-guard.mjs
-
-      - name: Unit tests (native TS, no build step)
-        run: node --experimental-strip-types --test packages/*/test/*.test.ts
-
-      - name: Boundary-guard self-tests
-        run: node --test tools/boundary-guard.test.mjs
-
-      - name: Typecheck
-        run: pnpm exec tsc -p tsconfig.json --noEmit
+      # ONE gate, identical to what runs locally: node --test across packages + services + apps,
+      # then tsc --noEmit. (The AGPL boundary-guard was retired at P0 when the fork was cold-archived —
+      # tools/boundary-guard.mjs stays on disk, re-armable, but no longer gates CI. See STATE.md §5.5.)
+      # The Postgres integration test self-skips without CHOKEPOINT_TEST_DB_URL, so CI needs no database.
+      - run: pnpm run verify
