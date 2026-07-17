@@ -21,7 +21,7 @@ test('vault: put/get, jsonb ciphertext round-trip, rotate, needs-reauth', async 
   const kms = new LocalKeyKms(LocalKeyKms.generateMasterKey());
   const access = await sealToken('atok', kms);
   const refresh = await sealToken('rtok', kms);
-  await store.put({ vaultRef: 'v1', emailHash: 'h', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD', access, refresh, refreshRotatedAt: 100, needsReauth: false });
+  await store.put({ vaultRef: 'v1', emailHash: 'h', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD', verified: true, createdAtMs: 1_600_000_000_000, access, refresh, refreshRotatedAt: 100, needsReauth: false });
 
   const row = await store.getByRef('v1');
   assert.ok(row);
@@ -73,7 +73,7 @@ test('oauth pending: put -> resolve upsert -> get -> delete', async () => {
   assert.equal((await store.getPending('p1'))?.verifier, 'ver');
   assert.equal((await store.getPending('p1'))?.resolved, null);
 
-  await store.putPending({ pendingId: 'p1', verifier: 'ver', emailHash: 'h', lane: 'BYO', clientId: 'c', sessionNonce: 'n', createdAt: 1, expiresAt: 2, resolved: { xUserId: 'x1', username: 'acme', accessToken: 'a', refreshToken: 'r' } });
+  await store.putPending({ pendingId: 'p1', verifier: 'ver', emailHash: 'h', lane: 'BYO', clientId: 'c', sessionNonce: 'n', createdAt: 1, expiresAt: 2, resolved: { xUserId: 'x1', username: 'acme', verified: true, createdAtMs: 1_600_000_000_000, accessToken: 'a', refreshToken: 'r' } });
   assert.equal((await store.getPending('p1'))?.resolved?.username, 'acme');
 
   await store.deletePending('p1');
@@ -109,7 +109,7 @@ test('real Postgres round-trip (guarded by CHOKEPOINT_TEST_DB_URL)', { skip: !pr
   const kms = new LocalKeyKms(LocalKeyKms.generateMasterKey());
   const access = await sealToken('atok', kms);
   const refresh = await sealToken('rtok', kms);
-  await store.put({ vaultRef: 'it-v1', emailHash: 'it-h', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD', access, refresh, refreshRotatedAt: 1, needsReauth: false });
+  await store.put({ vaultRef: 'it-v1', emailHash: 'it-h', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD', verified: true, createdAtMs: 1_600_000_000_000, access, refresh, refreshRotatedAt: 1, needsReauth: false });
   assert.equal((await store.getByRef('it-v1'))?.access.ciphertext, access.ciphertext);
   await store.addAllowlisted('it-h');
   assert.equal(await store.isAllowlisted('it-h'), true);

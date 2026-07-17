@@ -1,12 +1,12 @@
-// L1 — Eligibility. Kill switches + Loops gating (TEAM+, verified, >=30d, good standing).
+// L1 — Eligibility. Kill switches + Loops gating (verified, >=30d, good standing).
+//
+// The old "TEAM+ tier" gate was REMOVED (decided 2026-07-17): tiers were the paid-SaaS billing model,
+// which the Option-B pivot killed — under BYO every allowlisted user is equivalent, so gating Loops on
+// `tier` gated on a field that no longer means anything. The ACCOUNT-HEALTH gates stay: they are real
+// anti-abuse and map to X's own Automation Rules (relevant to the legal sign-off), and they are what
+// stops a fresh throwaway account from running autonomous posting.
 import type { LayerResult, GauntletContext } from './types.ts';
-import {
-  GuardrailLayer,
-  Verdict,
-  TIER_LIMITS,
-  AccountStanding,
-  LOOP_MIN_ACCOUNT_AGE_DAYS,
-} from '@capx/core';
+import { GuardrailLayer, Verdict, AccountStanding, LOOP_MIN_ACCOUNT_AGE_DAYS } from '@capx/core';
 
 export function layer1Eligibility(ctx: GauntletContext): LayerResult {
   const layer = GuardrailLayer.L1_ELIGIBILITY;
@@ -15,7 +15,6 @@ export function layer1Eligibility(ctx: GauntletContext): LayerResult {
 
   const reasons: string[] = [];
   if (ctx.loop) {
-    if (!TIER_LIMITS[ctx.tier].loopsEnabled) reasons.push(`tier ${ctx.tier} cannot use Loops (TEAM+ only)`);
     if (!ctx.handle.verified) reasons.push('handle not verified — blue tick required for Loops');
     if (ctx.handle.ageDays < LOOP_MIN_ACCOUNT_AGE_DAYS) {
       reasons.push(`handle too new (${ctx.handle.ageDays}d < ${LOOP_MIN_ACCOUNT_AGE_DAYS}d)`);

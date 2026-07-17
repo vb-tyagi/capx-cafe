@@ -72,10 +72,12 @@ test('unverified handle cannot run Loops (L1 block)', () => {
   assert.ok(res.finalReasons.some((r) => r.includes('blue tick')));
 });
 
-test('SOLO tier cannot run Loops', () => {
+test('tier does NOT gate Loops any more (the TEAM+ gate was removed with the paid tiers)', () => {
+  // Decided 2026-07-17: `tier` was the paid-SaaS billing model the Option-B pivot killed, so gating
+  // Loops on it gated on a field that no longer means anything. Account-health gates below still apply.
   const res = runGauntlet(makePost(), makeCtx({ tier: Tier.SOLO }));
-  assert.equal(res.verdict, Verdict.BLOCK);
-  assert.ok(res.finalReasons.some((r) => r.includes('TEAM+')));
+  assert.equal(res.verdict, Verdict.PASS);
+  assert.ok(!res.finalReasons.some((r) => r.includes('TEAM+')));
 });
 
 test('account younger than 30 days cannot run Loops', () => {

@@ -17,6 +17,13 @@ create table if not exists vault (
 );
 create index if not exists vault_email_hash_idx on vault (email_hash);
 
+-- Account facts from X, captured at connect. casserole L1 gates Loops on verified + account age, so
+-- these must be real, not placeholders. Added via ALTER so an already-deployed vault migrates in place
+-- (runMigrations is idempotent and re-runs on every boot). created_at_ms 0 = unknown, which fails the
+-- age gate closed — deliberate.
+alter table vault add column if not exists verified      boolean not null default false;
+alter table vault add column if not exists created_at_ms bigint  not null default 0;
+
 -- License allowlist — hashed emails only.
 create table if not exists allowlist (
   email_hash text primary key

@@ -172,6 +172,10 @@ export interface XConnectionRef {
   username: string;
   lane: Lane;
   standing: AccountStanding;
+  /** blue tick, from X at connect. casserole L1 gates Loops on it. */
+  verified: boolean;
+  /** epoch ms the X ACCOUNT was created. L1 gates Loops on age >= LOOP_MIN_ACCOUNT_AGE_DAYS. 0 = unknown. */
+  createdAtMs: number;
 }
 
 export const OutboxState = {

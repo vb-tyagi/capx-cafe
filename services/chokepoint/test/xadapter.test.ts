@@ -18,7 +18,7 @@ async function vaultWithConn() {
   const kms = new LocalKeyKms(LocalKeyKms.generateMasterKey());
   const vault = new Vault(store, kms, () => NOW);
   const ref = await vault.put(
-    { emailHash: 'h_abc', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD' },
+    { emailHash: 'h_abc', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD', verified: true, createdAtMs: 1_600_000_000_000 },
     { access: 'the-real-access-token', refresh: 'the-real-refresh-token' },
   );
   return { store, vault, ref };

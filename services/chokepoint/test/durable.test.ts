@@ -19,7 +19,7 @@ async function makeGate(opts: { failFirst?: boolean } = {}) {
   const kms = new LocalKeyKms(LocalKeyKms.generateMasterKey());
   const vault = new Vault(store, kms, () => NOW);
   await store.addAllowlisted('h_abc');
-  await vault.put({ emailHash: 'h_abc', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD' }, { access: 'a', refresh: 'r' });
+  await vault.put({ emailHash: 'h_abc', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD', verified: true, createdAtMs: 1_600_000_000_000 }, { access: 'a', refresh: 'r' });
   const admission = new Admission(store, new HmacSessionSigner('s', 15 * 60_000, 12 * 60 * 60_000));
   let calls = 0;
   const post = async () => {

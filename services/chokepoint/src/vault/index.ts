@@ -13,6 +13,9 @@ export interface VaultRow {
   username: string;
   lane: Lane;
   standing: AccountStanding;
+  /** blue tick + X account creation time, captured at connect; casserole L1 gates Loops on both. */
+  verified: boolean;
+  createdAtMs: number;
   access: SealedToken;
   refresh: SealedToken;
   refreshRotatedAt: number;
@@ -39,6 +42,8 @@ export interface ConnectMeta {
   username: string;
   lane: Lane;
   standing: AccountStanding;
+  verified: boolean;
+  createdAtMs: number;
 }
 
 export class Vault {
@@ -74,6 +79,8 @@ export class Vault {
       username: row.username,
       lane: row.lane,
       standing: row.standing,
+      verified: row.verified,
+      createdAtMs: row.createdAtMs,
     };
   }
 

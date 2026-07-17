@@ -10,7 +10,15 @@ function makeVault() {
   const vault = new Vault(store, kms, () => 1_700_000_000_000);
   return { vault, store };
 }
-const META = { emailHash: 'h_abc', xUserId: 'x123', username: 'acme', lane: 'BYO' as const, standing: 'GOOD' as const };
+const META = {
+  emailHash: 'h_abc',
+  xUserId: 'x123',
+  username: 'acme',
+  lane: 'BYO' as const,
+  standing: 'GOOD' as const,
+  verified: true,
+  createdAtMs: 1_600_000_000_000,
+};
 const TOKENS = { access: 'access-SECRET-tok', refresh: 'refresh-SECRET-tok' };
 
 test('put then getMetadata returns metadata, NEVER a token', async () => {

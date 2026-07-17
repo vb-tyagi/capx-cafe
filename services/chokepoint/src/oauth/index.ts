@@ -15,6 +15,10 @@ import { challengeS256, generateState, generateVerifier } from './pkce.ts';
 export interface ResolvedConnection {
   xUserId: string;
   username: string;
+  /** blue tick — casserole L1 gates Loops on it. */
+  verified: boolean;
+  /** epoch ms the X ACCOUNT was created; casserole L1 gates Loops on age >= 30d. 0 = unknown (fails closed). */
+  createdAtMs: number;
   accessToken: string;
   refreshToken: string;
 }
@@ -44,7 +48,9 @@ export type TokenExchange = (p: {
   clientSecret?: string;
 }) => Promise<{ accessToken: string; refreshToken: string }>;
 
-export type IdentityFetch = (accessToken: string) => Promise<{ xUserId: string; username: string }>;
+export type IdentityFetch = (
+  accessToken: string,
+) => Promise<{ xUserId: string; username: string; verified: boolean; createdAtMs: number }>;
 
 export interface OAuthConfig {
   authorizeEndpoint: string;
@@ -72,6 +78,8 @@ export interface ConfirmedConnection {
   lane: Lane;
   xUserId: string;
   username: string;
+  verified: boolean;
+  createdAtMs: number;
   accessToken: string;
   refreshToken: string;
 }
@@ -137,6 +145,8 @@ export class OAuthFlow {
     const resolved: ResolvedConnection = {
       xUserId: who.xUserId,
       username: who.username,
+      verified: who.verified,
+      createdAtMs: who.createdAtMs,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
@@ -161,6 +171,8 @@ export class OAuthFlow {
       lane: pending.lane,
       xUserId: pending.resolved.xUserId,
       username: pending.resolved.username,
+      verified: pending.resolved.verified,
+      createdAtMs: pending.resolved.createdAtMs,
       accessToken: pending.resolved.accessToken,
       refreshToken: pending.resolved.refreshToken,
     };

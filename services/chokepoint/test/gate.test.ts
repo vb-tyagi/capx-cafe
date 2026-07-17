@@ -21,7 +21,7 @@ async function setup(o: { connected?: boolean } = {}) {
   const admission = new Admission(store, new HmacSessionSigner('sign-key', 15 * 60_000, 12 * 60 * 60_000));
   await store.addAllowlisted('h_abc');
   if (o.connected ?? true) {
-    await vault.put({ emailHash: 'h_abc', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD' }, { access: 'atok', refresh: 'rtok' });
+    await vault.put({ emailHash: 'h_abc', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD', verified: true, createdAtMs: 1_600_000_000_000 }, { access: 'atok', refresh: 'rtok' });
   }
   const client = new FakePlatformClient();
   const gate = new PublishGate({ admission, vault, client, now: () => NOW });
@@ -99,7 +99,7 @@ test('a failing x-adapter yields publish_failed, not a throw', async () => {
   const vault = new Vault(store, kms, () => NOW);
   const admission = new Admission(store, new HmacSessionSigner('sign-key', 15 * 60_000, 12 * 60 * 60_000));
   await store.addAllowlisted('h_abc');
-  await vault.put({ emailHash: 'h_abc', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD' }, { access: 'a', refresh: 'r' });
+  await vault.put({ emailHash: 'h_abc', xUserId: 'x1', username: 'acme', lane: 'BYO', standing: 'GOOD', verified: true, createdAtMs: 1_600_000_000_000 }, { access: 'a', refresh: 'r' });
   const throwing: PlatformClient = { publish: async (): Promise<PublishResult> => { throw new Error('X 5xx'); } };
   const gate = new PublishGate({ admission, vault, client: throwing, now: () => NOW });
   const r = await gate.postNow(req(CLEAN, admission.issueSession('h_abc', NOW)));

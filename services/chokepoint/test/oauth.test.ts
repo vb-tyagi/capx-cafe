@@ -15,7 +15,12 @@ const CFG = {
 
 // Mock X: echoes the code into deterministic tokens; identity derives a stable user.
 const exchange: TokenExchange = async ({ code }) => ({ accessToken: `atok-${code}`, refreshToken: `rtok-${code}` });
-const identity: IdentityFetch = async (tok) => ({ xUserId: `x-${tok}`, username: 'acme' });
+const identity: IdentityFetch = async (tok) => ({
+  xUserId: `x-${tok}`,
+  username: 'acme',
+  verified: true,
+  createdAtMs: 1_600_000_000_000,
+});
 
 function make() {
   const store = new InMemoryStore();

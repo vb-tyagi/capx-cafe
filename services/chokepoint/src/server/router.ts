@@ -114,7 +114,16 @@ export function createService(deps: ServiceDeps): ChokepointService {
         const conn = await deps.oauth.confirm({ pendingId, sessionNonce });
         if (conn.emailHash !== adm.emailHash) return json(403, { error: 'session/connection mismatch' });
         await deps.vault.put(
-          { emailHash: conn.emailHash, xUserId: conn.xUserId, username: conn.username, lane: conn.lane, standing: AccountStanding.GOOD },
+          {
+            emailHash: conn.emailHash,
+            xUserId: conn.xUserId,
+            username: conn.username,
+            lane: conn.lane,
+            standing: AccountStanding.GOOD,
+            // Real account facts from X — casserole L1 gates Loops on these.
+            verified: conn.verified,
+            createdAtMs: conn.createdAtMs,
+          },
           { access: conn.accessToken, refresh: conn.refreshToken },
         );
         return json(200, { connected: true, username: conn.username });

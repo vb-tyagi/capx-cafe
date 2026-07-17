@@ -107,15 +107,19 @@ export class PublishGate {
       //    L2 (daily ceiling) + L3 (near-duplicate dedup) enforce on real history.
       const history = this.#recent ? await this.#recent.recent(emailHash, now) : [];
       const killSwitch = await this.#admission.resolveKillSwitch(emailHash, conn.xUserId);
+      // Real account facts from X (captured at connect), NOT placeholders: casserole L1 gates Loops on
+      // verified + ageDays, so hardcoding them would either block every loop or wave through a brand-new
+      // account. createdAtMs 0 (X didn't grant the field) => ageDays 0 => loops fail closed.
+      const ageDays = conn.createdAtMs > 0 ? Math.floor((now - conn.createdAtMs) / 86_400_000) : 0;
       const handle: Handle = {
         id: conn.xUserId,
         workspaceId: '',
         platform: Platform.X,
         username: conn.username,
-        verified: false,
-        ageDays: 0,
+        verified: conn.verified,
+        ageDays,
         standing: conn.standing,
-        connectedAt: 0,
+        connectedAt: conn.createdAtMs,
       };
       const ctx: GauntletContext = {
         tier: 'SOLO',

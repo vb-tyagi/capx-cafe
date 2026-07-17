@@ -19,7 +19,7 @@ async function gateFor(lane: Lane, cap: number) {
   const kms = new LocalKeyKms(LocalKeyKms.generateMasterKey());
   const vault = new Vault(store, kms, () => NOW);
   await store.addAllowlisted('h_abc');
-  await vault.put({ emailHash: 'h_abc', xUserId: 'x1', username: 'acme', lane, standing: 'GOOD' }, { access: 'a', refresh: 'r' });
+  await vault.put({ emailHash: 'h_abc', xUserId: 'x1', username: 'acme', lane, standing: 'GOOD', verified: true, createdAtMs: 1_600_000_000_000 }, { access: 'a', refresh: 'r' });
   const admission = new Admission(store, new HmacSessionSigner('sign', 15 * 60_000, 12 * 60 * 60_000));
   const gate = new PublishGate({ admission, vault, client: new XAdapter({ vault, post: async () => ({ id: 'tw' }) }), now: () => NOW, metering: new Metering(store, cap) });
   return { gate, bearer: admission.issueSession('h_abc', NOW) };

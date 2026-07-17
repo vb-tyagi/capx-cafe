@@ -7,7 +7,9 @@ import type { TokenExchange, IdentityFetch } from '../oauth/index.ts';
 import type { RefreshExchange } from '../oauth/refresh.ts';
 
 const TOKEN_ENDPOINT = 'https://api.twitter.com/2/oauth2/token';
-const IDENTITY_ENDPOINT = 'https://api.twitter.com/2/users/me';
+// user.fields is REQUIRED to get verified + created_at; without it X returns only id/name/username.
+// Loops need both: casserole L1 gates scheduled posting on blue-tick + account age (>=30d).
+const IDENTITY_ENDPOINT = 'https://api.twitter.com/2/users/me?user.fields=verified,created_at';
 const FORM = 'application/x-www-form-urlencoded';
 
 function basicAuth(clientId: string, clientSecret?: string): Record<string, string> {
@@ -56,15 +58,30 @@ export function httpRefreshExchange(fetchImpl: FetchLike, cfg?: { endpoint?: str
   };
 }
 
-/** Resolve the connected account (GET /2/users/me) with the freshly-minted access token. */
+/**
+ * Resolve the connected account (GET /2/users/me) with the freshly-minted access token.
+ * Also captures verified + created_at, which casserole L1 needs to gate Loops. If X omits created_at
+ * (field not granted on the app's access tier), createdAtMs is 0 — which reads as a 0-day-old account
+ * and FAILS the loop age gate. That is deliberate: fail closed rather than let an unknown-age account
+ * schedule autonomous posts. Manual post_now is unaffected (L1 only gates when ctx.loop is set).
+ */
 export function httpIdentity(fetchImpl: FetchLike, cfg?: { endpoint?: string }): IdentityFetch {
   return async (accessToken) => {
     const res = await fetchImpl(cfg?.endpoint ?? IDENTITY_ENDPOINT, {
       method: 'GET',
       headers: { authorization: `Bearer ${accessToken}` },
     });
-    const data = await readJson<{ data?: { id?: string; username?: string } }>(res, 'X users/me');
+    const data = await readJson<{ data?: { id?: string; username?: string; verified?: boolean; created_at?: string } }>(
+      res,
+      'X users/me',
+    );
     if (!data.data?.id || !data.data?.username) throw new Error('X users/me: missing id/username');
-    return { xUserId: data.data.id, username: data.data.username };
+    const createdAtMs = data.data.created_at ? Date.parse(data.data.created_at) : 0;
+    return {
+      xUserId: data.data.id,
+      username: data.data.username,
+      verified: Boolean(data.data.verified),
+      createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : 0,
+    };
   };
 }

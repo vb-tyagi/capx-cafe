@@ -16,7 +16,7 @@ function base() {
     adminKey: 'admin-secret',
     oauth: { authorizeEndpoint: 'https://x.example/authorize', redirectUri: 'https://capx.example/oauth/callback', scope: 'tweet.write' },
     tokenExchange: async ({ code }) => ({ accessToken: `atok-${code}`, refreshToken: `rtok-${code}` }),
-    identity: async () => ({ xUserId: 'x1', username: 'acme' }),
+    identity: async () => ({ xUserId: 'x1', username: 'acme', verified: true, createdAtMs: 1_600_000_000_000 }),
     xPost: async ({ accessToken, text }) => {
       xPostCalls.push({ accessToken, text });
       return { id: 'tweet-1' };

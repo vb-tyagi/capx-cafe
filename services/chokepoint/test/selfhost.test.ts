@@ -45,7 +45,7 @@ test('a self-hosted BYO instance connects + posts identically (single local key)
     adminKey: 'local-admin',
     oauth: { authorizeEndpoint: 'https://x.example/authorize', redirectUri: 'https://selfhost.example/oauth/callback', scope: 'tweet.write' },
     tokenExchange: async ({ code }) => ({ accessToken: `atok-${code}`, refreshToken: `rtok-${code}` }),
-    identity: async () => ({ xUserId: 'x1', username: 'acme' }),
+    identity: async () => ({ xUserId: 'x1', username: 'acme', verified: true, createdAtMs: 1_600_000_000_000 }),
     xPost: async () => ({ id: 'tw-1' }),
     byoDefaultClientId: 'my-own-x-app', // the self-hoster's own X app
     // no capxAppDailyCap -> capx-app lane simply not used
