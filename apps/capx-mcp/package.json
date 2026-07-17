@@ -13,7 +13,8 @@
   "scripts": {
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "start": "node --experimental-strip-types src/server.ts"
+    "start": "node --experimental-strip-types src/server.ts",
+    "build": "node build.mjs"
   },
   "dependencies": {
     "@capx-cafe/config": "workspace:*",
@@ -21,5 +22,8 @@
     "@capx-cafe/platform-client": "workspace:*",
     "@modelcontextprotocol/sdk": "1.29.0",
     "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
   }
 }
