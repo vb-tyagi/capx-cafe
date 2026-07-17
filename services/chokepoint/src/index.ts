@@ -13,6 +13,7 @@ export * from './outbox/mutex.ts';
 export * from './outbox/index.ts';
 export * from './metering/index.ts';
 export * from './recent/index.ts';
+export * from './loops/index.ts';
 export * from './oauth/pkce.ts';
 export * from './oauth/index.ts';
 export * from './oauth/refresh.ts';
@@ -42,10 +43,18 @@ import { RecentPosts } from './recent/index.ts';
 import type { RecentPostStore } from './recent/index.ts';
 import { Outbox } from './outbox/index.ts';
 import type { OutboxStore } from './outbox/index.ts';
+import { Loops } from './loops/index.ts';
+import type { LoopStore } from './loops/index.ts';
 import { createService } from './server/router.ts';
 
 /** A store implementing every chokepoint port (InMemoryStore and PostgresStore both satisfy it). */
-export type ChokepointStore = VaultStore & AdmissionStore & OutboxStore & PendingStore & MeteringStore & RecentPostStore;
+export type ChokepointStore = VaultStore &
+  AdmissionStore &
+  OutboxStore &
+  PendingStore &
+  MeteringStore &
+  RecentPostStore &
+  LoopStore;
 
 export interface ChokepointConfig {
   masterKeyBase64: string; // KMS_KEY_ID
@@ -82,6 +91,7 @@ export function createChokepoint(store: ChokepointStore, cfg: ChokepointConfig) 
   const metering = cfg.capxAppDailyCap !== undefined ? new Metering(store, cfg.capxAppDailyCap) : undefined;
   const recentPosts = new RecentPosts(store);
   const outbox = new Outbox(store);
+  const loops = new Loops(store, now);
   const gate = new PublishGate({ admission, vault, client: new XAdapter({ vault, post: cfg.xPost }), now, metering, recentPosts, outbox });
   const refresher = new Refresher({ vault, clientId: cfg.byoDefaultClientId ?? '' });
   const service = createService({
@@ -95,7 +105,7 @@ export function createChokepoint(store: ChokepointStore, cfg: ChokepointConfig) 
     identity: cfg.identity,
     byoDefaultClientId: cfg.byoDefaultClientId,
   });
-  return { service, store, vault, admission, oauth, gate, refresher };
+  return { service, store, vault, admission, oauth, gate, refresher, loops };
 }
 
 /** Build the service over the in-memory store (dev / tests / self-host evaluation — no DB). */

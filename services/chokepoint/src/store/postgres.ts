@@ -14,6 +14,8 @@ import type { OutboxStore } from '../outbox/index.ts';
 import type { PendingStore, PendingConnection, ResolvedConnection } from '../oauth/index.ts';
 import type { MeteringStore } from '../metering/index.ts';
 import type { RecentPostStore } from '../recent/index.ts';
+import type { LoopStore, LoopRecord } from '../loops/index.ts';
+import type { Autonomy } from '@capx/core';
 
 /** Minimal pool shape satisfied by both the real `pg` Pool and pg-mem's adapter. */
 export interface SqlPool {
@@ -36,7 +38,7 @@ export async function runMigrations(pool: SqlPool): Promise<void> {
 }
 
 export class PostgresStore
-  implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore, RecentPostStore
+  implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore, RecentPostStore, LoopStore
 {
   readonly #pool: SqlPool;
 
@@ -193,5 +195,52 @@ export class PostgresStore
   }
   async recordRecentPost(emailHash: string, item: PostHistoryItem): Promise<void> {
     await this.#pool.query(`insert into recent_posts (email_hash,body,posted_at,loop_id) values ($1,$2,$3,$4)`, [emailHash, item.text, item.postedAt, item.loopId ?? null]);
+  }
+
+  // ---- LoopStore ----
+  async createLoop(l: LoopRecord): Promise<void> {
+    await this.#pool.query(
+      `insert into loops (id,email_hash,timezone,time_of_day_minutes,days_of_week,buffer,autonomy,training_wheels_remaining,paused,paused_reason,last_fired_day_key,created_at_ms)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [l.id, l.emailHash, l.timezone, l.timeOfDayMinutes, l.daysOfWeek, l.buffer, l.autonomy, l.trainingWheelsRemaining, l.paused, l.pausedReason ?? null, l.lastFiredDayKey ?? null, l.createdAtMs],
+    );
+  }
+  async getLoop(id: string): Promise<LoopRecord | null> {
+    const { rows } = await this.#pool.query(`select * from loops where id=$1`, [id]);
+    return rows[0] ? this.#toLoop(rows[0]) : null;
+  }
+  async listLoops(emailHash: string): Promise<LoopRecord[]> {
+    const { rows } = await this.#pool.query(`select * from loops where email_hash=$1 order by created_at_ms`, [emailHash]);
+    return rows.map((r) => this.#toLoop(r));
+  }
+  async listActiveLoops(): Promise<LoopRecord[]> {
+    const { rows } = await this.#pool.query(`select * from loops where paused = false`);
+    return rows.map((r) => this.#toLoop(r));
+  }
+  async updateLoop(l: LoopRecord): Promise<void> {
+    await this.#pool.query(
+      `update loops set timezone=$2, time_of_day_minutes=$3, days_of_week=$4, buffer=$5, autonomy=$6,
+         training_wheels_remaining=$7, paused=$8, paused_reason=$9, last_fired_day_key=$10 where id=$1`,
+      [l.id, l.timezone, l.timeOfDayMinutes, l.daysOfWeek, l.buffer, l.autonomy, l.trainingWheelsRemaining, l.paused, l.pausedReason ?? null, l.lastFiredDayKey ?? null],
+    );
+  }
+  async deleteLoop(id: string): Promise<void> {
+    await this.#pool.query(`delete from loops where id=$1`, [id]);
+  }
+  #toLoop(r: Record<string, unknown>): LoopRecord {
+    return {
+      id: String(r.id),
+      emailHash: String(r.email_hash),
+      timezone: String(r.timezone),
+      timeOfDayMinutes: Number(r.time_of_day_minutes),
+      daysOfWeek: (r.days_of_week as number[] | null ?? []).map(Number),
+      buffer: (r.buffer as string[] | null) ?? [],
+      autonomy: r.autonomy as Autonomy,
+      trainingWheelsRemaining: Number(r.training_wheels_remaining),
+      paused: Boolean(r.paused),
+      pausedReason: r.paused_reason == null ? undefined : String(r.paused_reason),
+      lastFiredDayKey: r.last_fired_day_key == null ? undefined : String(r.last_fired_day_key),
+      createdAtMs: Number(r.created_at_ms),
+    };
   }
 }

@@ -75,6 +75,26 @@ create table if not exists metering (
   primary key (email_hash, day_index)
 );
 
+-- Loops (scheduled posting). `buffer` holds AGENT-AUTHORED posts: capx never generates content, so a
+-- loop is a schedule + a queue of text the user's agent already wrote. timezone is an IANA zone (not an
+-- offset) so "9am" survives DST. last_fired_day_key is the local-day exactly-once guard.
+create table if not exists loops (
+  id                        text primary key,
+  email_hash                text not null,
+  timezone                  text not null,
+  time_of_day_minutes       integer not null,
+  days_of_week              integer[] not null,
+  buffer                    text[] not null default '{}',
+  autonomy                  text not null,
+  training_wheels_remaining integer not null default 0,
+  paused                    boolean not null default false,
+  paused_reason             text,
+  last_fired_day_key        text,
+  created_at_ms             bigint not null
+);
+create index if not exists loops_email_hash_idx on loops (email_hash);
+create index if not exists loops_active_idx on loops (paused) where paused = false;
+
 -- Per-handle recent-post cache feeding casserole L2/L3 (dedup + ceiling).
 create table if not exists recent_posts (
   id         bigserial primary key,

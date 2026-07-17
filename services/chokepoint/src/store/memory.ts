@@ -8,10 +8,13 @@ import type { OutboxStore } from '../outbox/index.ts';
 import type { PendingStore, PendingConnection } from '../oauth/index.ts';
 import type { MeteringStore } from '../metering/index.ts';
 import type { RecentPostStore } from '../recent/index.ts';
+import type { LoopStore, LoopRecord } from '../loops/index.ts';
 import { OutboxState } from '@capx/core';
 import type { OutboxJob, PostHistoryItem } from '@capx/core';
 
-export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore, RecentPostStore {
+export class InMemoryStore
+  implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore, RecentPostStore, LoopStore
+{
   // vault
   readonly #vault = new Map<string, VaultRow>(); // vaultRef -> row
   readonly #vaultByEmail = new Map<string, string>(); // emailHash -> vaultRef
@@ -28,6 +31,8 @@ export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, P
   readonly #metering = new Map<string, number>(); // `${emailHash}:${dayIndex}` -> count
   // recent-post cache: per-handle post history for casserole L2/L3
   readonly #recent = new Map<string, PostHistoryItem[]>(); // emailHash -> items
+  // loops (scheduled posting)
+  readonly #loops = new Map<string, LoopRecord>(); // loop id -> loop
 
   // ---- VaultStore ----
   async put(row: VaultRow): Promise<void> {
@@ -116,5 +121,32 @@ export class InMemoryStore implements VaultStore, AdmissionStore, OutboxStore, P
     const list = this.#recent.get(emailHash) ?? [];
     list.push(item);
     this.#recent.set(emailHash, list);
+  }
+
+  // ---- LoopStore ----
+  // Structured-clone on the way in/out so a caller mutating a returned record can't corrupt the store
+  // (the Postgres driver serialises anyway — the in-memory driver must behave identically).
+  async createLoop(loop: LoopRecord): Promise<void> {
+    this.#loops.set(loop.id, { ...loop, buffer: [...loop.buffer], daysOfWeek: [...loop.daysOfWeek] });
+  }
+  async getLoop(id: string): Promise<LoopRecord | null> {
+    const l = this.#loops.get(id);
+    return l ? { ...l, buffer: [...l.buffer], daysOfWeek: [...l.daysOfWeek] } : null;
+  }
+  async listLoops(emailHash: string): Promise<LoopRecord[]> {
+    return [...this.#loops.values()]
+      .filter((l) => l.emailHash === emailHash)
+      .map((l) => ({ ...l, buffer: [...l.buffer], daysOfWeek: [...l.daysOfWeek] }));
+  }
+  async listActiveLoops(): Promise<LoopRecord[]> {
+    return [...this.#loops.values()]
+      .filter((l) => !l.paused)
+      .map((l) => ({ ...l, buffer: [...l.buffer], daysOfWeek: [...l.daysOfWeek] }));
+  }
+  async updateLoop(loop: LoopRecord): Promise<void> {
+    this.#loops.set(loop.id, { ...loop, buffer: [...loop.buffer], daysOfWeek: [...loop.daysOfWeek] });
+  }
+  async deleteLoop(id: string): Promise<void> {
+    this.#loops.delete(id);
   }
 }
