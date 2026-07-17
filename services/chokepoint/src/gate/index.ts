@@ -3,8 +3,9 @@
 // per-handle lock -> normalizes the draft -> runs casserole with a REQUIRED live kill-switch -> hands
 // off to the x-adapter ONLY when verdict===PASS && !requiresHumanReview. Nothing here decrypts a token
 // (that is the x-adapter/vault). Manual post_now runs with ctx.loop undefined (spacing-exempt). See §4.
-import { Verdict, Platform, Lane, OutboxState } from '@capx/core';
-import type { Handle } from '@capx/core';
+import { Verdict, Platform, Lane, OutboxState, TweetType } from '@capx/core';
+import type { Handle, LoopConfig } from '@capx/core';
+import type { LoopRecord } from '../loops/index.ts';
 import { runGauntlet } from '@capx/casserole';
 import type { GauntletContext } from '@capx/casserole';
 import type { PlatformClient } from '@capx/platform-client';
@@ -68,6 +69,7 @@ export class PublishGate {
     this.#outbox = deps.outbox;
   }
 
+  /** Manual path: the agent is present and holds a session. */
   async postNow(input: PostNowInput): Promise<PostResult> {
     const now = this.#now();
 
@@ -76,7 +78,34 @@ export class PublishGate {
     if (!adm.admitted || !adm.emailHash) {
       return { outcome: 'rejected', finalReasons: [adm.reason ?? 'not admitted'] };
     }
-    const emailHash = adm.emailHash;
+    return this.#publish({ emailHash: adm.emailHash, text: input.text, aiGenerated: input.aiGenerated, idempotencyKey: input.idempotencyKey, now });
+  }
+
+  /**
+   * Loop path: fired by the server's tick, so there is no session to admit — the loop's existence is the
+   * authorisation, and it was created by an admitted session. Everything AFTER admission is identical to
+   * post_now (same #publish body): same kill-switch, same casserole, same vault, same x-adapter. A loop
+   * gets NO shortcut to X — it just arrives with ctx.loop set, which makes casserole STRICTER (L1
+   * eligibility + L2 one-per-day + spacing).
+   */
+  async postFromLoop(input: { emailHash: string; loop: LoopRecord; text: string; idempotencyKey: string; now: number }): Promise<PostResult> {
+    // The kill-switch still applies: resolveKillSwitch runs inside #publish and casserole L1 blocks on it.
+    if (await this.#admission.isGlobalKilled()) {
+      return { outcome: 'rejected', finalReasons: ['global kill-switch active'] };
+    }
+    return this.#publish({
+      emailHash: input.emailHash,
+      text: input.text,
+      aiGenerated: true, // loop posts are agent-authored by construction
+      idempotencyKey: input.idempotencyKey,
+      now: input.now,
+      loop: input.loop,
+    });
+  }
+
+  async #publish(input: { emailHash: string; text: string; aiGenerated?: boolean; idempotencyKey: string; now: number; loop?: LoopRecord }): Promise<PostResult> {
+    const now = input.now;
+    const emailHash = input.emailHash;
 
     // 2. Resolve the connection SERVER-SIDE from the session identity (never client input).
     const vaultRef = await this.#vault.refByEmailHash(emailHash);
@@ -121,9 +150,30 @@ export class PublishGate {
         standing: conn.standing,
         connectedAt: conn.createdAtMs,
       };
+      // A loop post carries ctx.loop, which makes casserole STRICTER, not looser: L1 eligibility
+      // (verified / >=30d / GOOD standing) and L2's one-per-loop-per-day + 5-min spacing all switch on.
+      // The chef-era fields (model/category/brief/styleSources) are vestigial under the pre-generated
+      // buffer — the agent already wrote the text — but L6 records them in the audit, so pass honest values.
+      const loopCfg: LoopConfig | undefined = input.loop
+        ? {
+            id: input.loop.id,
+            handleId: conn.xUserId,
+            timeOfDayMinutes: input.loop.timeOfDayMinutes,
+            daysOfWeek: input.loop.daysOfWeek,
+            type: TweetType.TEXT,
+            model: 'agent-authored', // capx runs no model; the user's harness wrote this
+            category: '',
+            tags: [],
+            brief: '',
+            styleSources: [],
+            autonomy: input.loop.autonomy,
+            trainingWheelsRemaining: input.loop.trainingWheelsRemaining,
+          }
+        : undefined;
       const ctx: GauntletContext = {
         tier: 'SOLO',
         handle,
+        loop: loopCfg,
         history,
         now,
         accountDailyCeiling: MANUAL_DAILY_CEILING,

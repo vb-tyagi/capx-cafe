@@ -143,6 +143,36 @@ export class Loops {
     return next;
   }
 
+  // ---- tick-side mutations (server-driven; no owner check — the tick IS the server) ----
+
+  /** Stamp the day AND pop the post in one write: the tick's "stamp before send" step. */
+  async consume(id: string, dayKey: string): Promise<void> {
+    const loop = await this.#store.getLoop(id);
+    if (!loop) return;
+    await this.#store.updateLoop({ ...loop, buffer: loop.buffer.slice(1), lastFiredDayKey: dayKey });
+  }
+
+  /** Burn a day without consuming a post (used when a post is too late to send). */
+  async markFired(id: string, dayKey: string): Promise<void> {
+    const loop = await this.#store.getLoop(id);
+    if (!loop) return;
+    await this.#store.updateLoop({ ...loop, lastFiredDayKey: dayKey });
+  }
+
+  /** Give a post back after a transient publish failure (front of the queue — it was next). */
+  async restore(id: string, text: string): Promise<void> {
+    const loop = await this.#store.getLoop(id);
+    if (!loop) return;
+    await this.#store.updateLoop({ ...loop, buffer: [text, ...loop.buffer] });
+  }
+
+  /** The loop ran out of agent-written posts. Pause and say why — capx will not invent content. */
+  async pauseDry(id: string): Promise<void> {
+    const loop = await this.#store.getLoop(id);
+    if (!loop) return;
+    await this.#store.updateLoop({ ...loop, paused: true, pausedReason: 'buffer empty' });
+  }
+
   async remove(id: string, emailHash: string): Promise<boolean> {
     const loop = await this.#owned(id, emailHash);
     if (!loop) return false;

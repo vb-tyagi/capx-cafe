@@ -41,6 +41,11 @@ export class Admission {
     return this.#store.isAllowlisted(emailHash);
   }
 
+  /** The global kill-switch, for server-driven paths (the loop tick) that have no session to admit. */
+  async isGlobalKilled(): Promise<boolean> {
+    return this.#store.isGlobalKill();
+  }
+
   /** License gate: valid signature -> usable (live | in-grace) -> allowlisted -> not globally killed. */
   async admit(bearer: string, now: number): Promise<AdmissionResult> {
     const v = this.#signer.verify(bearer, now);
