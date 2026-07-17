@@ -10,13 +10,12 @@ Last touched: 2026-07-17._
 
 These are ranked by "how much time it costs when you hit it cold." Each is: **symptom → cause → fix.**
 
-### 1. `npx @capx-cafe/mcp` cannot be published as-is (the workspace:* trap)
-**This is the big one — it's still there and will still be there next time someone touches the MCP package.**
-- **Symptom:** publish `@capx-cafe/mcp` to npm, a stranger runs `npx @capx-cafe/mcp`, it installs then instantly crashes: `Cannot find module '@capx-cafe/core'`.
-- **Cause:** `apps/capx-mcp/package.json` depends on `@capx-cafe/core`, `@capx-cafe/config`, `@capx-cafe/platform-client` via `workspace:*`. That protocol resolves **only inside this monorepo**. On npm those deps do not exist — and all three are `private: true` on purpose (they carry closed domain types / the guardrail-adjacent surface).
-- **Why it's a trap:** everything works perfectly in local dev and in CI (both run inside the workspace), so the failure is invisible until the moment you actually try to distribute — i.e. exactly when you're demoing to someone.
-- **Fix (recommended):** **bundle** the three `@capx-cafe/*` deps into `@capx-cafe/mcp` at publish time (e.g. tsup/esbuild) so one self-contained public package ships and the engines stay closed. Do NOT naively `pnpm publish` all four — that leaks the closed packages and creates 4-package version management.
-- **Blast radius today:** zero (nobody uses npm yet; the `.mcp.json` points at a local path). Becomes a hard blocker the instant you want anyone outside this repo to install capx.
+### 1. ✅ RESOLVED — the workspace:* publish trap (was: `npx @capx-cafe/mcp` crashes)
+**Kept as the top entry because the fix must not be undone — anyone editing the MCP package's deps can re-open it.**
+- **Was the trap:** `apps/capx-mcp` depends on `@capx-cafe/{core,config,platform-client}` via `workspace:*`, which resolves ONLY inside this monorepo (and those packages are `private: true`). A naive publish crashes for a stranger with `Cannot find module '@capx-cafe/core'` — invisible in dev/CI (both run inside the workspace), a hard blocker the instant you distribute.
+- **Fix (done, 2026-07-18):** `apps/capx-mcp/build.mjs` (esbuild) **inlines** those three private engines into one `dist/capx-cafe.mjs`, keeps `@modelcontextprotocol/sdk` + `zod` external, and emits `dist/package.json` named **`capx-cafe`** (unscoped). Verified by `npm pack` → install into a clean temp project (no monorepo) → the bin runs standalone.
+- **To publish:** `pnpm --filter @capx-cafe/mcp build` → `cd apps/capx-mcp/dist && npm publish`. **Before the FIRST publish:** (a) pick a real `license` (currently `UNLICENSED` placeholder in build.mjs), (b) `npm login`, (c) bump `version`.
+- **Do NOT** revert to publishing `apps/capx-mcp` directly, and do NOT `pnpm publish` the four packages — that re-opens the trap and leaks the closed engines.
 
 ### 2. `/healthz` is reserved by Google's frontend on Cloud Run
 - **Symptom:** container is provably healthy and listening, but every probe of `/healthz` returns Google's own HTML 404 (no `server:` / `x-cloud-trace-context` header). Looks dead for ~40 min; you chase phantom causes.
@@ -54,11 +53,16 @@ These are ranked by "how much time it costs when you hit it cold." Each is: **sy
 
 **P0 ✅ · P1 ✅ · P2 ✅ (bar npm publish) · P3 ✅ · P4 ❌ · P5 ❌**
 
-### P4 — Monetization (NOT started)
+### P4 — Monetization (⏸ EXPLICITLY DEFERRED 2026-07-18, at founder's call)
 Turns "founder curls `/admin/allow` per person" into "pay → in, cancel → out."
-- Pick a Merchant of Record: **Lemon Squeezy vs Polar** (bake-off deferred here per decision §5.8). MoR handles global tax/VAT/GST; capx never touches card data.
-- Wire the MoR webhook → `ingestAllowlist`. **Today `ingestAllowlist`'s signature check is a STUB and nothing calls it** — that's the P4 hole.
+- **MoR choice is UNMADE — decide first.** Lemon Squeezy vs Polar (bake-off deferred per decision §5.8).
+  The choice gates the code: each MoR signs webhooks differently, so the signature-verification impl can't
+  be written until it's picked. (Founder chose to punt the decision on 2026-07-18.)
+- Then wire the MoR webhook → `ingestAllowlist`. **Today `ingestAllowlist`'s signature check is a STUB and
+  nothing calls it** — that's the P4 hole. Add subscribe→allowlist-add and cancel/refund→allowlist-remove.
 - Pricing MUST cover capx's metered X cost, because on lane B **capx pays X per post**.
+- **Interim reality:** billing = the founder running `POST /admin/allow` by hand. Fine for a private alpha;
+  a hard blocker for self-serve signups.
 
 ### P5 — Claude Code plugin sugar (NOT started)
 Pure distribution polish, no new capability: `plugin.json` (marketplace), slash commands (`/capx-post`), `userConfig` (Claude Code prompts for the X Client ID instead of hand-editing `.mcp.json`).
