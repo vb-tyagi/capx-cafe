@@ -9,3 +9,6 @@ coverage/
 .DS_Store
 .next/
 .gcp/
+
+# Personal MCP config: your email + a machine-specific absolute path. Not shareable.
+.mcp.json
