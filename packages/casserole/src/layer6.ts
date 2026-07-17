@@ -1,7 +1,7 @@
 // L6 — Label & log. Produces the audit record and the AI-content labelling decision. Never blocks.
 import type { LayerResult, GauntletContext } from './types.ts';
-import type { DraftPost } from '../../core/src/index.ts';
-import { GuardrailLayer, Verdict } from '../../core/src/index.ts';
+import type { DraftPost } from '@capx/core';
+import { GuardrailLayer, Verdict } from '@capx/core';
 
 export function layer6Audit(
   ctx: GauntletContext,

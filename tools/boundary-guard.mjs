@@ -1,6 +1,10 @@
 // AGPL open/closed boundary guard for the CLOSED repo (legally-validated boundary, 2026-07-10).
 // Fails the build if closed code imports the open fork, vendors fork source, or pulls a copyleft dep.
 // Dependency-free; the pure findViolations() is unit-tested in boundary-guard.test.mjs.
+//
+// 🗄️ DORMANT since P0 (2026-07-14): unwired from `pnpm verify` — the Postiz fork is cold-archived
+// (STATE §5.1/§5.5, Option B). This file is intentionally KEPT: run it ad hoc via `pnpm guard`, and
+// re-add it to the `verify` script in one line if the fork is ever un-archived. Do not delete.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';

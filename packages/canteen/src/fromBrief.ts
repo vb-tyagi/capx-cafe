@@ -1,10 +1,10 @@
 // capx-canteen — the FULL Loop tick from a brief: capx-chef → capx-casserole → capx-counter → capx-cafe.
-import type { GauntletContext } from '../../casserole/src/index.ts';
-import type { CreditLedger } from '../../counter/src/index.ts';
-import type { PlatformClient } from '../../platform-client/src/index.ts';
-import type { ContentProvider, GenerationRequest } from '../../chef/src/index.ts';
-import { runGeneration } from '../../chef/src/index.ts';
-import type { DraftPost } from '../../core/src/index.ts';
+import type { GauntletContext } from '@capx/casserole';
+import type { CreditLedger } from '@capx/counter';
+import type { PlatformClient } from '@capx/platform-client';
+import type { ContentProvider, GenerationRequest } from '@capx/chef';
+import { runGeneration } from '@capx/chef';
+import type { DraftPost } from '@capx/core';
 import { runLoopTick } from './orchestrator.ts';
 import type { LoopRunResult } from './orchestrator.ts';
 

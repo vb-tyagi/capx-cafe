@@ -8,14 +8,14 @@
     "node": ">=22.6"
   },
   "scripts": {
-    "test": "node --experimental-strip-types --test packages/*/test/*.test.ts",
+    "test": "node --experimental-strip-types --test $(find packages services apps -name '*.test.ts' -not -path '*/node_modules/*')",
     "test:casserole": "node --experimental-strip-types --test packages/casserole/test/*.test.ts",
     "test:counter": "node --experimental-strip-types --test packages/counter/test/*.test.ts",
     "test:canteen": "node --experimental-strip-types --test packages/canteen/test/*.test.ts",
     "guard": "node tools/boundary-guard.mjs",
     "guard:test": "node --test tools/boundary-guard.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "verify": "node tools/boundary-guard.mjs && node --experimental-strip-types --test packages/*/test/*.test.ts && node --test tools/boundary-guard.test.mjs && tsc -p tsconfig.json --noEmit"
+    "verify": "node --experimental-strip-types --test $(find packages services apps -name '*.test.ts' -not -path '*/node_modules/*') && tsc -p tsconfig.json --noEmit"
   },
   "workspaces": [
     "packages/*",

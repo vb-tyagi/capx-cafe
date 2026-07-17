@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { runGauntlet, computeSlopScore, similarity } from '../src/index.ts';
 import type { GauntletContext } from '../src/index.ts';
-import { Tier, Platform, TweetType, Autonomy, AccountStanding, Verdict } from '../../core/src/index.ts';
-import type { Handle, DraftPost, LoopConfig } from '../../core/src/index.ts';
+import { Tier, Platform, TweetType, Autonomy, AccountStanding, Verdict } from '@capx/core';
+import type { Handle, DraftPost, LoopConfig } from '@capx/core';
 
 const NOW = 1_700_000_000_000;
 const HOUR = 3_600_000;
@@ -39,7 +39,7 @@ function makeLoop(o: Partial<LoopConfig> = {}): LoopConfig {
   };
 }
 function makeCtx(o: Partial<GauntletContext> = {}): GauntletContext {
-  return { tier: Tier.TEAM, handle: makeHandle(), loop: makeLoop(), history: [], now: NOW, accountDailyCeiling: 10, ...o };
+  return { tier: Tier.TEAM, handle: makeHandle(), loop: makeLoop(), history: [], now: NOW, accountDailyCeiling: 10, killSwitch: { global: false, handle: false }, ...o };
 }
 function makePost(o: Partial<DraftPost> = {}): DraftPost {
   return {
@@ -148,6 +148,19 @@ test('bad account health auto-pauses (block)', () => {
 test('global kill switch blocks everything', () => {
   const res = runGauntlet(makePost(), makeCtx({ killSwitch: { global: true, handle: false } }));
   assert.equal(res.verdict, Verdict.BLOCK);
+});
+
+test('manual post (no loop) is exempt from the 5-min spacing rule', () => {
+  const recent = { text: 'an earlier unrelated note', postedAt: NOW - 60_000 }; // 1 min ago
+  // a LOOP post 1 min after a recent post is blocked by spacing...
+  const looped = runGauntlet(makePost(), makeCtx({ history: [recent] }));
+  assert.ok(looped.finalReasons.some((r) => r.includes('spacing')));
+  // ...but a MANUAL post (no loop) is not.
+  const manual = runGauntlet(
+    makePost({ loopId: undefined }),
+    makeCtx({ loop: undefined, history: [recent] }),
+  );
+  assert.ok(!manual.finalReasons.some((r) => r.includes('spacing')));
 });
 
 test('more than 3 style profiles is blocked (cloning risk)', () => {

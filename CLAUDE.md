@@ -3,7 +3,8 @@
 **capx-cafe** is the umbrella for the **agent-native track**: re-engineer the social-posting product into a
 **Claude Code / Codex / Cursor plugin** (a portable MCP server) with a *minimal* login UI and **no central
 user database** — a whitelisted user connects their **own** X account, then creates / schedules / manages
-posts from inside their agent session. **Scope is still deliberately OPEN** — do not assume; see `docs/STATE.md`.
+posts from inside their agent session. **Core decisions are LOCKED (2026-07-14)** — read the decision log in
+`docs/STATE.md` §5 before building; do not re-litigate them.
 
 This repo is the monorepo (formerly `capx-culture`, renamed). **Sibling repos:**
 - `../capx-conductor` — the open **Postiz fork** (the posting engine). Its own repo, AGPL, Docker-based, runs separately.
@@ -11,7 +12,7 @@ This repo is the monorepo (formerly `capx-culture`, renamed). **Sibling repos:**
 
 ## Read next
 1. `docs/STATE.md` — full handoff: state, naming rotation, the open decisions, the fork's handling, risks.
-2. `docs/PLUGIN-ARCHITECTURE.md` — the Track-2 direction + **the core open decision (Option A vs B)**.
+2. `docs/PLUGIN-ARCHITECTURE.md` — the Track-2 direction (**Option B decided** — thin hosted chokepoint; all §8 items resolved).
 3. `docs/PRODUCT-MAP.md` — the named products + boundaries.
 
 ## Naming (current — after the rotation)
@@ -21,5 +22,7 @@ This repo is the monorepo (formerly `capx-culture`, renamed). **Sibling repos:**
 - Unchanged packages: `casserole` (guardrail), `canteen` (loops), `counter` (credits), `chef` (content), `config`, `core`, `platform-client`.
 
 ## Dev
-Node ≥ 22.6. `pnpm run verify` = AGPL boundary-guard + 64 unit tests + guard self-tests + typecheck (all green).
+Node ≥ 22.6. `pnpm run verify` = 64 unit tests + typecheck (all green). The AGPL boundary-guard was
+unwired from `verify` at P0 (fork cold-archived — STATE §5.5), but `tools/boundary-guard.mjs` and the
+`pnpm guard` / `guard:test` scripts stay on disk, re-armable in one line if the fork ever un-archives.
 The fork runs from `../capx-conductor` (see `docs/GO-LIVE.md`); its Docker Compose project is pinned to `capx-cafe`.

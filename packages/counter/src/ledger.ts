@@ -1,6 +1,6 @@
 // @capx/credits — the credit ledger. Pure, deterministic (caller supplies timestamps).
 
-import type { ActionType, Tier } from '../../core/src/index.ts';
+import type { ActionType, Tier } from '@capx/core';
 import { preflightCost } from './costModel.ts';
 import type { CostBreakdown } from './costModel.ts';
 

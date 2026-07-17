@@ -1,7 +1,7 @@
 // L3 — Anti-slop quality. Duplication, slop-scoring, banned patterns, AI-image bar, factuality flag.
 import type { LayerResult, GauntletContext } from './types.ts';
-import type { DraftPost } from '../../core/src/index.ts';
-import { GuardrailLayer, Verdict, TweetType } from '../../core/src/index.ts';
+import type { DraftPost } from '@capx/core';
+import { GuardrailLayer, Verdict, TweetType } from '@capx/core';
 import { similarity } from './text.ts';
 import { worst } from './verdict.ts';
 

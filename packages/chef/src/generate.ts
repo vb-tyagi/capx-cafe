@@ -1,6 +1,6 @@
 // capx-chef entrypoint: validate the request (chef's input guardrails), then generate.
 import type { ContentProvider, GenerationRequest } from './types.ts';
-import type { DraftPost } from '../../core/src/index.ts';
+import type { DraftPost } from '@capx/core';
 import { validateRequest } from './enablement.ts';
 
 export type GenerationResult = { ok: true; draft: DraftPost } | { ok: false; problems: string[] };

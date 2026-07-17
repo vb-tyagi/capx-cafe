@@ -1,0 +1,205 @@
+// The publish gate — THE unbypassable boundary. A server-side port of canteen.runLoopTick: the ONLY
+// code path to a send. It admits (license gate) -> resolves the connection server-side -> takes a
+// per-handle lock -> normalizes the draft -> runs casserole with a REQUIRED live kill-switch -> hands
+// off to the x-adapter ONLY when verdict===PASS && !requiresHumanReview. Nothing here decrypts a token
+// (that is the x-adapter/vault). Manual post_now runs with ctx.loop undefined (spacing-exempt). See §4.
+import { Verdict, Platform, Lane, OutboxState } from '@capx/core';
+import type { Handle } from '@capx/core';
+import { runGauntlet } from '@capx/casserole';
+import type { GauntletContext } from '@capx/casserole';
+import type { PlatformClient } from '@capx/platform-client';
+import type { Admission } from '../admission/index.ts';
+import type { Vault } from '../vault/index.ts';
+import type { Metering } from '../metering/index.ts';
+import type { RecentPosts } from '../recent/index.ts';
+import type { Outbox } from '../outbox/index.ts';
+import { KeyedMutex } from '../outbox/mutex.ts';
+import { normalizeDraft } from './draft.ts';
+
+export type PostOutcome = 'published' | 'blocked' | 'held' | 'regenerate' | 'rejected' | 'publish_failed';
+
+export interface PostResult {
+  outcome: PostOutcome;
+  verdict?: Verdict;
+  requiresHumanReview?: boolean;
+  finalReasons: string[];
+  platformPostId?: string;
+}
+
+export interface PostNowInput {
+  bearer: string;
+  text: string;
+  aiGenerated?: boolean;
+  idempotencyKey: string;
+}
+
+export interface GateDeps {
+  admission: Admission;
+  vault: Vault;
+  client: PlatformClient; // S3: FakePlatformClient; S4: the vault-backed x-adapter
+  now: () => number;
+  mutex?: KeyedMutex;
+  metering?: Metering; // lane-B (capx-app) cost cap; unused on the BYO lane
+  recentPosts?: RecentPosts; // per-handle history feeding casserole L2/L3 (dedup + ceiling)
+  outbox?: Outbox; // durable at-most-once send: idempotent on idempotencyKey
+}
+
+/** A manual per-day cap (the loop 1/day + 5-min spacing do not apply to manual posts). */
+const MANUAL_DAILY_CEILING = 25;
+
+export class PublishGate {
+  readonly #admission: Admission;
+  readonly #vault: Vault;
+  readonly #client: PlatformClient;
+  readonly #now: () => number;
+  readonly #mutex: KeyedMutex;
+  readonly #metering?: Metering;
+  readonly #recent?: RecentPosts;
+  readonly #outbox?: Outbox;
+
+  constructor(deps: GateDeps) {
+    this.#admission = deps.admission;
+    this.#vault = deps.vault;
+    this.#client = deps.client;
+    this.#now = deps.now;
+    this.#mutex = deps.mutex ?? new KeyedMutex();
+    this.#metering = deps.metering;
+    this.#recent = deps.recentPosts;
+    this.#outbox = deps.outbox;
+  }
+
+  async postNow(input: PostNowInput): Promise<PostResult> {
+    const now = this.#now();
+
+    // 1. ADMISSION — license gate (session valid/grace, allowlisted, not globally killed).
+    const adm = await this.#admission.admit(input.bearer, now);
+    if (!adm.admitted || !adm.emailHash) {
+      return { outcome: 'rejected', finalReasons: [adm.reason ?? 'not admitted'] };
+    }
+    const emailHash = adm.emailHash;
+
+    // 2. Resolve the connection SERVER-SIDE from the session identity (never client input).
+    const vaultRef = await this.#vault.refByEmailHash(emailHash);
+    if (!vaultRef) return { outcome: 'rejected', finalReasons: ['no connected X account — run connect_x first'] };
+    const conn = await this.#vault.getMetadata(vaultRef);
+    if (!conn) return { outcome: 'rejected', finalReasons: ['connection metadata missing'] };
+    if (await this.#vault.needsReauth(vaultRef)) {
+      return { outcome: 'rejected', finalReasons: ['connection needs re-auth — run connect_x again'] };
+    }
+
+    // Serialize the read-history -> gauntlet -> send critical section per handle (review fix #5).
+    return this.#mutex.run(emailHash, async () => {
+      // 2b. IDEMPOTENCY — a retried post_now with the same key that already SENT short-circuits here,
+      //     before re-evaluation, so a network retry never double-posts (the mutex makes this race-free).
+      if (this.#outbox) {
+        const prior = await this.#outbox.find(input.idempotencyKey);
+        if (prior && prior.state === OutboxState.SENT) {
+          return { outcome: 'published', requiresHumanReview: false, finalReasons: ['idempotent replay — already posted'] };
+        }
+      }
+
+      // 3. DRAFT — real hasLink + X weighted-length preflight.
+      const norm = normalizeDraft(input.text, { aiGenerated: input.aiGenerated ?? false });
+      if (norm.problems.length) return { outcome: 'rejected', finalReasons: norm.problems };
+
+      // 4. CTX — manual (no loop => spacing-exempt); killSwitch REQUIRED (populated live).
+      //    history comes from the per-handle recent-post cache (read inside the lock) so casserole
+      //    L2 (daily ceiling) + L3 (near-duplicate dedup) enforce on real history.
+      const history = this.#recent ? await this.#recent.recent(emailHash, now) : [];
+      const killSwitch = await this.#admission.resolveKillSwitch(emailHash, conn.xUserId);
+      const handle: Handle = {
+        id: conn.xUserId,
+        workspaceId: '',
+        platform: Platform.X,
+        username: conn.username,
+        verified: false,
+        ageDays: 0,
+        standing: conn.standing,
+        connectedAt: 0,
+      };
+      const ctx: GauntletContext = {
+        tier: 'SOLO',
+        handle,
+        history,
+        now,
+        accountDailyCeiling: MANUAL_DAILY_CEILING,
+        killSwitch,
+      };
+
+      // 5. CASSEROLE — the unbypassable gate. Defense-in-depth: never run without a kill-switch.
+      if (!ctx.killSwitch) throw new Error('gate: killSwitch must be populated before runGauntlet');
+      const g = runGauntlet(norm.draft, ctx);
+      if (g.verdict === Verdict.BLOCK) {
+        return { outcome: 'blocked', verdict: g.verdict, requiresHumanReview: g.requiresHumanReview, finalReasons: g.finalReasons };
+      }
+      if (g.requiresHumanReview) {
+        return { outcome: 'held', verdict: g.verdict, requiresHumanReview: true, finalReasons: g.finalReasons };
+      }
+      if (g.verdict === Verdict.REGENERATE) {
+        return { outcome: 'regenerate', verdict: g.verdict, requiresHumanReview: false, finalReasons: g.finalReasons };
+      }
+
+      // 6. METER (lane B only) — capx eats the capx-app-lane X cost, so cap it. Meter ACTUAL sends:
+      //    checked after casserole PASS, before the call. BYO lane is uncapped (user pays X directly).
+      if (conn.lane === Lane.CAPX_APP && this.#metering) {
+        const m = await this.#metering.check(emailHash, now);
+        if (!m.allowed) {
+          return {
+            outcome: 'rejected',
+            verdict: g.verdict,
+            requiresHumanReview: false,
+            finalReasons: [...g.finalReasons, `capx-app daily cap reached (${m.used}/${m.cap})`],
+          };
+        }
+      }
+
+      // 7. SEND via the x-adapter, durably. Enqueue PENDING -> SENDING -> (SENT | PUBLISH_FAILED).
+      //    channelId = vaultRef: the adapter maps it to the vaulted token server-side (S4). The token
+      //    never crosses this gate.
+      let jobId: string | null = null;
+      if (this.#outbox) {
+        const enq = await this.#outbox.enqueue({
+          id: input.idempotencyKey,
+          idempotencyKey: input.idempotencyKey,
+          emailHash,
+          vaultRef,
+          text: norm.draft.text,
+          aiGenerated: norm.draft.aiGenerated,
+          lane: conn.lane,
+          state: OutboxState.PENDING,
+          scheduledAtMs: g.scheduledAtMs ?? now,
+          createdAtMs: now,
+        });
+        jobId = enq.job.id;
+        await this.#outbox.markSending(jobId);
+      }
+      try {
+        const pub = await this.#client.publish({
+          channelId: vaultRef,
+          text: norm.draft.text,
+          scheduledAtMs: g.scheduledAtMs ?? now,
+          aiLabel: norm.draft.aiGenerated,
+        });
+        if (this.#outbox && jobId) await this.#outbox.markSent(jobId);
+        if (conn.lane === Lane.CAPX_APP && this.#metering) await this.#metering.record(emailHash, now);
+        // record into the recent-post cache (still inside the lock) so the next post dedups against it.
+        if (this.#recent) await this.#recent.record(emailHash, { text: norm.draft.text, postedAt: now });
+        return {
+          outcome: 'published',
+          verdict: g.verdict,
+          requiresHumanReview: false,
+          finalReasons: g.finalReasons,
+          platformPostId: pub.platformPostId,
+        };
+      } catch {
+        if (this.#outbox && jobId) await this.#outbox.markFailed(jobId);
+        return {
+          outcome: 'publish_failed',
+          verdict: g.verdict,
+          requiresHumanReview: false,
+          finalReasons: [...g.finalReasons, 'publish failed at the X boundary'],
+        };
+      }
+    });
+  }
+}

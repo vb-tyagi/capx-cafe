@@ -1,7 +1,7 @@
 // capx-chef — AI content generation. The ContentProvider abstraction lets a mock (keyless) and,
 // later, real LLM/image providers implement the same seam. chef returns a DraftPost that flows
 // straight into capx-canteen -> capx-casserole.
-import type { TweetType } from '../../core/src/index.ts';
+import type { TweetType } from '@capx/core';
 
 export interface GenerationRequest {
   type: TweetType;
@@ -18,5 +18,5 @@ export interface GenerationRequest {
 }
 
 export interface ContentProvider {
-  generate(req: GenerationRequest): Promise<import('../../core/src/index.ts').DraftPost>;
+  generate(req: GenerationRequest): Promise<import('@capx/core').DraftPost>;
 }

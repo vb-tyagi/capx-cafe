@@ -1,0 +1,11 @@
+# Cloud Build: build the chokepoint image on GCP's x86 workers and push to Artifact Registry.
+# Why Cloud Build and not a local `docker push`: this Mac is Apple Silicon (arm64) and Cloud Run runs
+# amd64 only — a locally-built image would push fine and then fail to start. Building here also keeps
+# the Dockerfile path explicit (it lives under services/, not at the repo root).
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'services/chokepoint/Dockerfile', '-t', '${_IMAGE}', '.']
+images:
+  - '${_IMAGE}'
+options:
+  logging: CLOUD_LOGGING_ONLY

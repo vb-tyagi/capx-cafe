@@ -1,6 +1,6 @@
 // capx-captain — the gate on every request: kill switch → whitelist → membership → role → (handle cap).
 // Returns a tenantScope used to scope Postgres RLS (`set_config('app.workspace_id', tenantScope)`).
-import type { Role, Tier } from '../../core/src/index.ts';
+import type { Role, Tier } from '@capx/core';
 import { can, Action } from './roles.ts';
 import { isWhitelisted } from './whitelist.ts';
 import type { VerificationStatus } from './whitelist.ts';

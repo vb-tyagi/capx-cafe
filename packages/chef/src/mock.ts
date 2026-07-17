@@ -1,7 +1,7 @@
 // Deterministic, keyless stand-in for a real LLM. Real providers implement the same ContentProvider.
 import type { ContentProvider, GenerationRequest } from './types.ts';
-import type { DraftPost } from '../../core/src/index.ts';
-import { TweetType } from '../../core/src/index.ts';
+import type { DraftPost } from '@capx/core';
+import { TweetType } from '@capx/core';
 
 function composeText(req: GenerationRequest): string {
   const topic = req.category.trim();

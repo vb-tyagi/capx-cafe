@@ -1,12 +1,12 @@
 // The Loop tick — the publishing chokepoint. Composes guardrails + credits + platform-client:
 // a post reaches the platform adapter ONLY if the gauntlet passes AND (autonomous, no review)
 // AND credits are affordable. Credits are charged only on an actual publish.
-import type { DraftPost } from '../../core/src/index.ts';
-import { ActionType, TweetType, Verdict } from '../../core/src/index.ts';
-import { runGauntlet } from '../../casserole/src/index.ts';
-import type { GauntletContext, GauntletResult } from '../../casserole/src/index.ts';
-import { CreditLedger } from '../../counter/src/index.ts';
-import type { PlatformClient, PublishResult } from '../../platform-client/src/index.ts';
+import type { DraftPost } from '@capx/core';
+import { ActionType, TweetType, Verdict } from '@capx/core';
+import { runGauntlet } from '@capx/casserole';
+import type { GauntletContext, GauntletResult } from '@capx/casserole';
+import { CreditLedger } from '@capx/counter';
+import type { PlatformClient, PublishResult } from '@capx/platform-client';
 
 /** Which billable actions a draft incurs (generation + the posting action). */
 export function actionsForDraft(post: DraftPost): ActionType[] {

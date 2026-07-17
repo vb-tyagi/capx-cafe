@@ -1,0 +1,34 @@
+{
+  "name": "@capx/chokepoint",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The thin, stateless, self-hostable Option-B chokepoint: token vault + hosted-callback PKCE OAuth + admission (allowlist/session/kill-list) + x-adapter + the casserole-enforced publish gate. See docs/P1-CHOKEPOINT.md.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "capx-chokepoint": "./src/serve.ts"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node --experimental-strip-types src/serve.ts",
+    "dev": "node --experimental-strip-types --watch src/serve.ts"
+  },
+  "dependencies": {
+    "@capx/canteen": "workspace:*",
+    "@capx/captain": "workspace:*",
+    "@capx/casserole": "workspace:*",
+    "@capx/chef": "workspace:*",
+    "@capx/config": "workspace:*",
+    "@capx/core": "workspace:*",
+    "@capx/counter": "workspace:*",
+    "@capx/platform-client": "workspace:*",
+    "pg": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.20.0",
+    "pg-mem": "3.0.14"
+  }
+}

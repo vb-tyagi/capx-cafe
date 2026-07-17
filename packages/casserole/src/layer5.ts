@@ -1,6 +1,6 @@
 // L5 — Watch & kill. Account-health signals auto-pause Loops (mandatory for autonomous mode).
 import type { LayerResult, GauntletContext } from './types.ts';
-import { GuardrailLayer, Verdict } from '../../core/src/index.ts';
+import { GuardrailLayer, Verdict } from '@capx/core';
 import { worst } from './verdict.ts';
 
 const FOLLOWER_DROP_THRESHOLD = -50;
