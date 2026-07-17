@@ -66,6 +66,51 @@ async function main(): Promise<void> {
     async (args) => ({ content: [{ type: 'text', text: (await mcp.postNow(args)).text }] }),
   );
 
+  server.registerTool(
+    'create_loop',
+    {
+      description:
+        'Schedule recurring posts. YOU (the agent) must write the posts and pass them in `posts` — capx never generates content, so at fire time it only ships text you already wrote. When the queue empties the loop pauses and asks for more. Requires a verified X account at least 30 days old.',
+      inputSchema: {
+        time: z.string().describe('local time, HH:MM, e.g. "09:00"'),
+        daysOfWeek: z.array(z.number()).describe('0=Sunday .. 6=Saturday, e.g. [1,3,5]'),
+        posts: z.array(z.string()).describe('the posts YOU wrote; one is sent per fire, in order'),
+        timezone: z.string().optional().describe('IANA zone (defaults to this machine\'s), e.g. Asia/Kolkata'),
+      },
+    },
+    async (args) => ({ content: [{ type: 'text', text: (await mcp.createLoop(args)).text }] }),
+  );
+
+  server.registerTool(
+    'list_loops',
+    { description: 'List your scheduled loops, their next-post queue, and whether any are paused.', inputSchema: {} },
+    async () => ({ content: [{ type: 'text', text: (await mcp.listLoops()).text }] }),
+  );
+
+  server.registerTool(
+    'pause_loop',
+    {
+      description: 'Pause or resume a loop.',
+      inputSchema: { id: z.string(), paused: z.boolean().optional().describe('false to resume; defaults to true') },
+    },
+    async (args) => ({ content: [{ type: 'text', text: (await mcp.pauseLoop(args)).text }] }),
+  );
+
+  server.registerTool(
+    'top_up_loop',
+    {
+      description: 'Add more posts YOU wrote to a loop\'s queue. Resumes a loop that paused because it ran out.',
+      inputSchema: { id: z.string(), posts: z.array(z.string()) },
+    },
+    async (args) => ({ content: [{ type: 'text', text: (await mcp.topUpLoop(args)).text }] }),
+  );
+
+  server.registerTool(
+    'delete_loop',
+    { description: 'Delete a loop permanently.', inputSchema: { id: z.string() } },
+    async (args) => ({ content: [{ type: 'text', text: (await mcp.deleteLoop(args)).text }] }),
+  );
+
   await server.connect(new StdioServerTransport());
 }
 

@@ -38,6 +38,22 @@ export interface PostResp {
   finalReasons: string[];
   platformPostId?: string;
 }
+export interface LoopResp {
+  id: string;
+  timezone: string;
+  timeOfDayMinutes: number;
+  daysOfWeek: number[];
+  buffer: string[];
+  paused: boolean;
+  pausedReason?: string;
+  lastFiredDayKey?: string;
+}
+export interface CreateLoopBody {
+  timezone: string;
+  timeOfDayMinutes: number;
+  daysOfWeek: number[];
+  posts: string[];
+}
 
 export class ChokepointClient {
   readonly #base: string;
@@ -71,5 +87,22 @@ export class ChokepointClient {
   }
   postNow(bearer: string, input: { text: string; aiGenerated: boolean; idempotencyKey: string }): Promise<PostResp> {
     return this.#post<PostResp>('/post_now', input, bearer);
+  }
+
+  // ---- Loops ----
+  createLoop(bearer: string, input: CreateLoopBody): Promise<{ loop: LoopResp }> {
+    return this.#post<{ loop: LoopResp }>('/loops/create', input, bearer);
+  }
+  listLoops(bearer: string): Promise<{ loops: LoopResp[] }> {
+    return this.#post<{ loops: LoopResp[] }>('/loops/list', {}, bearer);
+  }
+  pauseLoop(bearer: string, id: string, paused: boolean): Promise<{ loop: LoopResp }> {
+    return this.#post<{ loop: LoopResp }>('/loops/pause', { id, paused }, bearer);
+  }
+  topUpLoop(bearer: string, id: string, posts: string[]): Promise<{ loop: LoopResp }> {
+    return this.#post<{ loop: LoopResp }>('/loops/topup', { id, posts }, bearer);
+  }
+  deleteLoop(bearer: string, id: string): Promise<{ ok: boolean }> {
+    return this.#post<{ ok: boolean }>('/loops/delete', { id }, bearer);
   }
 }

@@ -45,6 +45,7 @@ import { Outbox } from './outbox/index.ts';
 import type { OutboxStore } from './outbox/index.ts';
 import { Loops } from './loops/index.ts';
 import type { LoopStore } from './loops/index.ts';
+import { LoopTicker } from './loops/tick.ts';
 import { createService } from './server/router.ts';
 
 /** A store implementing every chokepoint port (InMemoryStore and PostgresStore both satisfy it). */
@@ -94,18 +95,21 @@ export function createChokepoint(store: ChokepointStore, cfg: ChokepointConfig) 
   const loops = new Loops(store, now);
   const gate = new PublishGate({ admission, vault, client: new XAdapter({ vault, post: cfg.xPost }), now, metering, recentPosts, outbox });
   const refresher = new Refresher({ vault, clientId: cfg.byoDefaultClientId ?? '' });
+  const ticker = new LoopTicker({ loops, gate, now });
   const service = createService({
     admission,
     vault,
     oauth,
     gate,
+    loops,
+    ticker,
     adminKey: cfg.adminKey,
     now,
     tokenExchange: cfg.tokenExchange,
     identity: cfg.identity,
     byoDefaultClientId: cfg.byoDefaultClientId,
   });
-  return { service, store, vault, admission, oauth, gate, refresher, loops };
+  return { service, store, vault, admission, oauth, gate, refresher, loops, ticker };
 }
 
 /** Build the service over the in-memory store (dev / tests / self-host evaluation — no DB). */

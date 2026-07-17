@@ -14,6 +14,8 @@ import type { Admission } from '../admission/index.ts';
 import type { Vault } from '../vault/index.ts';
 import type { OAuthFlow, TokenExchange, IdentityFetch } from '../oauth/index.ts';
 import type { PublishGate } from '../gate/index.ts';
+import type { Loops } from '../loops/index.ts';
+import type { LoopTicker } from '../loops/tick.ts';
 import { generateSessionNonce } from '../oauth/pkce.ts';
 
 export interface ServiceRequest {
@@ -37,6 +39,8 @@ export interface ServiceDeps {
   vault: Vault;
   oauth: OAuthFlow;
   gate: PublishGate;
+  loops: Loops;
+  ticker: LoopTicker;
   adminKey: string;
   now: () => number;
   tokenExchange: TokenExchange; // injected: mock X in dev/tests, real endpoints in prod
@@ -153,6 +157,53 @@ export function createService(deps: ServiceDeps): ChokepointService {
       if (!idempotencyKey) return json(400, { error: 'idempotencyKey required' });
       const result = await deps.gate.postNow({ bearer: tok, text, aiGenerated: Boolean(b.aiGenerated), idempotencyKey });
       return json(200, result);
+    }
+
+    // ---- Loops (scheduled posting). `posts` is ALWAYS agent-authored: capx runs no model. ----
+    if (route.startsWith('POST /loops/')) {
+      const tok = bearer(req.headers);
+      if (!tok) return json(401, { error: 'missing bearer' });
+      const adm = await deps.admission.admit(tok, now);
+      if (!adm.admitted || !adm.emailHash) return json(401, { error: adm.reason ?? 'not admitted' });
+      const me = adm.emailHash;
+      const b = asObj(req.body);
+
+      if (route === 'POST /loops/create') {
+        const { loop, problems } = await deps.loops.create({
+          emailHash: me,
+          timezone: String(b.timezone ?? ''),
+          timeOfDayMinutes: Number(b.timeOfDayMinutes),
+          daysOfWeek: Array.isArray(b.daysOfWeek) ? (b.daysOfWeek as unknown[]).map(Number) : [],
+          posts: Array.isArray(b.posts) ? (b.posts as unknown[]).map(String) : [],
+          autonomy: b.autonomy === 'USER_REVIEWED' ? 'USER_REVIEWED' : 'AUTONOMOUS',
+          trainingWheelsRemaining: b.trainingWheelsRemaining === undefined ? 0 : Number(b.trainingWheelsRemaining),
+        });
+        return problems.length ? json(400, { problems }) : json(200, { loop });
+      }
+      if (route === 'POST /loops/list') return json(200, { loops: await deps.loops.list(me) });
+      if (route === 'POST /loops/pause') {
+        const l = await deps.loops.setPaused(String(b.id ?? ''), me, b.paused !== false);
+        return l ? json(200, { loop: l }) : json(404, { error: 'no such loop' });
+      }
+      if (route === 'POST /loops/topup') {
+        const posts = Array.isArray(b.posts) ? (b.posts as unknown[]).map(String) : [];
+        if (!posts.length) return json(400, { error: 'posts required (capx does not generate content)' });
+        const l = await deps.loops.topUp(String(b.id ?? ''), me, posts);
+        return l ? json(200, { loop: l }) : json(404, { error: 'no such loop' });
+      }
+      if (route === 'POST /loops/delete') {
+        return (await deps.loops.remove(String(b.id ?? ''), me)) ? json(200, { ok: true }) : json(404, { error: 'no such loop' });
+      }
+      return json(404, { error: `no route ${route}` });
+    }
+
+    // The scheduler heartbeat. Cloud Run scales to zero, so Cloud Scheduler drives this. Admin-key
+    // gated: anyone who could call it could otherwise force loops to fire early.
+    if (route === 'POST /internal/tick') {
+      const key = req.headers['x-admin-key'];
+      if (!key || key !== deps.adminKey) return json(403, { error: 'bad admin key' });
+      const results = await deps.ticker.tick();
+      return json(200, { checked: results.length, fired: results.filter((r) => r.fired).length, results });
     }
 
     if (route === 'POST /admin/allow') {

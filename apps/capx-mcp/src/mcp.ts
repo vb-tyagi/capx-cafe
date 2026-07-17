@@ -2,7 +2,7 @@
 // the chokepoint; the MCP holds only a short-TTL session bearer (lazily obtained/refreshed) and the
 // transient connect pending-ref. It renders the chokepoint's verdict so the agent can explain a
 // blocked/held post WITHOUT re-running or being able to skip the guard (assume-compromised posture).
-import type { ChokepointClient, PostResp } from './client.ts';
+import type { ChokepointClient, PostResp, LoopResp } from './client.ts';
 
 export interface McpConfig {
   emailHash: string;
@@ -18,6 +18,16 @@ export interface CapxMcpDeps {
   config: McpConfig;
   now: () => number;
   sessionTtlMs?: number;
+}
+
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function renderLoop(l: LoopResp): string {
+  const hh = String(Math.floor(l.timeOfDayMinutes / 60)).padStart(2, '0');
+  const mm = String(l.timeOfDayMinutes % 60).padStart(2, '0');
+  const days = l.daysOfWeek.map((d) => DAY_NAMES[d] ?? String(d)).join('/');
+  const state = l.paused ? ` — PAUSED${l.pausedReason ? ` (${l.pausedReason})` : ''}` : '';
+  return `${hh}:${mm} ${l.timezone} on ${days} · ${l.buffer.length} post(s) queued${state} · id ${l.id}`;
 }
 
 function renderOutcome(r: PostResp): string {
@@ -98,6 +108,84 @@ export class CapxMcp {
     if (!w.connected) return { text: 'No X account connected. Run connect_x.', data: { connected: false } };
     const flag = w.needsReauth ? ' (needs re-auth — run connect_x again)' : '';
     return { text: `Connected as @${w.username} on the ${w.lane} lane${flag}.`, data: { ...w } };
+  }
+
+  // ---- Loops ----
+
+  /**
+   * Parse "09:00" / "9:00" / "0900" into minutes past local midnight. Agents naturally say "9am", not
+   * "540", so accept the human form and fail loudly rather than guessing.
+   */
+  static parseTime(t: string): number | null {
+    const m = /^(\d{1,2}):?(\d{2})$/.exec(t.trim());
+    if (!m) return null;
+    const h = Number(m[1]);
+    const min = Number(m[2]);
+    if (h > 23 || min > 59) return null;
+    return h * 60 + min;
+  }
+
+  /** The machine's IANA zone — so "9am" means the user's 9am without them stating it. */
+  static localZone(): string {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  }
+
+  async createLoop(args: { time: string; daysOfWeek: number[]; posts: string[]; timezone?: string }): Promise<ToolResult> {
+    const bearer = await this.#ensureSession();
+    const minutes = CapxMcp.parseTime(args.time);
+    if (minutes === null) return { text: `Could not read time "${args.time}". Use HH:MM, e.g. "09:00".`, data: { ok: false } };
+    if (!args.posts?.length) {
+      return {
+        text: 'A loop needs posts you have written — capx never generates content. Write the posts first, then create the loop with them.',
+        data: { ok: false, needsPosts: true },
+      };
+    }
+    const timezone = args.timezone ?? CapxMcp.localZone();
+    try {
+      const { loop } = await this.#client.createLoop(bearer, { timezone, timeOfDayMinutes: minutes, daysOfWeek: args.daysOfWeek, posts: args.posts });
+      return { text: `Loop created: ${renderLoop(loop)}`, data: { ok: true, ...loop } };
+    } catch (e) {
+      return { text: `Could not create the loop: ${e instanceof Error ? e.message : String(e)}`, data: { ok: false } };
+    }
+  }
+
+  async listLoops(): Promise<ToolResult> {
+    const bearer = await this.#ensureSession();
+    const { loops } = await this.#client.listLoops(bearer);
+    if (!loops.length) return { text: 'No loops yet. Use create_loop with posts you have written.', data: { loops: [] } };
+    return { text: loops.map((l) => `• ${renderLoop(l)}`).join('\n'), data: { loops } };
+  }
+
+  async pauseLoop(args: { id: string; paused?: boolean }): Promise<ToolResult> {
+    const bearer = await this.#ensureSession();
+    const paused = args.paused !== false;
+    try {
+      const { loop } = await this.#client.pauseLoop(bearer, args.id, paused);
+      return { text: `Loop ${paused ? 'paused' : 'resumed'}: ${renderLoop(loop)}`, data: { ...loop } };
+    } catch (e) {
+      return { text: `Could not update that loop: ${e instanceof Error ? e.message : String(e)}`, data: { ok: false } };
+    }
+  }
+
+  async topUpLoop(args: { id: string; posts: string[] }): Promise<ToolResult> {
+    const bearer = await this.#ensureSession();
+    if (!args.posts?.length) return { text: 'Write the posts first — capx does not generate them.', data: { ok: false } };
+    try {
+      const { loop } = await this.#client.topUpLoop(bearer, args.id, args.posts);
+      return { text: `Added ${args.posts.length} post(s). ${renderLoop(loop)}`, data: { ...loop } };
+    } catch (e) {
+      return { text: `Could not top up that loop: ${e instanceof Error ? e.message : String(e)}`, data: { ok: false } };
+    }
+  }
+
+  async deleteLoop(args: { id: string }): Promise<ToolResult> {
+    const bearer = await this.#ensureSession();
+    try {
+      await this.#client.deleteLoop(bearer, args.id);
+      return { text: 'Loop deleted.', data: { ok: true } };
+    } catch (e) {
+      return { text: `Could not delete that loop: ${e instanceof Error ? e.message : String(e)}`, data: { ok: false } };
+    }
   }
 
   async postNow(args: { text: string; aiGenerated?: boolean; idempotencyKey?: string }): Promise<ToolResult> {
