@@ -34,7 +34,7 @@ async function main(): Promise<void> {
   const client = new ChokepointClient(cfg.chokepointUrl, fetchImpl);
   const mcp = new CapxMcp({
     client,
-    config: { emailHash: emailHash(email), lane: cfg.lane, clientId: cfg.clientId },
+    config: { emailHash: emailHash(email), lane: cfg.lane, clientId: cfg.clientId, guideUrl: `${cfg.chokepointUrl}/connect/guide` },
     now: () => Date.now(),
   });
 

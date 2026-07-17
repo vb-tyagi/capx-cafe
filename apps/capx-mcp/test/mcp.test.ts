@@ -11,7 +11,7 @@ const EMAIL = 'founder@capx.ai';
 const CLEAN =
   'Shipping the anti-slop engine today: deterministic scoring, real unit tests, and zero external keys. Here is a concrete walkthrough of the pipeline.';
 
-function wire(cfg: { clientId?: string } = { clientId: 'client-xyz' }) {
+function wire(cfg: { clientId?: string } = { clientId: 'test-client-id-0123456789' }) {
   const built = createInMemoryChokepoint({
     masterKeyBase64: LocalKeyKms.generateMasterKey(),
     signingKey: 'sign',
@@ -20,7 +20,7 @@ function wire(cfg: { clientId?: string } = { clientId: 'client-xyz' }) {
     tokenExchange: async ({ code }) => ({ accessToken: `atok-${code}`, refreshToken: `rtok-${code}` }),
     identity: async () => ({ xUserId: 'x1', username: 'acme', verified: true, createdAtMs: 1_600_000_000_000 }),
     xPost: async () => ({ id: 'tweet-1' }),
-    byoDefaultClientId: 'client-xyz',
+    byoDefaultClientId: 'test-client-id-0123456789',
     now: () => NOW,
   });
   let sessionCalls = 0;

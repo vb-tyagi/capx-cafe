@@ -107,6 +107,7 @@ export function createChokepoint(store: ChokepointStore, cfg: ChokepointConfig) 
     now,
     tokenExchange: cfg.tokenExchange,
     identity: cfg.identity,
+    callbackUrl: cfg.oauth.redirectUri,
     byoDefaultClientId: cfg.byoDefaultClientId,
   });
   return { service, store, vault, admission, oauth, gate, refresher, loops, ticker };

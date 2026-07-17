@@ -32,7 +32,7 @@ function wire() {
       posted.push(text);
       return { id: 'tweet-1' };
     },
-    byoDefaultClientId: 'client-xyz',
+    byoDefaultClientId: 'test-client-id-0123456789',
     now: () => NOW,
   });
   const fetchImpl: FetchLike = async (url, init) => {
@@ -48,7 +48,7 @@ function wire() {
   };
   const client = new ChokepointClient('https://cp.example', fetchImpl);
   const eh = emailHash(EMAIL);
-  const mcp = new CapxMcp({ client, config: { emailHash: eh, lane: 'byo', clientId: 'client-xyz' }, now: () => NOW });
+  const mcp = new CapxMcp({ client, config: { emailHash: eh, lane: 'byo', clientId: 'test-client-id-0123456789' }, now: () => NOW });
   const direct = (method: string, path: string, body?: unknown, headers: Record<string, string> = {}) =>
     built.service.handle({ method, path, query: {}, body, headers });
   return { built, mcp, eh, posted, direct };

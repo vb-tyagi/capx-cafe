@@ -8,6 +8,29 @@ export interface McpConfig {
   emailHash: string;
   lane: 'byo' | 'capx-app';
   clientId?: string;
+  /** the chokepoint's hosted setup guide, surfaced in every BYO failure message. */
+  guideUrl?: string;
+}
+
+/**
+ * Preflight the BYO Client ID BEFORE sending anyone to X. X answers a bad client_id with an opaque
+ * error page, so a wrong value costs a confusing round-trip through a browser. Every failure here is
+ * one we have actually hit or expect: an unreplaced placeholder, a pasted API Key/Secret, a whole URL.
+ * Returns null when it looks usable.
+ */
+export function preflightClientId(id: string): string | null {
+  const v = id.trim();
+  if (!v) return 'No X Client ID set. Add X_CLIENT_ID to your capx config.';
+  if (/paste|your_|_here|xxx|placeholder/i.test(v)) {
+    return `X_CLIENT_ID is still the placeholder ("${v}"). Replace it with your real OAuth 2.0 Client ID.`;
+  }
+  if (/^https?:\/\//i.test(v)) return 'X_CLIENT_ID looks like a URL. Paste the OAuth 2.0 Client ID, not a link.';
+  if (v.includes(' ')) return 'X_CLIENT_ID contains a space — it was probably copied with surrounding text.';
+  // X OAuth2 client ids are compact base64url-ish tokens; API keys/secrets are longer or differently shaped.
+  if (v.length < 12) return `X_CLIENT_ID looks too short (${v.length} chars). Copy the OAuth 2.0 Client ID from your app's "Keys and tokens" page.`;
+  if (v.length > 80) return 'X_CLIENT_ID looks too long — that may be an API Secret or Bearer Token. capx wants the OAuth 2.0 Client ID.';
+  if (!/^[A-Za-z0-9_:-]+$/.test(v)) return 'X_CLIENT_ID has unexpected characters — it was probably copied with extra text.';
+  return null;
 }
 export interface ToolResult {
   text: string;
@@ -88,11 +111,12 @@ export class CapxMcp {
 
     const lane = args.lane ?? this.#cfg.lane;
     const clientId = args.clientId ?? this.#cfg.clientId;
-    if (lane === 'byo' && !clientId) {
-      return {
-        text: 'BYO lane needs your X app Client ID. Set X_CLIENT_ID (or pass clientId) and retry.',
-        data: { connected: false, needsClientId: true },
-      };
+    const guide = this.#cfg.guideUrl ? `\nSetup guide (has your exact callback URL to copy): ${this.#cfg.guideUrl}` : '';
+    if (lane === 'byo') {
+      // Preflight BEFORE minting a consent URL: X answers a bad client_id with an opaque error, so
+      // catching it here saves a confusing trip through the browser.
+      const problem = preflightClientId(clientId ?? '');
+      if (problem) return { text: `${problem}${guide}`, data: { connected: false, needsClientId: true } };
     }
     const s = await this.#client.startConnect(bearer, { lane: lane === 'capx-app' ? 'CAPX_APP' : 'BYO', clientId });
     this.#pending = { pendingId: s.pendingId, sessionNonce: s.sessionNonce };

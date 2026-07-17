@@ -46,10 +46,17 @@ export interface ServiceDeps {
   tokenExchange: TokenExchange; // injected: mock X in dev/tests, real endpoints in prod
   identity: IdentityFetch;
   byoDefaultClientId?: string;
+  /** the hosted HTTPS callback — the wizard shows it verbatim, since it must match X byte-for-byte. */
+  callbackUrl: string;
 }
 
 const json = (status: number, body: unknown): ServiceResponse => ({ status, body, contentType: 'application/json' });
 const html = (status: number, body: string): ServiceResponse => ({ status, body, contentType: 'text/html' });
+
+/** The callback URL is operator-configured, but it lands in an HTML attribute — escape it anyway. */
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+}
 
 function bearer(headers: Record<string, string | undefined>): string | null {
   const h = headers['authorization'] ?? headers['Authorization'];
@@ -72,6 +79,53 @@ export function createService(deps: ServiceDeps): ChokepointService {
     // app while GET /healthz did not).
     if (route === 'GET /health' || route === 'GET /healthz') {
       return json(200, { ok: true, service: 'capx-chokepoint' });
+    }
+
+    // The BYO onboarding wizard (decision §5.6). BYO is a developer wall in front of a creator tool:
+    // registering an X app is ~8 screens, and the most common failure is a callback that doesn't match
+    // BYTE-FOR-BYTE — which X reports as an opaque error. So the chokepoint serves the exact callback
+    // string to copy rather than asking anyone to retype it.
+    if (route === 'GET /connect/guide') {
+      const cb = escapeHtml(deps.callbackUrl);
+      return html(
+        200,
+        `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>capx — connect your X account</title>
+<style>
+ :root{color-scheme:light dark}
+ body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:44rem;margin:3rem auto;padding:0 1.25rem}
+ h1{font-size:1.6rem;margin:0 0 .25rem} p.sub{opacity:.7;margin:0 0 2rem}
+ ol{padding-left:1.2rem} li{margin:.9rem 0}
+ code{background:rgba(127,127,127,.16);padding:.15rem .4rem;border-radius:4px;font-size:.9em}
+ .cb{display:flex;gap:.5rem;align-items:center;margin:.6rem 0}
+ .cb input{flex:1;font:13px ui-monospace,SFMono-Regular,Menlo,monospace;padding:.6rem;border:1px solid rgba(127,127,127,.4);border-radius:6px;background:transparent;color:inherit}
+ button{padding:.6rem .9rem;border:0;border-radius:6px;background:#1d9bf0;color:#fff;font-weight:600;cursor:pointer}
+ .warn{border-left:3px solid #e0245e;padding:.5rem 0 .5rem .9rem;margin:1.5rem 0}
+ .ok{border-left:3px solid #17bf63;padding:.5rem 0 .5rem .9rem;margin:1.5rem 0}
+ a{color:#1d9bf0}
+</style>
+<h1>Connect your X account</h1>
+<p class=sub>You bring your own X app, so <strong>you</strong> hold the API quota and capx never pays for your posts. About 5 minutes, once.</p>
+<ol>
+ <li>Open <a href="https://developer.x.com/en/portal/dashboard" target="_blank" rel="noopener">the X developer portal</a> and sign in as the account you want to post from.</li>
+ <li>First time? Apply for a developer account and accept the terms.</li>
+ <li><strong>Projects &amp; Apps</strong> → create a <strong>Project</strong> → create an <strong>App</strong> inside it. Any name.</li>
+ <li>Open the app → <strong>User authentication settings</strong> → <strong>Set up</strong>.</li>
+ <li><strong>App permissions</strong>: <code>Read and write</code>. (Read-only cannot post — the most common mistake after the callback.)</li>
+ <li><strong>Type of App</strong>: <code>Native App</code>. It's a public client, so there is no secret to leak.</li>
+ <li><strong>Callback URI / Redirect URL</strong> — paste this exactly:
+   <div class=cb>
+     <input id=cb value="${cb}" readonly onclick="this.select()">
+     <button onclick="navigator.clipboard.writeText(document.getElementById('cb').value);this.textContent='Copied'">Copy</button>
+   </div>
+ </li>
+ <li><strong>Website URL</strong>: any URL you own. Save.</li>
+ <li>Copy the <strong>OAuth 2.0 Client ID</strong> — that is what capx needs.</li>
+</ol>
+<div class=warn><strong>The callback must match character-for-character.</strong> A trailing slash, <code>http</code> for <code>https</code>, or a typo all produce the same unhelpful error from X. Use Copy rather than retyping.</div>
+<div class=ok><strong>Do not paste your API Key or API Secret.</strong> capx wants the <em>OAuth 2.0 Client ID</em> — a different value on the same page. The Client ID is not a secret, and capx never asks for your secret on this lane.</div>
+<p>Then set <code>X_CLIENT_ID</code> in your agent's capx config and run <code>connect_x</code>.</p>`,
+      );
     }
 
     if (route === 'POST /session') {
