@@ -23,7 +23,7 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 | Phase | Goal (one line) | Shippable Artifact | External Gates |
 |---|---|---|---|
 | **P0** | Two-repo split, closed monorepo skeleton, **dual-side** AGPL boundary guard, data spine + fail-closed RLS, CI/IaC plane | Green-CI closed monorepo with boundary invariant + tenant-isolated Postgres, runnable on docker-compose | None |
-| **P1** | The dependency-free moat: pure gauntlet, credit math, AI abstraction, OAuth PKCE, KMS crypto, timing math, **split-integrity audit chain** | Versioned `@capx/*` package set proving anti-slop + pricing + scheduling IP works fully offline | None |
+| **P1** | The dependency-free moat: pure gauntlet, credit math, AI abstraction, OAuth PKCE, KMS crypto, timing math, **split-integrity audit chain** | Versioned `@capx-cafe/*` package set proving anti-slop + pricing + scheduling IP works fully offline | None |
 | **P2** | Invite-only identity/authz authority, Medium gate, 3-handle cap, kill switches, BFF shell — **with security-logging + edge throttling from day one** | Invite-only, tenant-isolated identity service + BFF onboarding shell on local infra | None |
 | **P3** | Stateful credit ledger: holds, dedup metering, packs/grants, **reversals/clawback designed in** | Keyless credit ledger with crash-safe authorize-capture + reversal semantics | None |
 | **P4** | Six-layer guardrail service wrapping the pure gauntlet, **L1 defined as API-observable proxies**, offline factuality advisory | Standalone service scoring any candidate post through all six layers | None |
@@ -37,7 +37,7 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 
 ## P0 — Foundation, AGPL Boundary & Data Spine
 
-> ✅ **Foundation DONE & verified (2026-07-10):** monorepo skeleton · `@capx/core` + `@capx/config` + `@capx/platform-client` · CI-enforced **AGPL boundary-guard** (self-tested) · Prisma schema **CLI-validated** + `rls.sql` + local `docker-compose` (Postgres 5433 / Redis 6380) · dev port **4343** · `verify` gate = boundary-guard + **39 unit tests** + guard tests + **typecheck**, all green. Deferred to the service phases (P3–P5) where they naturally live: the NestJS service skeletons, the BullMQ pipeline run, and the pre-publish HMAC webhook.
+> ✅ **Foundation DONE & verified (2026-07-10):** monorepo skeleton · `@capx-cafe/core` + `@capx-cafe/config` + `@capx-cafe/platform-client` · CI-enforced **AGPL boundary-guard** (self-tested) · Prisma schema **CLI-validated** + `rls.sql` + local `docker-compose` (Postgres 5433 / Redis 6380) · dev port **4343** · `verify` gate = boundary-guard + **39 unit tests** + guard tests + **typecheck**, all green. Deferred to the service phases (P3–P5) where they naturally live: the NestJS service skeletons, the BullMQ pipeline run, and the pre-publish HMAC webhook.
 
 **Goal.** Stand up the two-repo split, the closed pnpm+Turborepo monorepo skeleton, a **dual-side** CI-enforced AGPL boundary guard, shared core/config packages, the multi-tenant Prisma schema with fail-closed row-level security, and the full test/CI/local-stack/IaC plane — all with zero external keys. Dev ports allocated in the **43xx block** and documented per project convention.
 
@@ -45,12 +45,12 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 
 **Monorepo topology & open/closed boundary**
 - `[now]` **mono-skeleton** — pnpm-workspace + `turbo.json` + `tsconfig.base` + root config; allocate & hard-code unique 43xx dev ports (check listeners first, document in README).
-- `[now]` **boundary-guard (closed side)** — dependency-cruiser/eslint-boundaries forbidding `@capx/*` leaks into the fork boundary + license-checker rejecting AGPL deps in the closed graph. ⚠ REVIEW-FIX: this guard only sees the closed graph; the **mirror guard lands in P7 inside the fork repo** and both are required CI.
-- `[now]` **platform-client-iface** — `@capx/platform-client` `PlatformClient` interface + `FakePlatformClient` (records calls, returns canned IDs).
+- `[now]` **boundary-guard (closed side)** — dependency-cruiser/eslint-boundaries forbidding `@capx-cafe/*` leaks into the fork boundary + license-checker rejecting AGPL deps in the closed graph. ⚠ REVIEW-FIX: this guard only sees the closed graph; the **mirror guard lands in P7 inside the fork repo** and both are required CI.
+- `[now]` **platform-client-iface** — `@capx-cafe/platform-client` `PlatformClient` interface + `FakePlatformClient` (records calls, returns canned IDs).
 
 **Shared core packages**
-- `[now]` **core-schemas** — `@capx/core`: all shared Zod schemas, domain types, event contracts (single source of domain truth).
-- `[now]` **config-env** — `@capx/config`: single Zod env schema parsed once at boot (fail-fast) + rejection tests.
+- `[now]` **core-schemas** — `@capx-cafe/core`: all shared Zod schemas, domain types, event contracts (single source of domain truth).
+- `[now]` **config-env** — `@capx-cafe/config`: single Zod env schema parsed once at boot (fail-fast) + rejection tests.
 
 **Multi-tenant data model & RLS**
 - `[now]` **prisma-schema** — all entities/enums/composite-FKs/indexes/UUIDv7 PKs; closed brain is system-of-record, opaque refs to fork. ⚠ REVIEW-FIX (handle-uniqueness): schema carries a `realExternalAccountId` column, nullable pre-connect, with the global `UNIQUE(platform, realExternalAccountId)` enforced at real-connect time (see P7/P8), separate from the pre-connect fake-ref registry.
@@ -60,8 +60,8 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 - `[now]` **rls-test-suite** — cross-tenant SELECT = 0 rows, `WITH CHECK` blocks cross-tenant INSERT, ledger UPDATE/DELETE denied.
 
 **Test / CI / local-stack / IaC plane**
-- `[now]` **test-runners** — `node:test` for pure packages + shared Vitest config + `@capx/test-fixtures` deterministic factories.
-- `[now]` **local-stack** — docker-compose (PG16+RLS, Redis7, LocalStack KMS/S3) + postiz-mock server + `@capx/postiz-contract`.
+- `[now]` **test-runners** — `node:test` for pure packages + shared Vitest config + `@capx-cafe/test-fixtures` deterministic factories.
+- `[now]` **local-stack** — docker-compose (PG16+RLS, Redis7, LocalStack KMS/S3) + postiz-mock server + `@capx-cafe/postiz-contract`.
 - `[now]` **ci-pipeline** — GitHub Actions: turbo affected-graph lint→typecheck→unit→integration→contract→build + gitleaks/osv security jobs.
 - `[now]` **iac-authoring** — Terraform modules (network/rds/redis/kms/s3/iam/compute) + validate/tflint/checkov in CI (no apply). ⚠ REVIEW-FIX (WAF): network/compute modules include **edge WAF + rate-limit** primitives. ⚠ REVIEW-FIX (DR): rds module includes **PITR + automated backups + tested-restore** config and an audit-chain-head offsite-export hook.
 
@@ -78,49 +78,49 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 ### Epics & Tasks
 
 **Anti-slop gauntlet core (L2/L3/L4 math)**
-- `[now]` **gauntlet-contracts** — `@capx/gauntlet-contracts`: Zod `CandidatePost`/`GauntletContext`/`Verdict`/`Disposition`/`LayerResult`/`VariationDirective`/`GauntletConfig` + provider interfaces.
-- `[now]` **gauntlet-core** — `@capx/gauntlet-core`: TextNormalizer, banned-pattern scanner, slop-score, SimHash/MinHash/Jaccard/Levenshtein dedup, variation/style-clone fingerprints, jitter/spacing solver, EWMA/z-score, verdict reducer. ⚠ REVIEW-FIX (factuality): the L3 factuality component is defined here as a **cheap offline "claim detector"** (numbers / named-entity / absolute-claim patterns) that routes to human review and **is advisory only — never a hard autonomous block**. Real fact-checking is deferred to P8 behind an LLM key and stays advisory.
+- `[now]` **gauntlet-contracts** — `@capx-cafe/gauntlet-contracts`: Zod `CandidatePost`/`GauntletContext`/`Verdict`/`Disposition`/`LayerResult`/`VariationDirective`/`GauntletConfig` + provider interfaces.
+- `[now]` **gauntlet-core** — `@capx-cafe/gauntlet-core`: TextNormalizer, banned-pattern scanner, slop-score, SimHash/MinHash/Jaccard/Levenshtein dedup, variation/style-clone fingerprints, jitter/spacing solver, EWMA/z-score, verdict reducer. ⚠ REVIEW-FIX (factuality): the L3 factuality component is defined here as a **cheap offline "claim detector"** (numbers / named-entity / absolute-claim patterns) that routes to human review and **is advisory only — never a hard autonomous block**. Real fact-checking is deferred to P8 behind an LLM key and stays advisory.
 - `[now]` **gauntlet-golden** — golden-fixture + invariant tests: never-post-raw degrade-to-hold, never lands on `:00`, deterministic seed reproducibility.
 
 **Credit money core**
-- `[now]` **credits-core** — `@capx/credits`: branded integer money (uUSD/mcr), `ceilDiv`/`applyMarkupBps`, versioned `RateCard` + `PriceCatalog`, `estimate()`, `tierEntitlements()`, `readDedupDecision()`.
+- `[now]` **credits-core** — `@capx-cafe/credits`: branded integer money (uUSD/mcr), `ceilDiv`/`applyMarkupBps`, versioned `RateCard` + `PriceCatalog`, `estimate()`, `tierEntitlements()`, `readDedupDecision()`.
 - `[now]` **credits-proptests** — property tests: no-float-drift, ceilDiv correctness, monotonic pricing, peg/markup reproduce worked examples (plain post ~2cr, link-post 32cr, read 0.65cr, packs 2000/5500/12000cr).
 
 **AI content abstraction**
-- `[now]` **content-contracts** — `@capx/content` Zod contracts + `ContentProvider` port + `ProviderCapabilities` + `ModelCatalog` + `GenerationIntent` enum.
+- `[now]` **content-contracts** — `@capx-cafe/content` Zod contracts + `ContentProvider` port + `ProviderCapabilities` + `ModelCatalog` + `GenerationIntent` enum.
 - `[now]` **content-prompt-style** — versioned `PromptContract v1` assembler + `OutputContract` parser + `StyleCalibrator` with hard *no-source-n-gram > K* guard (style calibration, never verbatim cloning) + `CostEstimator`.
 - `[now]` **content-mocks** — `MockTextProvider` + `AdversarialFakeProvider` (emits slop/banned/over-length) + `MockImageProvider` (`requiresHumanReview`) + `SingleShotPipeline` `run()`/`regenerate()` + provenance envelope.
 
 **OAuth PKCE, KMS envelope & connection state**
-- `[now]` **oauth-pkce** — `@capx/oauth-pkce`: S256 verifier/challenge + state/nonce gen + constant-time verify (node:crypto only).
-- `[now]` **kms-envelope** — `@capx/kms` + `@capx/token-crypto`: `EnvelopeCipher` (AES-256-GCM + AAD tenant-binding) behind `KmsProvider` iface + `LocalKms`/`MockKms` + DEK cache + rotation. ⚠ REVIEW-FIX (custody): this package is consumed by **both** the fork's AGPL-native provider (for platform user tokens, P7) and the closed vault (for closed-side secrets only, P6) — the *code* is shared-shape, the *keys and data* are not.
-- `[now]` **connection-statemachine** — `ConnectionStateMachine` pure reducer (all states + full error taxonomy) + `@capx/connection-contracts`.
+- `[now]` **oauth-pkce** — `@capx-cafe/oauth-pkce`: S256 verifier/challenge + state/nonce gen + constant-time verify (node:crypto only).
+- `[now]` **kms-envelope** — `@capx-cafe/kms` + `@capx-cafe/token-crypto`: `EnvelopeCipher` (AES-256-GCM + AAD tenant-binding) behind `KmsProvider` iface + `LocalKms`/`MockKms` + DEK cache + rotation. ⚠ REVIEW-FIX (custody): this package is consumed by **both** the fork's AGPL-native provider (for platform user tokens, P7) and the closed vault (for closed-side secrets only, P6) — the *code* is shared-shape, the *keys and data* are not.
+- `[now]` **connection-statemachine** — `ConnectionStateMachine` pure reducer (all states + full error taxonomy) + `@capx-cafe/connection-contracts`.
 
 **Publisher timing math & cross-cutting libs**
-- `[now]` **publisher-contracts** — `@capx/publisher-contracts`: `SchedulePostCommand`, `PublishPayload`, policy configs, `PublishErrorClass` taxonomy, `PostizPublishPort`.
+- `[now]` **publisher-contracts** — `@capx-cafe/publisher-contracts`: `SchedulePostCommand`, `PublishPayload`, policy configs, `PublishErrorClass` taxonomy, `PostizPublishPort`.
 - `[now]` **publisher-pure** — pure `node:test` functions: `JitterPolicy` (non-`:00`), spacing solver, daily-ceiling + warm-up curve math, `RetryBackoff`, `ErrorClassifier` (Luxon DST-safe).
-- `[now]` **obs-package** — `@capx/observability`: Pino **deny-by-default redaction serializer**, OTel SDK, AsyncLocalStorage correlation context, MetricsRegistry (console exporter). ⚠ REVIEW-FIX: this package is **mounted starting in P2** (first service touching secrets), not deferred to P6.
-- `[now]` **audit-chain** — `@capx/audit`: hash-chained append-only writer + `AuditChainVerifier` + tamper-detection tests. ⚠ REVIEW-FIX (GDPR-vs-immutability): audit chain is designed **split-integrity from the start** — the immutable chain stores only a **salted hash/commitment** of PII-bearing fields (the <500-word brief, up-to-3 "sound like" source profiles, approver identity), while plaintext lives in **per-subject-key-encrypted shreddable side storage**. Crypto-shredding a subject's DEK erases plaintext while the chain and any evidence pack still verify structurally.
+- `[now]` **obs-package** — `@capx-cafe/observability`: Pino **deny-by-default redaction serializer**, OTel SDK, AsyncLocalStorage correlation context, MetricsRegistry (console exporter). ⚠ REVIEW-FIX: this package is **mounted starting in P2** (first service touching secrets), not deferred to P6.
+- `[now]` **audit-chain** — `@capx-cafe/audit`: hash-chained append-only writer + `AuditChainVerifier` + tamper-detection tests. ⚠ REVIEW-FIX (GDPR-vs-immutability): audit chain is designed **split-integrity from the start** — the immutable chain stores only a **salted hash/commitment** of PII-bearing fields (the <500-word brief, up-to-3 "sound like" source profiles, approver identity), while plaintext lives in **per-subject-key-encrypted shreddable side storage**. Crypto-shredding a subject's DEK erases plaintext while the chain and any evidence pack still verify structurally.
 
 **Cross-cutting authz**
 - `[now]` **authz-engine** — `packages/authz`: Role/Action enums, permission matrix, `can()` with workspace+handle most-specific-grant resolution (node:test, zero infra).
 
-**Definition of Done.** Every pure `@capx/*` package builds and passes node:test/Vitest with golden fixtures and property tests; the *never-post-raw* and *never-fire-on-`:00`* invariants are encoded as passing tests; credit worked-examples reproduce exactly; the audit chain's split-integrity design passes a "shred plaintext → chain still verifies" test; no package imports a framework, network, or external key.
+**Definition of Done.** Every pure `@capx-cafe/*` package builds and passes node:test/Vitest with golden fixtures and property tests; the *never-post-raw* and *never-fire-on-`:00`* invariants are encoded as passing tests; credit worked-examples reproduce exactly; the audit chain's split-integrity design passes a "shred plaintext → chain still verifies" test; no package imports a framework, network, or external key.
 
-**Shippable Artifact.** A versioned internal `@capx/*` package set proving the anti-slop, credit-pricing, style-calibration, scheduling, and split-integrity-audit IP works fully offline.
+**Shippable Artifact.** A versioned internal `@capx-cafe/*` package set proving the anti-slop, credit-pricing, style-calibration, scheduling, and split-integrity-audit IP works fully offline.
 
 ---
 
 ## P2 — Identity, Whitelist Gate & Tenancy
 
-> 🟡 **Engine shipped (2026-07-10):** `@capx/conductor` is the pure authorization core — role/permission engine, invite + Medium-gate whitelist, the 3-handle cap, scoped kill switches (feeding capx-casserole L1), and the request `gate` returning a tenant scope for RLS. 12 tests green + typecheck clean. Remaining P2 (needs infra/keys): the NestJS service + Next.js BFF auth shell, passwordless sessions, and the security-logging + edge-throttling controls.
+> 🟡 **Engine shipped (2026-07-10):** `@capx-cafe/conductor` is the pure authorization core — role/permission engine, invite + Medium-gate whitelist, the 3-handle cap, scoped kill switches (feeding capx-casserole L1), and the request `gate` returning a tenant scope for RLS. 12 tests green + typecheck clean. Remaining P2 (needs infra/keys): the NestJS service + Next.js BFF auth shell, passwordless sessions, and the security-logging + edge-throttling controls.
 
 **Goal.** Ship the closed authorization authority: passwordless sessions, operator invites + Medium verification gate, workspaces/roles, the 3-handle-per-identity cap, scoped kill switches, abuse signals, and the Next.js BFF auth shell — the invite-only front door and single source of authorization truth. ⚠ REVIEW-FIX: security-logging controls and edge throttling are **live from this phase**, since sessions/capability-JWTs are handled here.
 
 ### Epics & Tasks
 
 **Security-logging & edge hardening (moved forward)**
-- `[now]` **obs-mount-p2** — mount `@capx/observability` (Pino redaction serializer + correlation context) in the identity service; enable the **no-secret-logging ESLint rule**; run **secret-leak tests in CI from P2 onward**. ⚠ REVIEW-FIX #10.
+- `[now]` **obs-mount-p2** — mount `@capx-cafe/observability` (Pino redaction serializer + correlation context) in the identity service; enable the **no-secret-logging ESLint rule**; run **secret-leak tests in CI from P2 onward**. ⚠ REVIEW-FIX #10.
 - `[now]` **bff-edge-throttle** — per-route rate-limiting + lockout/backoff on invite-redeem, magic-link request, and auth endpoints; wire to the IaC WAF from P0. ⚠ REVIEW-FIX #16.
 
 **Passwordless sessions & capabilities**
@@ -151,7 +151,7 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 
 ## P3 — Credit Ledger & Cost Metering Service
 
-**Goal.** Ship the stateful closed billing service wrapping `@capx/credits`: append-only ledger, authorize/capture/void holds, dedup-aware read metering, pack purchases + free starter grants, and reconciliation workers, against stubbed payment/cost ports — so the platform can front fees and recover cost+markup invisibly. ⚠ REVIEW-FIX: **reversals/clawback and possibly-negative-balance are designed into the ledger now**, not bolted on in P8.
+**Goal.** Ship the stateful closed billing service wrapping `@capx-cafe/credits`: append-only ledger, authorize/capture/void holds, dedup-aware read metering, pack purchases + free starter grants, and reconciliation workers, against stubbed payment/cost ports — so the platform can front fees and recover cost+markup invisibly. ⚠ REVIEW-FIX: **reversals/clawback and possibly-negative-balance are designed into the ledger now**, not bolted on in P8.
 
 ### Epics & Tasks
 
@@ -174,7 +174,7 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 
 ## P4 — Six-Layer Anti-Slop Guardrail Service
 
-**Goal.** Ship `guardrail-svc` wrapping `@capx/gauntlet-core` with DB/Redis: the two-phase `runGauntlet` (L1 eligibility, L2 rate/jitter/ceiling, L3 quality/dedup, L4 authenticity, L5 kill/watch, L6 label+audit), a bounded regenerate loop, health-monitor auto-pause, and a hash-chained audit trail — the runtime enforcement of the moat.
+**Goal.** Ship `guardrail-svc` wrapping `@capx-cafe/gauntlet-core` with DB/Redis: the two-phase `runGauntlet` (L1 eligibility, L2 rate/jitter/ceiling, L3 quality/dedup, L4 authenticity, L5 kill/watch, L6 label+audit), a bounded regenerate loop, health-monitor auto-pause, and a hash-chained audit trail — the runtime enforcement of the moat.
 
 ### Epics & Tasks
 
@@ -211,7 +211,7 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 - `[now]` **loops-scheduler** — `LoopSchedulerService` planner: tz→UTC occurrences, jitter (never `:00`), per-loop 1/day, min-spacing, atomic account-ceiling reservation, ahead-of-time BullMQ delayed jobs.
 
 **Generation & gauntlet orchestration**
-- `[now]` **loops-content-module** — `ContentModule` binding `@capx/content` (MockProvider) + `ModelRouter` (tier/type gating) + `StyleCalibration` + `VariationEngine`.
+- `[now]` **loops-content-module** — `ContentModule` binding `@capx-cafe/content` (MockProvider) + `ModelRouter` (tier/type gating) + `StyleCalibration` + `VariationEngine`.
 - `[now]` **loops-orchestrator** — `GauntletOrchestrator` state machine (SCHEDULED → … → PUBLISHED) + bounded regen + `GuardrailClient` port (`FakeGuardrailClient`) + hold-never-post-raw. ⚠ REVIEW-FIX: the orchestrator forces **every generated candidate — and every manual post carrying AI content — through L3/L4**; a `reEnterGauntletOnEdit` transition covers user edits of held/queued items.
 - `[now]` **loops-autonomy-queue** — `TrainingWheelsService` (effective-mode + decrement/flip) + `ApprovalQueueService` (approve/edit/skip + auto-skip at fire+grace so reviewed items never auto-post).
 
@@ -266,7 +266,7 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 
 **Fork setup, AGPL compliance & keyless boot**
 - `[now]` **fork-setup** — clone + pin Postiz fork (`capx-platform`, separate AGPL repo), boot via its docker-compose, apply NOTICE/attribution + modification log (AGPL §13). ⚠ REVIEW-FIX #14: **audit Postiz's required env matrix and stub/neutralize every provider requirement** (dummy secrets, disabled provider modules, JWT secrets, upload/storage) so the fork boots and serves OAuth/publish endpoints **fully keyless**; bake this into the fork's committed local compose profile.
-- `[now]` **fork-boundary-mirror** — ⚠ REVIEW-FIX #1: **required CI in the fork repo** that fails the build on any import of `@capx/*`, any dependency on a closed package, and any non-AGPL/proprietary license in the fork graph — **plus a source-provenance scan** so hand-copied closed logic (prompts, slop-score, dedup math) is caught. The AGPL invariant is now enforced on **both** sides of the wire.
+- `[now]` **fork-boundary-mirror** — ⚠ REVIEW-FIX #1: **required CI in the fork repo** that fails the build on any import of `@capx-cafe/*`, any dependency on a closed package, and any non-AGPL/proprietary license in the fork graph — **plus a source-provenance scan** so hand-copied closed logic (prompts, slop-score, dedup math) is caught. The AGPL invariant is now enforced on **both** sides of the wire.
 - `[now]` **fork-kms-patch** — ⚠ REVIEW-FIX #2: AGPL-native `KmsEnvelopeEncryptionProvider` replacing env-key AES on the Integration token columns (no closed imports). **This provider is the sole owner of platform user-token encryption** — the fork is the single custodian and refresher.
 - `[now]` **fork-api-facade** — thin stable public-API facade module on the fork (boundary-safe generic feature) + spike against the actual Postiz surface.
 - `[now]` **fork-network-isolation** — ⚠ REVIEW-FIX #3: network-isolate the fork so **only `platform-gateway` may reach it**; disable fork-native scheduling/calendar publish paths and remove direct user access; make the **pre-publish webhook mandatory and fail-closed** — the fork cannot publish without a closed allow.
@@ -274,7 +274,7 @@ Nine further high/medium fixes (pricing-peg gating, GDPR-vs-immutable-audit spli
 **Anti-corruption layer against live fork**
 - `[now]` **platform-gateway** — `services/platform-gateway` + `PostizHttpClient` implementing `PlatformClient` against the local fork; server-side tenant→org scoping (sole consumer of the fork API).
 - `[now]` **pre-publish-webhook** — generic pre-publish webhook receiver + HMAC verify (URL + allow/hold/deny); **all decision logic closed-side**; fail-closed if the closed service is unreachable.
-- `[now]` **postiz-contract-live** — nightly consumer-driven contract test `@capx/postiz-client` vs live fork (pinned-version drift alarm).
+- `[now]` **postiz-contract-live** — nightly consumer-driven contract test `@capx-cafe/postiz-client` vs live fork (pinned-version drift alarm).
 
 **Adapter swaps (Fake → live fork) & token custody proof**
 - `[now]` **publisher-http-swap** — swap `FakePostizAdapter` → `PostizHttpAdapter` in publisher (single class, no scheduling/guardrail changes).
@@ -407,20 +407,20 @@ mono-skeleton → core-schemas → prisma-schema → rls-policies → tenant-con
 Everything below is **`[now]`**: it needs **no external keys, no vendor, no lawyer, no cloud** — only the P0 skeleton. This is the secret sauce, provable fully offline and unit-tested before a single credential exists.
 
 **1. Core data model + fail-closed multi-tenant spine**
-- `@capx/core` (all Zod schemas, domain types, event contracts) — single source of domain truth.
+- `@capx-cafe/core` (all Zod schemas, domain types, event contracts) — single source of domain truth.
 - `prisma/schema.prisma` + RLS policies (three roles, FORCE RLS, append-only ledger grants) + `withTenant()` + `tenantGuard`.
 - RLS isolation suite: cross-tenant SELECT = 0 rows, `WITH CHECK` blocks cross-tenant INSERT, ledger UPDATE/DELETE denied.
 
-**2. `@capx/guardrails` — the six-layer anti-slop engine (pure)**
+**2. `@capx-cafe/guardrails` — the six-layer anti-slop engine (pure)**
 - `gauntlet-core`: TextNormalizer, banned-pattern scanner, slop-score, SimHash/MinHash/Jaccard/Levenshtein dedup, style-clone fingerprints, jitter/spacing solver (never `:00`), EWMA/z-score health math, verdict reducer.
 - Offline advisory factuality claim-detector (routes to review, never hard-blocks autonomous).
 - Golden-fixture + invariant tests encoding the two load-bearing guarantees: **never-post-raw (degrade-to-hold)** and **never-fire-on-`:00`**, with deterministic seed reproducibility.
 
-**3. `@capx/credits` — the money ledger math (pure)**
+**3. `@capx-cafe/credits` — the money ledger math (pure)**
 - Branded integer money (uUSD/mcr), `ceilDiv`/`applyMarkupBps`, versioned `RateCard` + `PriceCatalog`, `estimate()`, `tierEntitlements()`, dedup-read decision.
 - Property tests: no-float-drift, monotonic pricing, and the worked examples reproduced exactly (plain post ~2cr, link-post 32cr, read 0.65cr, packs 2000/5500/12000cr).
 
-**Plus the supporting pure libs that make the above real:** `@capx/oauth-pkce` (S256, constant-time verify), `@capx/kms`/`@capx/token-crypto` (AES-256-GCM envelope with tenant-bound AAD), `@capx/audit` (**split-integrity** hash-chain: commitments in the immutable chain, shreddable per-subject plaintext side-storage — reconciling immutability with GDPR erasure from day one), `@capx/observability` (deny-by-default redaction), and `packages/authz` (`can()` with most-specific-grant resolution).
+**Plus the supporting pure libs that make the above real:** `@capx-cafe/oauth-pkce` (S256, constant-time verify), `@capx-cafe/kms`/`@capx-cafe/token-crypto` (AES-256-GCM envelope with tenant-bound AAD), `@capx-cafe/audit` (**split-integrity** hash-chain: commitments in the immutable chain, shreddable per-subject plaintext side-storage — reconciling immutability with GDPR erasure from day one), `@capx-cafe/observability` (deny-by-default redaction), and `packages/authz` (`can()` with most-specific-grant resolution).
 
 **Why this is the moat:** it proves — offline, deterministically, in the first session — that the anti-slop gauntlet cannot post raw, the scheduler cannot fire on the hour, the pricing reproduces to the credit, tenants cannot see each other, and the audit trail can be both tamper-evident and erasable. Every later phase is IO and vendors dropped into seams around this core.
 

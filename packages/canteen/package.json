@@ -1,14 +1,14 @@
 {
-  "name": "@capx/canteen",
+  "name": "@capx-cafe/canteen",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": { ".": "./src/index.ts" },
   "dependencies": {
-    "@capx/core": "workspace:*",
-    "@capx/casserole": "workspace:*",
-    "@capx/counter": "workspace:*",
-    "@capx/platform-client": "workspace:*",
-    "@capx/chef": "workspace:*"
+    "@capx-cafe/core": "workspace:*",
+    "@capx-cafe/casserole": "workspace:*",
+    "@capx-cafe/counter": "workspace:*",
+    "@capx-cafe/platform-client": "workspace:*",
+    "@capx-cafe/chef": "workspace:*"
   }
 }

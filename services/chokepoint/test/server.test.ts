@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInMemoryChokepoint, LocalKeyKms } from '../src/index.ts';
 import type { ChokepointService, ServiceRequest } from '../src/index.ts';
-import { emailHash } from '@capx/core';
+import { emailHash } from '@capx-cafe/core';
 
 const NOW = 1_700_000_000_000;
 const CLEAN =

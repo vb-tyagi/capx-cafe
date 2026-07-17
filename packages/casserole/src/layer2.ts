@@ -1,7 +1,7 @@
 // L2 — Rate. Per-loop 1/day, account daily ceiling, minimum spacing, and deterministic
 // posting-time jitter (never fires exactly on the :00).
 import type { LayerResult, GauntletContext } from './types.ts';
-import { GuardrailLayer, Verdict } from '@capx/core';
+import { GuardrailLayer, Verdict } from '@capx-cafe/core';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MIN_SPACING_MS = 5 * 60 * 1000;

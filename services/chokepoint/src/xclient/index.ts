@@ -3,7 +3,7 @@
 // vault.withToken() (the single plaintext boundary), calls X, and returns the tweet id. The token
 // never returns to the gate or any caller. The actual HTTP call is injected (XPoster) so the adapter
 // and the gate stay unit-testable with no network.
-import type { PlatformClient, PublishRequest, PublishResult } from '@capx/platform-client';
+import type { PlatformClient, PublishRequest, PublishResult } from '@capx-cafe/platform-client';
 import type { Vault } from '../vault/index.ts';
 
 export type XPoster = (input: { accessToken: string; text: string }) => Promise<{ id: string }>;

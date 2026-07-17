@@ -1,8 +1,8 @@
 // Build the casserole-ready DraftPost from agent-authored text (post_now publishes the agent's own
 // text; the host agent IS the LLM). Sets a REAL hasLink (URL regex), honest aiGenerated, type=TEXT,
 // and an X weighted-length preflight (casserole has no length check). See §6 fix #13.
-import type { DraftPost } from '@capx/core';
-import { TweetType } from '@capx/core';
+import type { DraftPost } from '@capx-cafe/core';
+import { TweetType } from '@capx-cafe/core';
 
 const URL_G = /\bhttps?:\/\/\S+/gi; // global — for counting/removing
 const URL_TEST = /\bhttps?:\/\/\S+/i; // non-global — for a stateless hasLink test

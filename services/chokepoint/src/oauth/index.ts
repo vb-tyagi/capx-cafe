@@ -9,7 +9,7 @@
 //                          specific pendingId; only then are the tokens released for the vault write.
 // The token exchange + identity lookup are injected (mock X in tests; real X endpoints in prod), so
 // this whole module is unit-tested with no network.
-import type { Lane } from '@capx/core';
+import type { Lane } from '@capx-cafe/core';
 import { challengeS256, generateState, generateVerifier } from './pkce.ts';
 
 export interface ResolvedConnection {

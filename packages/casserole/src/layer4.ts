@@ -1,7 +1,7 @@
 // L4 — Authenticity. Variation engine (vs the loop's own recent output) + style-source sanity.
 import type { LayerResult, GauntletContext } from './types.ts';
-import type { DraftPost } from '@capx/core';
-import { GuardrailLayer, Verdict } from '@capx/core';
+import type { DraftPost } from '@capx-cafe/core';
+import { GuardrailLayer, Verdict } from '@capx-cafe/core';
 import { similarity } from './text.ts';
 import { worst } from './verdict.ts';
 

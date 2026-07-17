@@ -11,14 +11,14 @@ posting, scheduling, analytics, calendar/composer UI. It lives in a **separate r
 
 ## The boundary (lawyer-validated 2026-07-10)
 - capx-cafe is the **only** open (AGPL) component.
-- The closed monorepo talks to it **only over HTTP**, via `@capx/platform-client`.
+- The closed monorepo talks to it **only over HTTP**, via `@capx-cafe/platform-client`.
 - No closed code is compiled into the fork; no fork source is imported here.
 - `tools/boundary-guard.mjs` enforces this on every build.
 - AGPL obligations for the fork: publish Corresponding Source, keep `NOTICE` +
   attribution, document modifications. (The fork carries `NOTICE` + `CAPX-CAFE.md`.)
 
 ## The seam (built + verified ✅)
-`@capx/platform-client` exposes:
+`@capx-cafe/platform-client` exposes:
 - `PlatformClient` — the interface (`publish(req)`).
 - `FakePlatformClient` — dev/test double (zero keys).
 - `HttpPlatformClient(baseUrl, { serviceToken })` — the **real** seam, verified against
@@ -49,7 +49,7 @@ pnpm dev                                           # fork API + UI
 ## Then wire it
 canteen depends only on the `PlatformClient` interface, so wiring is an **env change**, not a code change:
 ```ts
-import { createPlatformClient } from '@capx/platform-client';
+import { createPlatformClient } from '@capx-cafe/platform-client';
 const platform = createPlatformClient({
   mode: process.env.PLATFORM_MODE as 'fake' | 'http', // 'fake' (default) | 'http'
   baseUrl: process.env.PLATFORM_API_URL,

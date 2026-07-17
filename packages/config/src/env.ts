@@ -1,4 +1,4 @@
-// @capx/config — dependency-free environment validation. Parsed once at boot; fails fast,
+// @capx-cafe/config — dependency-free environment validation. Parsed once at boot; fails fast,
 // aggregating ALL problems so a misconfigured deploy surfaces every issue at once.
 
 export type EnvVarType = 'string' | 'number' | 'boolean' | 'url';

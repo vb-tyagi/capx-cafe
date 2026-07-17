@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FakePlatformClient } from '@capx/platform-client';
-import type { PlatformClient, PublishResult } from '@capx/platform-client';
+import { FakePlatformClient } from '@capx-cafe/platform-client';
+import type { PlatformClient, PublishResult } from '@capx-cafe/platform-client';
 import { InMemoryStore } from '../src/store/memory.ts';
 import { LocalKeyKms } from '../src/vault/kms.ts';
 import { Vault } from '../src/vault/index.ts';

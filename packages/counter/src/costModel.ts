@@ -1,9 +1,9 @@
-// @capx/credits — cost model.
+// @capx-cafe/credits — cost model.
 // All money is integer micro-USD (1 USD = 1_000_000) to avoid floating-point drift.
 // User-facing spend is "credits": 1 credit = $0.001.
 
-import type { ActionType, Tier } from '@capx/core';
-import { TIER_LIMITS } from '@capx/core';
+import type { ActionType, Tier } from '@capx-cafe/core';
+import { TIER_LIMITS } from '@capx-cafe/core';
 
 export const MICRO_USD_PER_CREDIT = 1000; // 1 credit = $0.001
 

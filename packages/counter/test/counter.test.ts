@@ -7,7 +7,7 @@ import {
   InsufficientCreditsError,
   MICRO_USD_PER_CREDIT,
 } from '../src/index.ts';
-import { TIER_LIMITS } from '@capx/core';
+import { TIER_LIMITS } from '@capx-cafe/core';
 
 const T0 = 1_700_000_000_000;
 const HOUR = 60 * 60 * 1000;

@@ -1,4 +1,4 @@
-import type { Verdict } from '@capx/core';
+import type { Verdict } from '@capx-cafe/core';
 
 // Severity ordering: PASS < REGENERATE (auto-retry) < HOLD (human) < BLOCK (drop).
 const SEVERITY: Record<Verdict, number> = { PASS: 0, REGENERATE: 1, HOLD: 2, BLOCK: 3 };

@@ -1,9 +1,9 @@
 // Admission — the transformed captain: the chokepoint's server-side "is this send allowed right now?"
 // layer, BEFORE casserole. Hashed-email allowlist + short-TTL session (with grace) + kill-list whose
-// resolve() emits casserole's exact { global, handle } shape (reused from @capx/captain). Workspace /
+// resolve() emits casserole's exact { global, handle } shape (reused from @capx-cafe/captain). Workspace /
 // RLS / Membership / invite machinery is stripped (Option B has no multi-tenant user DB). See §4/§5.
-import { resolveKillSwitch as captainResolve, emptyKillSwitch } from '@capx/captain';
-import type { KillSwitch } from '@capx/core';
+import { resolveKillSwitch as captainResolve, emptyKillSwitch } from '@capx-cafe/captain';
+import type { KillSwitch } from '@capx-cafe/core';
 import { HmacSessionSigner } from './session.ts';
 
 /** Persistence port for admission state (implemented by InMemoryStore / PostgresStore). */

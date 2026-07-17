@@ -1,6 +1,6 @@
-// @capx/credits — the credit ledger. Pure, deterministic (caller supplies timestamps).
+// @capx-cafe/credits — the credit ledger. Pure, deterministic (caller supplies timestamps).
 
-import type { ActionType, Tier } from '@capx/core';
+import type { ActionType, Tier } from '@capx-cafe/core';
 import { preflightCost } from './costModel.ts';
 import type { CostBreakdown } from './costModel.ts';
 

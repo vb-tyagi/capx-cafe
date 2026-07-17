@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { InMemoryStore } from '../src/store/memory.ts';
 import { Outbox } from '../src/outbox/index.ts';
 import { KeyedMutex } from '../src/outbox/mutex.ts';
-import type { OutboxJob } from '@capx/core';
+import type { OutboxJob } from '@capx-cafe/core';
 
 function job(o: Partial<OutboxJob> = {}): OutboxJob {
   return {

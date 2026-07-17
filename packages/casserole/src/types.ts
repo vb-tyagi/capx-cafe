@@ -7,7 +7,7 @@ import type {
   PostHistoryItem,
   AccountHealth,
   KillSwitch,
-} from '@capx/core';
+} from '@capx-cafe/core';
 
 export interface LayerResult {
   layer: GuardrailLayer;

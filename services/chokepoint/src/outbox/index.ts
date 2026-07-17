@@ -2,8 +2,8 @@
 // enqueue() is idempotent on idempotencyKey so a retried worker tick cannot double-insert (and, at the
 // gate, cannot double-charge). State transitions PENDING -> SENDING -> SENT | PUBLISH_FAILED. The
 // Postgres SKIP LOCKED poller + fire-time scheduling land at S7; here it is the in-memory primitive.
-import { OutboxState } from '@capx/core';
-import type { OutboxJob } from '@capx/core';
+import { OutboxState } from '@capx-cafe/core';
+import type { OutboxJob } from '@capx-cafe/core';
 
 export interface OutboxStore {
   findByIdempotencyKey(key: string): Promise<OutboxJob | null>;

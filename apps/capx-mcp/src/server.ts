@@ -38,7 +38,7 @@ async function main(): Promise<void> {
     now: () => Date.now(),
   });
 
-  const server = new McpServer({ name: 'capx-mcp', version: '0.1.0' });
+  const server = new McpServer({ name: 'capx-cafe', version: '0.1.0' });
 
   server.registerTool(
     'connect_x',

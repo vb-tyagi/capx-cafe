@@ -34,7 +34,7 @@
 | **conductor (identity/whitelist/roles/tenancy/kill-switch)** | **TRANSFORM → shrink hard** | Multi-tenant DB dies. Survives as stateless logic: invite-whitelist → signed token / allowlist-of-hashes; 3-handle cap → a (soft) signed claim; **kill-switch → must become a hosted kill-list lookup if revocation matters (§4).** Roles/tenant-gate deleted. |
 | **chef (AI gen + mock)** | **TRANSFORM → demote** | The harness's own model is the content engine now. chef → prompt templates/skills; mock survives for tests only. |
 | **platform-client (Fake/Http seam)** | **KEEP + REPOINT** | Cleanest reuse. `HttpPlatformClient` → `XApiClient` (or points at the chokepoint). `FakePlatformClient` stays as the test double. |
-| **config, @capx/core** | **KEEP + EXTEND** | Config gains host-agnostic precedence (env → `~/.capx/config.json` → keychain). core = shared types, unchanged. |
+| **config, @capx-cafe/core** | **KEEP + EXTEND** | Config gains host-agnostic precedence (env → `~/.capx/config.json` → keychain). core = shared types, unchanged. |
 
 ---
 
@@ -106,12 +106,12 @@ If you insist on Option A, that's legitimate — but then capx must be **markete
 
 - **P0 — Excise the fork.** Delete capx-cafe + both boundary-guards + AGPL docs; re-license clean. (AGPL problem gone.)
 - **P1 — Local OAuth + keychain + `XApiClient`.** loopback+PKCE `connect_x`, atomic on-device refresh, keychain store (fail-loud), `whoami` + `post_now` with casserole wired in. *Milestone: a whitelisted user connects X and posts, zero auth server.*
-- **P2 — MCP server + cross-harness packaging.** One stdio server (`npx @capx/mcp`), host-agnostic config; three snippets (Claude JSON / Cursor JSON / Codex TOML); capability detection for headless.
+- **P2 — MCP server + cross-harness packaging.** One stdio server (`npx @capx-cafe/mcp`), host-agnostic config; three snippets (Claude JSON / Cursor JSON / Codex TOML); capability detection for headless.
 - **P3 — The chokepoint decision (§5) + scheduling.** If Option B: build the thin publish/schedule proxy (casserole enforced here, real kill-list, exact-time jobs, delete-after-send, self-hostable). If Option A: local SQLite queue + OS scheduler with catch-up + `max_lateness` (never auto-post stale).
 - **P4 — Monetization + whitelist.** Stateless edge fn + Ed25519 keypair + allowlist-of-hashes + MoR; bake `handle_cap`+`exp` into claims.
 - **P5 — Claude Code plugin sugar.** Marketplace + `plugin.json` + slash commands + `userConfig` (Client ID → keychain).
 
-**Reuse verbatim:** casserole, config, @capx/core, platform-client (repoint), canteen's Loop concept, chef's mock (tests). **Delete:** capx-cafe, counter, conductor's multi-tenant/DB.
+**Reuse verbatim:** casserole, config, @capx-cafe/core, platform-client (repoint), canteen's Loop concept, chef's mock (tests). **Delete:** capx-cafe, counter, conductor's multi-tenant/DB.
 
 ---
 

@@ -8,7 +8,7 @@ import { Admission } from '../src/admission/index.ts';
 import { Metering } from '../src/metering/index.ts';
 import { PublishGate } from '../src/gate/index.ts';
 import { XAdapter } from '../src/xclient/index.ts';
-import type { Lane } from '@capx/core';
+import type { Lane } from '@capx-cafe/core';
 
 const NOW = 1_700_000_000_000;
 const CLEAN =

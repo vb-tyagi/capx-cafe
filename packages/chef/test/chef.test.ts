@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MockContentProvider, runGeneration, validateRequest } from '../src/index.ts';
 import type { GenerationRequest } from '../src/index.ts';
-import { TweetType } from '@capx/core';
+import { TweetType } from '@capx-cafe/core';
 
 const req = (o: Partial<GenerationRequest> = {}): GenerationRequest => ({
   type: TweetType.TEXT,

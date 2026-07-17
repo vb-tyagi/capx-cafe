@@ -1,10 +1,10 @@
 {
-  "name": "@capx/chef",
+  "name": "@capx-cafe/chef",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": { ".": "./src/index.ts" },
   "dependencies": {
-    "@capx/core": "workspace:*"
+    "@capx-cafe/core": "workspace:*"
   }
 }

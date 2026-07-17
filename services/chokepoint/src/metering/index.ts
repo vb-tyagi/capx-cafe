@@ -1,7 +1,7 @@
 // Lane-B (capx-app) metering seam — the slim `counter` revival (decision §5.2). On the capx-app lane
 // capx's OWN X app posts on behalf of creators, so capx eats the X API cost and must cap it; the BYO
 // lane is uncapped (the user pays X directly). P1 meters a per-day post COUNT as the cost proxy; the
-// full @capx/counter credit/cost model plugs in at this same seam at P4. Only ACTUAL sends are metered
+// full @capx-cafe/counter credit/cost model plugs in at this same seam at P4. Only ACTUAL sends are metered
 // (a casserole-blocked post never reaches X, so never counts).
 export interface MeteringStore {
   postsToday(emailHash: string, dayIndex: number): Promise<number>;

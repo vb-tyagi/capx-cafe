@@ -1,5 +1,5 @@
 {
-  "name": "@capx/mcp",
+  "name": "@capx-cafe/mcp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,9 +16,9 @@
     "start": "node --experimental-strip-types src/server.ts"
   },
   "dependencies": {
-    "@capx/config": "workspace:*",
-    "@capx/core": "workspace:*",
-    "@capx/platform-client": "workspace:*",
+    "@capx-cafe/config": "workspace:*",
+    "@capx-cafe/core": "workspace:*",
+    "@capx-cafe/platform-client": "workspace:*",
     "@modelcontextprotocol/sdk": "1.29.0",
     "zod": "4.4.3"
   }

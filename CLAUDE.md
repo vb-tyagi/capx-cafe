@@ -17,7 +17,7 @@ This repo is the monorepo (formerly `capx-culture`, renamed). **Sibling repos:**
 
 ## Naming (current — after the rotation)
 - **`capx-cafe`** = this umbrella monorepo.
-- **`@capx/captain`** = identity/whitelist engine (was `conductor`).
+- **`@capx-cafe/captain`** = identity/whitelist engine (was `conductor`).
 - **`capx-conductor`** = the Postiz fork / posting engine (was the folder `capx-cafe`).
 - Unchanged packages: `casserole` (guardrail), `canteen` (loops), `counter` (credits), `chef` (content), `config`, `core`, `platform-client`.
 

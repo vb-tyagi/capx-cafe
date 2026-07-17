@@ -2,7 +2,7 @@
 // put() encrypts + persists; getMetadata() reads identity WITHOUT decrypting; withToken() is the
 // single plaintext-lifetime boundary (decrypt in-memory, hand to fn, never return/log). See §1/§4.
 import { randomUUID } from 'node:crypto';
-import type { Lane, AccountStanding, XConnectionRef } from '@capx/core';
+import type { Lane, AccountStanding, XConnectionRef } from '@capx-cafe/core';
 import type { Kms } from './kms.ts';
 import { sealToken, openToken, type SealedToken } from './crypto.ts';
 

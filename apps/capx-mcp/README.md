@@ -1,4 +1,4 @@
-# @capx/mcp
+# @capx-cafe/mcp
 
 The agent-co-resident **MCP server** (stdio) for Claude Code / Codex / Cursor. Exposes `connect_x`,
 `whoami`, `post_now`. Design: [`docs/P1-CHOKEPOINT.md`](../../docs/P1-CHOKEPOINT.md).
@@ -38,7 +38,7 @@ Resolved `env → ~/.capx/config.json → chokepoint session` (first-defined win
   "mcpServers": {
     "capx": {
       "command": "npx",
-      "args": ["-y", "@capx/mcp"],
+      "args": ["-y", "@capx-cafe/mcp"],
       "env": {
         "CAPX_CHOKEPOINT_URL": "https://your-chokepoint.example",
         "CAPX_EMAIL": "you@example.com",
@@ -53,7 +53,7 @@ Resolved `env → ~/.capx/config.json → chokepoint session` (first-defined win
 ```toml
 [mcp_servers.capx]
 command = "npx"
-args = ["-y", "@capx/mcp"]
+args = ["-y", "@capx-cafe/mcp"]
 env = { CAPX_CHOKEPOINT_URL = "https://your-chokepoint.example", CAPX_EMAIL = "you@example.com", X_CLIENT_ID = "your-x-app-client-id" }
 ```
 

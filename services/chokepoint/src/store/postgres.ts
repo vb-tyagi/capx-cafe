@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import type { Lane, AccountStanding, OutboxJob, OutboxState, PostHistoryItem } from '@capx/core';
+import type { Lane, AccountStanding, OutboxJob, OutboxState, PostHistoryItem } from '@capx-cafe/core';
 import type { VaultStore, VaultRow } from '../vault/index.ts';
 import type { SealedToken } from '../vault/crypto.ts';
 import type { AdmissionStore } from '../admission/index.ts';
@@ -15,7 +15,7 @@ import type { PendingStore, PendingConnection, ResolvedConnection } from '../oau
 import type { MeteringStore } from '../metering/index.ts';
 import type { RecentPostStore } from '../recent/index.ts';
 import type { LoopStore, LoopRecord } from '../loops/index.ts';
-import type { Autonomy } from '@capx/core';
+import type { Autonomy } from '@capx-cafe/core';
 
 /** Minimal pool shape satisfied by both the real `pg` Pool and pg-mem's adapter. */
 export interface SqlPool {

@@ -2,7 +2,7 @@
 // The chokepoint server binary — the deployable entry. Reads serverEnvSchema, opens the ONE Postgres
 // (runs migrations), wires the REAL X endpoints into the injected seams, and serves the HTTP surface.
 // All logic is createChokepoint/createHttpServer (tested); this is thin, un-unit-tested I/O wiring.
-import { parseEnv, serverEnvSchema } from '@capx/config';
+import { parseEnv, serverEnvSchema } from '@capx-cafe/config';
 import { createChokepoint, PostgresStore, runMigrations, createHttpServer } from './index.ts';
 import type { TokenExchange } from './index.ts';
 import { createPgPool } from './store/pg-pool.ts';

@@ -23,7 +23,7 @@ scheduling / management happens **inside their agent session**, driven by the ha
 |---|---|---|
 | `capx-culture` (monorepo) | **`capx-cafe`** | this umbrella |
 | `capx-cafe` (fork folder) | **`capx-conductor`** | the Postiz posting engine |
-| `@capx/conductor` (pkg) | **`@capx/captain`** | identity/whitelist engine ✅ renamed in code + tests |
+| `@capx-cafe/conductor` (pkg) | **`@capx-cafe/captain`** | identity/whitelist engine ✅ renamed in code + tests |
 | casserole, canteen, counter, chef, config, core, platform-client | *(unchanged)* | closed engines |
 
 ## 3. Current state (verified)
@@ -74,7 +74,7 @@ TRANSFORM: **canteen** (Loops: guardrail→publish; metering step only on the ca
 - **Backend port moved to `:3006`** (your `parvani`/women-gym-app owns `:3000`); frontend `:4200`, orchestrator `:3002`. DB creds are `postiz-local` / `postiz-local-pwd` (the `.env.example` shipped wrong ones — already fixed in `.env`).
 - **To run it:** see `docs/GO-LIVE.md` — `pnpm install` → `pnpm run dev:docker` → `PATH="$PWD/node_modules/.bin:$PATH" pnpm run --filter ./apps/backend --filter ./apps/frontend --filter ./apps/orchestrator --parallel dev` (skip the `extension` app; hoisted node-linker means dotenv lives in root `.bin`). UI at http://localhost:4200.
 - **⚠️ Lesson (why it matters):** during this reshuffle a **running dev server recreated a stale path mid-rename** and nearly nested a repo. **Always stop the fork's dev servers before any folder move.**
-- **AGPL boundary:** the fork stays generic Postiz — it carries a `NOTICE` + a mirror `tools/capx-boundary-guard.mjs` (fails if `@capx/*` leaks in). Closed code talks to it only over HTTP. Live integration (real `POST /public/v1/posts` mapping, OAuth keys) is **pending** (needs X/LinkedIn dev apps).
+- **AGPL boundary:** the fork stays generic Postiz — it carries a `NOTICE` + a mirror `tools/capx-boundary-guard.mjs` (fails if `@capx-cafe/*` leaks in). Closed code talks to it only over HTTP. Live integration (real `POST /public/v1/posts` mapping, OAuth keys) is **pending** (needs X/LinkedIn dev apps).
 
 ## 9. Docs in this repo
 - `PLUGIN-ARCHITECTURE.md` — Track-2 direction + open decisions (current).
@@ -89,7 +89,7 @@ TRANSFORM: **canteen** (Loops: guardrail→publish; metering step only on the ca
 
 **✅ BUILT & VERIFIED (2026-07-15, branch `track2/decision-lock-and-p0`, `pnpm verify` = 153 tests + tsc):**
 - **P0** — fork cold-archived + AGPL boundary-guard unwired from `verify` (`../capx-conductor` stays cold on disk).
-- **P1 (S0–S7)** — the full chokepoint per [`docs/P1-CHOKEPOINT.md`](P1-CHOKEPOINT.md): vault (AES-256-GCM envelope), admission (allowlist/session+grace/kill-list), hosted-callback PKCE OAuth (account-binding), vault-backed x-adapter, crash-consistent refresh→needs-reauth, **casserole enforced at the publish boundary**, durable idempotent outbox, recent-post cache, lane-B metering, HTTP service, and the `@capx/mcp` stdio server (`connect_x`/`whoami`/`post_now`, credential-free). Red-team suite proves the §6 flaw is defended.
+- **P1 (S0–S7)** — the full chokepoint per [`docs/P1-CHOKEPOINT.md`](P1-CHOKEPOINT.md): vault (AES-256-GCM envelope), admission (allowlist/session+grace/kill-list), hosted-callback PKCE OAuth (account-binding), vault-backed x-adapter, crash-consistent refresh→needs-reauth, **casserole enforced at the publish boundary**, durable idempotent outbox, recent-post cache, lane-B metering, HTTP service, and the `@capx-cafe/mcp` stdio server (`connect_x`/`whoami`/`post_now`, credential-free). Red-team suite proves the §6 flaw is defended.
 - **Post-P1 GA hardening** — `PostgresStore` + `migrations/001_init.sql` (verified vs pg-mem AND real Postgres 17); real X API v2 wiring (`httpTokenExchange`/`httpRefreshExchange`/`httpIdentity`); **`services/chokepoint/src/serve.ts`** deployable binary (booted against real Postgres: `/healthz` ok, `/session` unallowlisted→403).
 
 **⏭️ REMAINING (code):** P3 scheduling — `create_loop` + the outbox POLLER (durable primitive + idempotency already exist). Later: P4 monetization (MoR), P5 plugin sugar, the BYO onboarding wizard (§5.6).

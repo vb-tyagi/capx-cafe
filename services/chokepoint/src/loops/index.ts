@@ -4,7 +4,7 @@
 // not invent content. That is what keeps "the harness writes, casserole decides what ships" true even at
 // 9am with the laptop shut.
 import { randomUUID } from 'node:crypto';
-import type { Autonomy } from '@capx/core';
+import type { Autonomy } from '@capx-cafe/core';
 
 export interface LoopRecord {
   id: string;

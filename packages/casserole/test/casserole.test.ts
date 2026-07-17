@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { runGauntlet, computeSlopScore, similarity } from '../src/index.ts';
 import type { GauntletContext } from '../src/index.ts';
-import { Tier, Platform, TweetType, Autonomy, AccountStanding, Verdict } from '@capx/core';
-import type { Handle, DraftPost, LoopConfig } from '@capx/core';
+import { Tier, Platform, TweetType, Autonomy, AccountStanding, Verdict } from '@capx-cafe/core';
+import type { Handle, DraftPost, LoopConfig } from '@capx-cafe/core';
 
 const NOW = 1_700_000_000_000;
 const HOUR = 3_600_000;

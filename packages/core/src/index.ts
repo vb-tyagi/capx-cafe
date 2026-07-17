@@ -1,4 +1,4 @@
-// @capx/core — shared domain types & constants.
+// @capx-cafe/core — shared domain types & constants.
 // NOTE: TS `enum`, namespaces, parameter-properties and decorators are intentionally
 // avoided so every file runs directly under `node --experimental-strip-types`.
 import { createHash } from 'node:crypto';

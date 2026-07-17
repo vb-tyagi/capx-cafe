@@ -1,4 +1,4 @@
-// @capx/platform-client — the ONLY seam the closed monorepo uses to reach the open platform
+// @capx-cafe/platform-client — the ONLY seam the closed monorepo uses to reach the open platform
 // (the AGPL Postiz fork). Network-only, arm's-length. A Fake implementation lets the whole
 // pipeline build and test with zero external keys.
 

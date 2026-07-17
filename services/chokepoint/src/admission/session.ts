@@ -2,7 +2,7 @@
 // `base64url(payload).hmac`; the chokepoint validates the signature + expiry (+ cached grace window).
 // Only a SESSION_SIGNING_KEY holder can mint one; theft yields at most gated, kill-switch-bounded posting.
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import type { SessionHandle, SessionValidation } from '@capx/core';
+import type { SessionHandle, SessionValidation } from '@capx-cafe/core';
 
 const b64url = (s: string): string => Buffer.from(s, 'utf8').toString('base64url');
 const unb64url = (s: string): string => Buffer.from(s, 'base64url').toString('utf8');

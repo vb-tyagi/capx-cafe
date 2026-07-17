@@ -1,4 +1,4 @@
-# @capx/chokepoint
+# @capx-cafe/chokepoint
 
 The thin, stateless, self-hostable **Option-B chokepoint** — the only process that can decrypt an X token
 or reach X. Full design + build order: [`docs/P1-CHOKEPOINT.md`](../../docs/P1-CHOKEPOINT.md).
@@ -25,6 +25,6 @@ self-host = BYO-only (no capx secret, no MoR, no counter).
 
 ## Test
 ```sh
-pnpm --filter @capx/chokepoint test        # node --test over src/**/*.test.ts
-pnpm --filter @capx/chokepoint typecheck
+pnpm --filter @capx-cafe/chokepoint test        # node --test over src/**/*.test.ts
+pnpm --filter @capx-cafe/chokepoint typecheck
 ```

@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { runLoopFromBrief } from '../src/index.ts';
-import { MockContentProvider } from '@capx/chef';
-import type { GenerationRequest } from '@capx/chef';
-import { FakePlatformClient } from '@capx/platform-client';
-import { CreditLedger } from '@capx/counter';
-import type { GauntletContext } from '@capx/casserole';
-import { Tier, Platform, TweetType, Autonomy, AccountStanding } from '@capx/core';
-import type { Handle, LoopConfig } from '@capx/core';
+import { MockContentProvider } from '@capx-cafe/chef';
+import type { GenerationRequest } from '@capx-cafe/chef';
+import { FakePlatformClient } from '@capx-cafe/platform-client';
+import { CreditLedger } from '@capx-cafe/counter';
+import type { GauntletContext } from '@capx-cafe/casserole';
+import { Tier, Platform, TweetType, Autonomy, AccountStanding } from '@capx-cafe/core';
+import type { Handle, LoopConfig } from '@capx-cafe/core';
 
 const NOW = 1_700_000_000_000;
 const HOUR = 3_600_000;

@@ -3,7 +3,7 @@
 // capx X app, no MoR. The SAME composition root + service run identically to the hosted deployment.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseEnv, serverEnvSchema, EnvValidationError } from '@capx/config';
+import { parseEnv, serverEnvSchema, EnvValidationError } from '@capx-cafe/config';
 import { createInMemoryChokepoint, LocalKeyKms } from '../src/index.ts';
 
 const NOW = 1_700_000_000_000;

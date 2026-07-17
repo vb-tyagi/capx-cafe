@@ -12,13 +12,13 @@ Two independent products came out of the original build:
 | Component | Role | Source | Where |
 |---|---|---|---|
 | **capx-conductor** | X/LinkedIn posting, scheduling, analytics, UI — the **posting engine**. Holds OAuth tokens; does the actual posting. | 🔓 OPEN (AGPL) — Postiz fork | `../capx-conductor` (sibling repo) |
-| **capx-chef** | AI content generation (abstraction + mock; real LLMs later). | 🔒 CLOSED | `@capx/chef` |
-| **capx-canteen** | **Loops** — scheduled recurring posting; the publish chokepoint. | 🔒 CLOSED | `@capx/canteen` |
-| **capx-casserole** | Six-layer anti-slop guard — the mandatory chokepoint (**the moat**). | 🔒 CLOSED | `@capx/casserole` |
-| **capx-counter** | Credits / metering. | 🔒 CLOSED | `@capx/counter` |
-| **capx-captain** | Identity / whitelist / roles / tenancy / kill-switch (**was `conductor`**). | 🔒 CLOSED | `@capx/captain` |
+| **capx-chef** | AI content generation (abstraction + mock; real LLMs later). | 🔒 CLOSED | `@capx-cafe/chef` |
+| **capx-canteen** | **Loops** — scheduled recurring posting; the publish chokepoint. | 🔒 CLOSED | `@capx-cafe/canteen` |
+| **capx-casserole** | Six-layer anti-slop guard — the mandatory chokepoint (**the moat**). | 🔒 CLOSED | `@capx-cafe/casserole` |
+| **capx-counter** | Credits / metering. | 🔒 CLOSED | `@capx-cafe/counter` |
+| **capx-captain** | Identity / whitelist / roles / tenancy / kill-switch (**was `conductor`**). | 🔒 CLOSED | `@capx-cafe/captain` |
 
-**Shared plumbing (not products):** `@capx/core` (types), `@capx/config` (env), `@capx/platform-client` — the **"waiter"** seam to capx-conductor.
+**Shared plumbing (not products):** `@capx-cafe/core` (types), `@capx-cafe/config` (env), `@capx-cafe/platform-client` — the **"waiter"** seam to capx-conductor.
 
 ## The one hard boundary (AGPL)
 Only **capx-conductor** (the fork) is open (AGPL). Every closed component talks to it **only over HTTP** through `platform-client` — never compiled into the fork. **Lawyer-validated 2026-07-10.** Enforced by `tools/boundary-guard.mjs` (closed side) + a mirror guard inside the fork.

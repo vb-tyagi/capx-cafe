@@ -1,4 +1,4 @@
-// @capx/chokepoint — the thin, stateless, self-hostable hosted chokepoint (Option B).
+// @capx-cafe/chokepoint — the thin, stateless, self-hostable hosted chokepoint (Option B).
 // Public surface + a composition root. The whole service runs over the InMemoryStore driver (no DB
 // needed to boot for dev / self-host evaluation); the PostgresStore driver swaps in at the port with
 // zero code change above it. Real X integration (token exchange / identity / poster) is INJECTED, so

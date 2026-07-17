@@ -14,7 +14,7 @@ P1 sketch; it sits under the locked decisions in [STATE.md §5](STATE.md).
 
 ## 1. Architecture in one picture
 
-Two deployables + one datastore + the repointed `@capx/*` libraries.
+Two deployables + one datastore + the repointed `@capx-cafe/*` libraries.
 
 - **`apps/capx-mcp`** — the only process co-resident with the agent. Exposes `connect_x` / `whoami` /
   `post_now` over stdio. Holds **no X token and no secret** — only a short-TTL **session handle** and
@@ -46,7 +46,7 @@ the chokepoint, which gates every send through `runGauntlet`.
 | `platform-client` | **keep-repoint** | The client transport (MCP→chokepoint) **and** the template for the server-side x-adapter. Already credential-free by design (`channelId` is "never an OAuth token"). Repoint baseUrl → `CAPX_CHOKEPOINT_URL`; keep the fake\|http factory + `FakePlatformClient`; grow the interface to `{connectX, whoami, postNow}`; swap static `serviceToken` for a rotating session-handle provider (401-refresh, 403-revoked); add idempotency key + timeout; enrich result to a discriminated `PublishOutcome` carrying verdict/reasons. Forward `authHeaderName/Value` (currently dropped). |
 | `chef` | **demote** | Generation off the P1 hot path (`post_now` publishes agent-authored text; the host agent IS the LLM). One thin slice on the path: a `draftFromText` normalizer (real `hasLink` via URL regex, honest `aiGenerated`, `type=TEXT`, X weighted-length preflight). `ContentProvider`+mock parked for the P3 generation lane. Guarding stays OUT of chef, IN the gate. |
 | `config` | **keep-repoint** | Keep `parseEnv`/coerce/aggregate **verbatim**. Split `appEnvSchema` into a **server** schema (vault DB, KMS, OAuth callback https-enforced, X client id/secret, session key, MoR secret, deploy mode) and a **thin client** schema (chokepoint URL + lane + BYO public client_id). Add layered resolver `env → ~/.capx/config.json → chokepoint session`; add `secret?` flag + redaction, `oneOf` enums, https-only URL. |
-| `core` | **keep-repoint** | The type spine. `DraftPost` + `Verdict` reused verbatim. Repoint every consumer from `../../core/src/index.ts` to the `@capx/core` specifier. **Grow** (not rewrite): `Lane`, `SessionHandle`, `XConnectionRef`/`vaultRef`, serializable `KillSwitch`, outbox/job type; **make `GauntletContext.killSwitch` required** (see §6). Park non-P1 surface (LINKEDIN, GRAPHIC/ESSAY, Role, LoopConfig). |
+| `core` | **keep-repoint** | The type spine. `DraftPost` + `Verdict` reused verbatim. Repoint every consumer from `../../core/src/index.ts` to the `@capx-cafe/core` specifier. **Grow** (not rewrite): `Lane`, `SessionHandle`, `XConnectionRef`/`vaultRef`, serializable `KillSwitch`, outbox/job type; **make `GauntletContext.killSwitch` required** (see §6). Park non-P1 surface (LINKEDIN, GRAPHIC/ESSAY, Role, LoopConfig). |
 
 ## 3. Hosted-callback PKCE OAuth (both lanes)
 
@@ -116,7 +116,7 @@ reaches the credential), not a claim that the gauntlet blocks all malicious-but-
 | 5 | **Recent-post cache race** — concurrent `post_now` both read empty history, both pass spacing (major) | **Per-handle advisory lock** (`pg_advisory_xact_lock` / `SELECT … FOR UPDATE` on the vault row) around read-history → runGauntlet → send → write-cache. Concurrency test added to S3. |
 | 6 | **L2 5-min spacing blocks legit manual posts** (major) | **✅ DECIDED (2026-07-15): manual `post_now` is EXEMPT** from the L2 5-min loop-spacing rule (it is a loop/autonomy rule). Manual posts still get kill-switch + anti-slop + a manual daily ceiling + weighted-length. Implemented in the gate's ctx builder (a manual-mode flag relaxes L2 spacing/loop-cap); covered by an S3 test. |
 | 7 | **"One-flag" self-host hides a public-HTTPS-callback requirement** (major) | §8 states it honestly: self-host needs a public HTTPS callback (domain+TLS or tunnel) registered in the self-hoster's own X app, plus KMS/vault-DB/session-key/seeded-allowlist. "One code path, one mode flag" stays; "compose up + one URL = done" retired. |
-| 8 | **`killSwitch` stays type-optional** (major) | Make `GauntletContext.killSwitch` a **required** field in `@capx/core` (S1), so omission is a compile error; keep the runtime throw as defense-in-depth; lint-forbid direct `runGauntlet` outside the gate module. |
+| 8 | **`killSwitch` stays type-optional** (major) | Make `GauntletContext.killSwitch` a **required** field in `@capx-cafe/core` (S1), so omission is a compile error; keep the runtime throw as defense-in-depth; lint-forbid direct `runGauntlet` outside the gate module. |
 | 9 | counter not drop-in reuse (minor) | Reclassified as a P4 transform (ledger `|null` short-circuit + idempotency-key + atomic compare-and-deduct + refund kind). |
 | 10 | `whoami` leaks `vaultRef` (minor) | Removed from the `whoami` contract (§5). No endpoint accepts a client-supplied identity selector. |
 | 11 | "sole decryptor" wording inaccurate — refresh loop also decrypts (minor) | Reworded: x-adapter is the sole path from a decrypted token **to an X publish**; the refresh module is the only other decryptor and can only exchange, never post. Both decryptors live inside the vault's `withToken()`. |
@@ -127,8 +127,8 @@ reaches the credential), not a claim that the gauntlet blocks all malicious-but-
 
 Each slice keeps `pnpm verify` green and adds `node --test` coverage.
 
-- **S0 — Package repoint & extraction seam.** `@capx/core` specifier everywhere (no `../../core/src`); real
-  `@capx/*` deps + build/test scripts; config split server/client; scaffold `apps/capx-mcp` +
+- **S0 — Package repoint & extraction seam.** `@capx-cafe/core` specifier everywhere (no `../../core/src`); real
+  `@capx-cafe/*` deps + build/test scripts; config split server/client; scaffold `apps/capx-mcp` +
   `services/chokepoint` + one Dockerfile + compose (worker + Postgres). *No behavior change.* **Verify:** verify
   stays green; fresh-dir import resolves without `../../`; worker image builds.
 - **S1 — Layered config + core Option-B types.** Resolver `env → ~/.capx/config.json → chokepoint session`;
@@ -215,9 +215,9 @@ Minimal self-host = BYO-only (no capx secret, no MoR, no counter — lane A user
 ## 11. Build log
 
 - **2026-07-15 — S0 ✅ DONE.** Scaffolded `services/chokepoint/` + `apps/capx-mcp/` (commit `893ba33`).
-  Repointed all 53 cross-package imports `../../<pkg>/src/index.ts` → `@capx/<pkg>` across 24 files, each
-  consumer declaring real `@capx/*` workspace deps (commit `923c188`). **Resolution risk RESOLVED
-  empirically:** `node --experimental-strip-types` resolves `@capx/core` via the pnpm symlink whose realpath
+  Repointed all 53 cross-package imports `../../<pkg>/src/index.ts` → `@capx-cafe/<pkg>` across 24 files, each
+  consumer declaring real `@capx-cafe/*` workspace deps (commit `923c188`). **Resolution risk RESOLVED
+  empirically:** `node --experimental-strip-types` resolves `@capx-cafe/core` via the pnpm symlink whose realpath
   is `packages/core` (outside `node_modules`), so `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING` never fires.
   Ports: chokepoint HTTP **4477**, self-host Postgres host **5442**. `pnpm verify` green (64). Config split
   folded into S1.

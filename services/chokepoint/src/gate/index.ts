@@ -3,12 +3,12 @@
 // per-handle lock -> normalizes the draft -> runs casserole with a REQUIRED live kill-switch -> hands
 // off to the x-adapter ONLY when verdict===PASS && !requiresHumanReview. Nothing here decrypts a token
 // (that is the x-adapter/vault). Manual post_now runs with ctx.loop undefined (spacing-exempt). See §4.
-import { Verdict, Platform, Lane, OutboxState, TweetType } from '@capx/core';
-import type { Handle, LoopConfig } from '@capx/core';
+import { Verdict, Platform, Lane, OutboxState, TweetType } from '@capx-cafe/core';
+import type { Handle, LoopConfig } from '@capx-cafe/core';
 import type { LoopRecord } from '../loops/index.ts';
-import { runGauntlet } from '@capx/casserole';
-import type { GauntletContext } from '@capx/casserole';
-import type { PlatformClient } from '@capx/platform-client';
+import { runGauntlet } from '@capx-cafe/casserole';
+import type { GauntletContext } from '@capx-cafe/casserole';
+import type { PlatformClient } from '@capx-cafe/platform-client';
 import type { Admission } from '../admission/index.ts';
 import type { Vault } from '../vault/index.ts';
 import type { Metering } from '../metering/index.ts';

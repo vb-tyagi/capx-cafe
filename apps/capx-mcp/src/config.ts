@@ -1,10 +1,10 @@
 // Host-agnostic client config: resolve via the layered order env -> ~/.capx/config.json -> chokepoint
 // session (mergeSources). SECRET-FREE by construction (clientEnvSchema). The email->hash is the identity
 // key shared with the chokepoint allowlist; the MCP never sends the raw email anywhere.
-import { mergeSources, parseEnv, clientEnvSchema } from '@capx/config';
+import { mergeSources, parseEnv, clientEnvSchema } from '@capx-cafe/config';
 
-// The identity-key rule lives in @capx/core so the client and the chokepoint allowlist can never drift.
-export { emailHash } from '@capx/core';
+// The identity-key rule lives in @capx-cafe/core so the client and the chokepoint allowlist can never drift.
+export { emailHash } from '@capx-cafe/core';
 
 export interface ClientConfig {
   chokepointUrl: string;

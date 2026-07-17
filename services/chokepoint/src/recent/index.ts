@@ -2,7 +2,7 @@
 // casserole L2 (daily ceiling) + L3 (near-duplicate dedup) actually enforce on real history — the
 // piece that makes the per-handle mutex meaningful (read-history -> gauntlet -> send -> write-cache is
 // one critical section, so two concurrent post_now for a handle can't both pass on a stale history).
-import type { PostHistoryItem } from '@capx/core';
+import type { PostHistoryItem } from '@capx-cafe/core';
 
 export interface RecentPostStore {
   recentPosts(emailHash: string, sinceMs: number): Promise<PostHistoryItem[]>;

@@ -6,7 +6,7 @@
 // anti-abuse and map to X's own Automation Rules (relevant to the legal sign-off), and they are what
 // stops a fresh throwaway account from running autonomous posting.
 import type { LayerResult, GauntletContext } from './types.ts';
-import { GuardrailLayer, Verdict, AccountStanding, LOOP_MIN_ACCOUNT_AGE_DAYS } from '@capx/core';
+import { GuardrailLayer, Verdict, AccountStanding, LOOP_MIN_ACCOUNT_AGE_DAYS } from '@capx-cafe/core';
 
 export function layer1Eligibility(ctx: GauntletContext): LayerResult {
   const layer = GuardrailLayer.L1_ELIGIBILITY;

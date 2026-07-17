@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { runLoopTick, actionsForDraft } from '../src/index.ts';
-import { FakePlatformClient } from '@capx/platform-client';
-import { CreditLedger, preflightCost } from '@capx/counter';
-import type { GauntletContext } from '@capx/casserole';
-import { Tier, Platform, TweetType, Autonomy, AccountStanding } from '@capx/core';
-import type { Handle, DraftPost, LoopConfig } from '@capx/core';
+import { FakePlatformClient } from '@capx-cafe/platform-client';
+import { CreditLedger, preflightCost } from '@capx-cafe/counter';
+import type { GauntletContext } from '@capx-cafe/casserole';
+import { Tier, Platform, TweetType, Autonomy, AccountStanding } from '@capx-cafe/core';
+import type { Handle, DraftPost, LoopConfig } from '@capx-cafe/core';
 
 const NOW = 1_700_000_000_000;
 const HOUR = 3_600_000;

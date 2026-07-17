@@ -10,12 +10,12 @@ Last touched: 2026-07-17._
 
 These are ranked by "how much time it costs when you hit it cold." Each is: **symptom → cause → fix.**
 
-### 1. `npx @capx/mcp` cannot be published as-is (the workspace:* trap)
+### 1. `npx @capx-cafe/mcp` cannot be published as-is (the workspace:* trap)
 **This is the big one — it's still there and will still be there next time someone touches the MCP package.**
-- **Symptom:** publish `@capx/mcp` to npm, a stranger runs `npx @capx/mcp`, it installs then instantly crashes: `Cannot find module '@capx/core'`.
-- **Cause:** `apps/capx-mcp/package.json` depends on `@capx/core`, `@capx/config`, `@capx/platform-client` via `workspace:*`. That protocol resolves **only inside this monorepo**. On npm those deps do not exist — and all three are `private: true` on purpose (they carry closed domain types / the guardrail-adjacent surface).
+- **Symptom:** publish `@capx-cafe/mcp` to npm, a stranger runs `npx @capx-cafe/mcp`, it installs then instantly crashes: `Cannot find module '@capx-cafe/core'`.
+- **Cause:** `apps/capx-mcp/package.json` depends on `@capx-cafe/core`, `@capx-cafe/config`, `@capx-cafe/platform-client` via `workspace:*`. That protocol resolves **only inside this monorepo**. On npm those deps do not exist — and all three are `private: true` on purpose (they carry closed domain types / the guardrail-adjacent surface).
 - **Why it's a trap:** everything works perfectly in local dev and in CI (both run inside the workspace), so the failure is invisible until the moment you actually try to distribute — i.e. exactly when you're demoing to someone.
-- **Fix (recommended):** **bundle** the three `@capx/*` deps into `@capx/mcp` at publish time (e.g. tsup/esbuild) so one self-contained public package ships and the engines stay closed. Do NOT naively `pnpm publish` all four — that leaks the closed packages and creates 4-package version management.
+- **Fix (recommended):** **bundle** the three `@capx-cafe/*` deps into `@capx-cafe/mcp` at publish time (e.g. tsup/esbuild) so one self-contained public package ships and the engines stay closed. Do NOT naively `pnpm publish` all four — that leaks the closed packages and creates 4-package version management.
 - **Blast radius today:** zero (nobody uses npm yet; the `.mcp.json` points at a local path). Becomes a hard blocker the instant you want anyone outside this repo to install capx.
 
 ### 2. `/healthz` is reserved by Google's frontend on Cloud Run
@@ -63,7 +63,7 @@ Turns "founder curls `/admin/allow` per person" into "pay → in, cancel → out
 ### P5 — Claude Code plugin sugar (NOT started)
 Pure distribution polish, no new capability: `plugin.json` (marketplace), slash commands (`/capx-post`), `userConfig` (Claude Code prompts for the X Client ID instead of hand-editing `.mcp.json`).
 
-### npm publish of `@capx/mcp` — blocked by foot-gun #1 above
+### npm publish of `@capx-cafe/mcp` — blocked by foot-gun #1 above
 Not "just needs your npm account." Needs the bundling job first.
 
 ---

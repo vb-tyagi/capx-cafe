@@ -8,8 +8,8 @@
 //   POST /whoami           Bearer      -> {connected, username, lane, needsReauth}
 //   POST /post_now         Bearer {text, aiGenerated?, idempotencyKey} -> PostResult
 //   POST /admin/revoke     x-admin-key {global?, handleKey?} -> {ok}
-import { AccountStanding, emailHash } from '@capx/core';
-import type { Lane } from '@capx/core';
+import { AccountStanding, emailHash } from '@capx-cafe/core';
+import type { Lane } from '@capx-cafe/core';
 import type { Admission } from '../admission/index.ts';
 import type { Vault } from '../vault/index.ts';
 import type { OAuthFlow, TokenExchange, IdentityFetch } from '../oauth/index.ts';
@@ -264,7 +264,7 @@ export function createService(deps: ServiceDeps): ChokepointService {
       const key = req.headers['x-admin-key'];
       if (!key || key !== deps.adminKey) return json(403, { error: 'bad admin key' });
       const b = asObj(req.body);
-      // Accept a raw email (hashed here with the shared @capx/core rule) or a pre-computed hash.
+      // Accept a raw email (hashed here with the shared @capx-cafe/core rule) or a pre-computed hash.
       const hash = b.emailHash ? String(b.emailHash) : b.email ? emailHash(String(b.email)) : '';
       if (!hash) return json(400, { error: 'email or emailHash required' });
       await deps.admission.ingestAllowlist(hash, true); // admin key already authenticated this call

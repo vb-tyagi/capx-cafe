@@ -1,8 +1,8 @@
 // The gauntlet. Runs L1..L6 in order; autonomous mode skips only the human tap (L4 review),
 // never the automated layers. verdict = worst across all layers (audit never worsens it).
 import type { GauntletContext, GauntletResult, LayerResult } from './types.ts';
-import type { DraftPost } from '@capx/core';
-import { Verdict, Autonomy } from '@capx/core';
+import type { DraftPost } from '@capx-cafe/core';
+import { Verdict, Autonomy } from '@capx-cafe/core';
 import { worst } from './verdict.ts';
 import { layer1Eligibility } from './layer1.ts';
 import { layer2Rate } from './layer2.ts';

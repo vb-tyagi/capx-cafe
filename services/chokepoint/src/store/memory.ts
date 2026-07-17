@@ -9,8 +9,8 @@ import type { PendingStore, PendingConnection } from '../oauth/index.ts';
 import type { MeteringStore } from '../metering/index.ts';
 import type { RecentPostStore } from '../recent/index.ts';
 import type { LoopStore, LoopRecord } from '../loops/index.ts';
-import { OutboxState } from '@capx/core';
-import type { OutboxJob, PostHistoryItem } from '@capx/core';
+import { OutboxState } from '@capx-cafe/core';
+import type { OutboxJob, PostHistoryItem } from '@capx-cafe/core';
 
 export class InMemoryStore
   implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore, RecentPostStore, LoopStore

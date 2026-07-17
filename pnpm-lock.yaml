@@ -20,13 +20,13 @@ importers:
 
   apps/capx-mcp:
     dependencies:
-      '@capx/config':
+      '@capx-cafe/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@capx/core':
+      '@capx-cafe/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@capx/platform-client':
+      '@capx-cafe/platform-client':
         specifier: workspace:*
         version: link:../../packages/platform-client
       '@modelcontextprotocol/sdk':
@@ -38,37 +38,37 @@ importers:
 
   packages/canteen:
     dependencies:
-      '@capx/casserole':
+      '@capx-cafe/casserole':
         specifier: workspace:*
         version: link:../casserole
-      '@capx/chef':
+      '@capx-cafe/chef':
         specifier: workspace:*
         version: link:../chef
-      '@capx/core':
+      '@capx-cafe/core':
         specifier: workspace:*
         version: link:../core
-      '@capx/counter':
+      '@capx-cafe/counter':
         specifier: workspace:*
         version: link:../counter
-      '@capx/platform-client':
+      '@capx-cafe/platform-client':
         specifier: workspace:*
         version: link:../platform-client
 
   packages/captain:
     dependencies:
-      '@capx/core':
+      '@capx-cafe/core':
         specifier: workspace:*
         version: link:../core
 
   packages/casserole:
     dependencies:
-      '@capx/core':
+      '@capx-cafe/core':
         specifier: workspace:*
         version: link:../core
 
   packages/chef:
     dependencies:
-      '@capx/core':
+      '@capx-cafe/core':
         specifier: workspace:*
         version: link:../core
 
@@ -78,7 +78,7 @@ importers:
 
   packages/counter:
     dependencies:
-      '@capx/core':
+      '@capx-cafe/core':
         specifier: workspace:*
         version: link:../core
 
@@ -86,28 +86,28 @@ importers:
 
   services/chokepoint:
     dependencies:
-      '@capx/canteen':
+      '@capx-cafe/canteen':
         specifier: workspace:*
         version: link:../../packages/canteen
-      '@capx/captain':
+      '@capx-cafe/captain':
         specifier: workspace:*
         version: link:../../packages/captain
-      '@capx/casserole':
+      '@capx-cafe/casserole':
         specifier: workspace:*
         version: link:../../packages/casserole
-      '@capx/chef':
+      '@capx-cafe/chef':
         specifier: workspace:*
         version: link:../../packages/chef
-      '@capx/config':
+      '@capx-cafe/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@capx/core':
+      '@capx-cafe/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@capx/counter':
+      '@capx-cafe/counter':
         specifier: workspace:*
         version: link:../../packages/counter
-      '@capx/platform-client':
+      '@capx-cafe/platform-client':
         specifier: workspace:*
         version: link:../../packages/platform-client
       pg:
