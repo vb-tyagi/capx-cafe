@@ -77,19 +77,33 @@ Not "just needs your npm account." Needs the bundling job first.
 
 ---
 
-## 🔐 Secrets inventory (see also: Secret Manager migration, in progress 2026-07-17)
+## 🔐 Secrets inventory — ✅ ALL in Secret Manager (verified 2026-07-17)
 
-Live on Cloud Run `capx-chokepoint` (region asia-south1, project capx-cafe):
+Every sensitive value on Cloud Run `capx-chokepoint` is a `valueFrom.secretKeyRef` — **no plaintext
+secret in the service config.** Runtime SA `capx-chokepoint-run@…` holds `secretmanager.secretAccessor`
+on these five and nothing else (verified). The service boots reading from them (`/health` 200, `/session`
+200 exercises the signing key + KMS key).
 
-| Var | What it is | Sensitivity |
-|---|---|---|
-| `KMS_KEY_ID` | master key that decrypts EVERY vaulted X token | 🔴 highest |
-| `X_CLIENT_SECRET` | impersonates **capx itself** to X (lane B confidential client) | 🔴 highest |
-| `SESSION_SIGNING_KEY` | signs session bearers | 🟠 high |
-| `ADMIN_API_KEY` | `x-admin-key` for `/admin/*` and `/internal/tick` | 🟠 high |
+| Env var | Secret | What it is | Sensitivity |
+|---|---|---|---|
+| `KMS_KEY_ID` | `capx-kms-key` | master key that decrypts EVERY vaulted X token | 🔴 highest |
+| `X_CLIENT_SECRET` | `capx-x-client-secret` | impersonates **capx itself** to X (lane B confidential client) | 🔴 highest |
+| `VAULT_DB_URL` | `capx-vault-db-url` | Postgres conn string incl. DB password | 🔴 highest |
+| `SESSION_SIGNING_KEY` | `capx-session-signing-key` | signs session bearers | 🟠 high |
+| `ADMIN_API_KEY` | `capx-admin-api-key` | `x-admin-key` for `/admin/*` and `/internal/tick` | 🟠 high |
 
+- **Non-secret env vars stay plaintext (correct):** `X_CLIENT_ID` (public), `OAUTH_CALLBACK_URL` (public),
+  `CAPX_DEPLOY_MODE`, `NODE_ENV`.
+- **To rotate a secret:** `gcloud secrets versions add <name> --data-file=- --project=capx-cafe` then
+  redeploy (or the service picks up `:latest` on next cold start). Never `--set-env-vars` a secret back to plaintext.
 - Robot SA key: `.gcp/claude-capx-cafe-key.json` (gitignored, mode 600). **Rotate ~15 Oct 2026.**
-- Admin key also stored locally at `.gcp/admin-key.env` (gitignored).
+- Admin key mirror for local curl: `.gcp/admin-key.env` (gitignored). This is the ONE place a secret
+  still sits on disk in cleartext — fine for a founder-only laptop; delete it if this machine changes hands.
+
+**Correction note (for honesty in the record):** an interim status in this session claimed "4 plaintext
+env vars." That came from a grep matching env *names* without distinguishing literal values from secret
+refs. `X_CLIENT_SECRET` genuinely WAS plaintext at revision 00008, but the migration to Secret Manager
+completed shortly after. Lesson: to audit exposure, check `valueFrom` vs `value`, not just the name.
 
 ---
 
@@ -100,4 +114,8 @@ Live on Cloud Run `capx-chokepoint` (region asia-south1, project capx-cafe):
 - **Cloud SQL:** `capx-chokepoint-db` (POSTGRES_17, ENTERPRISE, db-f1-micro).
 - **Cron:** Cloud Scheduler `capx-loop-tick`, `*/5 * * * *` → `POST /internal/tick` (proven landing, 200).
 - **gcloud isolation:** this repo uses its own robot via `.envrc` (`CLOUDSDK_CONFIG=.gcp/gcloud-home`); `cd` here = robot + capx-cafe, `cd ~` = personal + parvani. Never clobbers other sessions.
-- **Deploy:** build on Cloud Build (Mac is arm64, Cloud Run is amd64); `run deploy --image` preserves existing env vars.
+- **Deploy:** build on Cloud Build (Mac is arm64, Cloud Run is amd64); `run deploy --image` preserves existing env vars + secret refs.
+- **Secret Manager:** enabled; 5 secrets (`capx-kms-key`, `capx-x-client-secret`, `capx-vault-db-url`,
+  `capx-session-signing-key`, `capx-admin-api-key`). Secret create/IAM = **your** identity; the scoped
+  robot has no Secret Manager role. Runtime SA reads them via `secretAccessor`.
+- **Cloud Run runtime SA:** `capx-chokepoint-run@…` — least privilege: `cloudsql.client` + per-secret `secretAccessor`.
