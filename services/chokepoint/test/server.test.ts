@@ -46,11 +46,15 @@ async function connectBearer(b: ReturnType<typeof base>): Promise<string> {
   return bearer;
 }
 
-test('healthz is up', async () => {
+test('health is up on /health AND the /healthz alias', async () => {
   const { service } = base();
-  const r = await call(service, 'GET', '/healthz');
-  assert.equal(r.status, 200);
-  assert.equal(obj(r.body).ok, true);
+  // /health is canonical — Google's Frontend intercepts the literal /healthz on Cloud Run, so a probe
+  // against /healthz never reaches us in prod. /healthz still answers for local/self-host.
+  for (const p of ['/health', '/healthz']) {
+    const r = await call(service, 'GET', p);
+    assert.equal(r.status, 200, `${p} should be 200`);
+    assert.equal(obj(r.body).ok, true);
+  }
 });
 
 test('END-TO-END: session -> connect (start/callback/confirm) -> whoami -> post_now', async () => {

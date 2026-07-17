@@ -61,7 +61,14 @@ export function createService(deps: ServiceDeps): ChokepointService {
     const now = deps.now();
     const route = `${req.method} ${req.path}`;
 
-    if (route === 'GET /healthz') return json(200, { ok: true, service: 'capx-chokepoint' });
+    // /health is the canonical liveness probe. NOT /healthz: Google's Frontend RESERVES the literal
+    // path /healthz on Cloud Run and answers it with its own 404 — the request never reaches this
+    // container, so a healthy service looks dead. /healthz is kept as an alias for local + self-host
+    // deployments, where nothing intercepts it. Verified empirically 2026-07-17 (GET /zzz reached the
+    // app while GET /healthz did not).
+    if (route === 'GET /health' || route === 'GET /healthz') {
+      return json(200, { ok: true, service: 'capx-chokepoint' });
+    }
 
     if (route === 'POST /session') {
       const emailHash = String(asObj(req.body).emailHash ?? '');
