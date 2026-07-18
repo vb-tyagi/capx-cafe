@@ -133,3 +133,62 @@ completed shortly after. Lesson: to audit exposure, check `valueFrom` vs `value`
   `capx-session-signing-key`, `capx-admin-api-key`). Secret create/IAM = **your** identity; the scoped
   robot has no Secret Manager role. Runtime SA reads them via `secretAccessor`.
 - **Cloud Run runtime SA:** `capx-chokepoint-run@…` — least privilege: `cloudsql.client` + per-secret `secretAccessor`.
+
+---
+
+## 📌 PINNED (founder asked to re-deliver these exact points on request, 2026-07-18)
+
+### Casserole — the exact points ("the bouncer")
+
+Casserole is the **bouncer at the only door to your X account.** Three things make it real, not decorative:
+
+1. **It lives on the server, not your laptop.** The bouncer stands *inside* the locked mailroom. Even if
+   the AI on your machine is fully hijacked, it can only *ask* — it can't walk around the bouncer,
+   because the account key is behind him.
+2. **It's the only path to the key.** The code is written so the X token is *physically only reachable*
+   after the bouncer says "pass." A blocked post never even *unlocks* the key (proven by test: a scam
+   post is blocked and the token is never decrypted).
+3. **It checks six things + live signals, on every single post:** allowed & not-killed account; too many
+   posts today; spammy / duplicate / engagement-bait content; style-cloning; account health; audit stamp.
+   Worst result wins: **pass / rewrite / hold-for-review / block.**
+
+Proof it can't be bypassed: calling the chokepoint *directly*, skipping the plugin entirely, still hits
+the bouncer (red-team suite). The plugin's checks are cosmetic; the server's are load-bearing. One-liner:
+**"the AI writes, casserole decides what ships."** Also pinned: casserole is **deliberately not AI** —
+deterministic rules can't be prompt-injected, are testable, and cost nothing per check; the AI writes,
+the judge is not an AI. (Full architecture: `docs/P1-CHOKEPOINT.md`; adversarial proof:
+`apps/capx-mcp/test/redteam.test.ts`.)
+
+### Hybrid-hosting Q&A (founder architecture round, 2026-07-18)
+
+- **Self-host** = identical image, `CAPX_DEPLOY_MODE=self-host`, own Postgres/key/domain/X-app, own
+  allowlist + kill-switch + cron; zero telemetry to capx. A self-hoster can strip casserole from their
+  own instance — endangers only their own account; the guarantee is per-operator.
+- **Token + guard + send are ONE inseparable unit** (their co-location IS the security thesis). Around it,
+  everything mixes: own trigger calling `post_now` (works today), full self-host, casserole as a standalone
+  library/linter (OSS). NOT supported: token at home + capx scheduler (recreates the rejected Option A and
+  defeats laptop-off). "Casserole-as-a-service" check-only endpoint = easy to add but is a **linter, not a
+  lock** — must never be marketed as enforcement.
+- **Failure mode = fail closed:** live post errors surface to the agent (idempotent retry, never double);
+  scheduled posts fire late only within the 120-min window, else the slot is skipped and the post stays
+  queued. Never stale, never duplicate.
+- **Capacity honest read:** Cloud Run autoscales (0→100 instances) and casserole is sub-ms; real limits are
+  the db-f1-micro Postgres (~25 conns — hundreds of users, one-flag upgrade) and X's own per-app rate
+  limits (lane B shares capx's app quota; BYO brings their own). Never load-tested — do that before scale.
+
+---
+
+## 📋 TBD LEDGER (decisions/work parked by the founder, 2026-07-18 — do not lose)
+
+1. **Skills plan** — "where the real value is." Needs an actual prioritized plan. Candidates already
+   identified: build-in-public-from-git-log (the bet), PR/release → announcement thread, blog/README →
+   thread, voice-matching, best-time-to-post; later (new X scopes + guardrail review): replies/engagement,
+   analytics. Sequence write-skills before read-skills.
+2. **Legal/compliance pack** — license choice (client permissive; chokepoint permissive vs BSL/AGPL —
+   founder leaning discussed, not decided), ToS, privacy policy (hosted chokepoint = data processor),
+   plus the comprehensive user documentation: per-agent install guides, walkthroughs, self-host guide,
+   security page.
+3. **Launch assets** — "absolute beast" GitHub README + capx-cafe landing page/site. Explicitly gated
+   until build/publish decisions are made; part of GTM execution.
+4. **GTM strategy** — full plan lives in `docs/GTM-PLAN.md` (created 2026-07-18).
+5. **P4 monetization** — still deferred (MoR pick gates webhook code); see Deferred work section above.
