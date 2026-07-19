@@ -34,6 +34,8 @@ export interface PostNowInput {
   idempotencyKey: string;
   /** thread chaining: the platform post id this post replies to (from a prior post_now's platformPostId). */
   inReplyToId?: string;
+  /** already-uploaded media ids (from POST /media) to attach. casserole never inspects media — only text. */
+  mediaIds?: string[];
 }
 
 /** casserole verdict for a draft WITHOUT sending — powers the draft-review skill. */
@@ -105,7 +107,7 @@ export class PublishGate {
     if (!adm.admitted || !adm.emailHash) {
       return { outcome: 'rejected', finalReasons: [adm.reason ?? 'not admitted'] };
     }
-    return this.#publish({ emailHash: adm.emailHash, text: input.text, aiGenerated: input.aiGenerated, idempotencyKey: input.idempotencyKey, now, inReplyToId: input.inReplyToId });
+    return this.#publish({ emailHash: adm.emailHash, text: input.text, aiGenerated: input.aiGenerated, idempotencyKey: input.idempotencyKey, now, inReplyToId: input.inReplyToId, mediaIds: input.mediaIds });
   }
 
   /**
@@ -184,7 +186,7 @@ export class PublishGate {
     });
   }
 
-  async #publish(input: { emailHash: string; text: string; aiGenerated?: boolean; idempotencyKey: string; now: number; loop?: LoopRecord; inReplyToId?: string }): Promise<PostResult> {
+  async #publish(input: { emailHash: string; text: string; aiGenerated?: boolean; idempotencyKey: string; now: number; loop?: LoopRecord; inReplyToId?: string; mediaIds?: string[] }): Promise<PostResult> {
     const now = input.now;
     const emailHash = input.emailHash;
 
@@ -315,6 +317,7 @@ export class PublishGate {
           scheduledAtMs: g.scheduledAtMs ?? now,
           aiLabel: norm.draft.aiGenerated,
           inReplyToId: input.inReplyToId,
+          mediaIds: input.mediaIds,
         });
         if (this.#outbox && jobId) await this.#outbox.markSent(jobId);
         if (conn.lane === Lane.CAPX_APP && this.#metering) await this.#metering.record(emailHash, now);

@@ -64,3 +64,85 @@ export function httpXPoster(fetchImpl: FetchLike, endpoint = 'https://api.twitte
     return { id };
   };
 }
+
+// --- Media upload (Phase 4). Chunked INIT -> APPEND -> FINALIZE -> STATUS-poll (video/gif). The bytes ---
+// reach here from the MCP (which read the user's local asset); casserole never inspected them. The token
+// is supplied by the gateway inside vault.withToken, so — like the poster — this never sees a raw token
+// except through the injected fetch. Behind the same FetchLike so it unit-tests with no network.
+
+export type XMediaUploader = (input: {
+  accessToken: string;
+  bytes: Uint8Array;
+  mediaType: string; // e.g. image/png, image/jpeg, image/gif, video/mp4
+  category: string; // X media_category: tweet_image | tweet_gif | tweet_video
+}) => Promise<{ mediaId: string }>;
+
+export interface XMediaUploaderOptions {
+  endpoint?: string;
+  /** raw bytes per APPEND chunk (X caps a chunk at 5 MB; default 4 MB leaves base64 headroom). */
+  chunkBytes?: number;
+  /** injected so STATUS polling is deterministic in tests. */
+  sleep?: (ms: number) => Promise<void>;
+  /** cap on STATUS polls so a stuck 'in_progress' can't loop forever. */
+  maxStatusPolls?: number;
+}
+
+interface MediaInitResponse {
+  media_id_string?: string;
+  processing_info?: { state: string; check_after_secs?: number };
+}
+
+export function httpXMediaUploader(fetchImpl: FetchLike, opts: XMediaUploaderOptions = {}): XMediaUploader {
+  const endpoint = opts.endpoint ?? 'https://upload.twitter.com/1.1/media/upload.json';
+  const chunkBytes = opts.chunkBytes ?? 4_000_000;
+  const sleep = opts.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
+  const maxPolls = opts.maxStatusPolls ?? 20;
+
+  return async ({ accessToken, bytes, mediaType, category }) => {
+    const headers = { authorization: `Bearer ${accessToken}`, 'content-type': 'application/x-www-form-urlencoded' };
+    const form = (params: Record<string, string>): string => new URLSearchParams(params).toString();
+
+    // INIT — declare the upload; X returns the media id we then append chunks to.
+    const initRes = await fetchImpl(endpoint, {
+      method: 'POST',
+      headers,
+      body: form({ command: 'INIT', total_bytes: String(bytes.length), media_type: mediaType, media_category: category }),
+    });
+    if (!initRes.ok) throw new Error(`X media INIT failed: ${initRes.status} ${await initRes.text()}`);
+    const init = (await initRes.json()) as MediaInitResponse;
+    const mediaId = init.media_id_string;
+    if (!mediaId) throw new Error('X media INIT: missing media_id_string');
+
+    // APPEND — stream the bytes in base64 chunks, in order.
+    let segment = 0;
+    for (let off = 0; off < bytes.length; off += chunkBytes) {
+      const chunk = bytes.subarray(off, Math.min(off + chunkBytes, bytes.length));
+      const mediaData = Buffer.from(chunk).toString('base64');
+      const apRes = await fetchImpl(endpoint, {
+        method: 'POST',
+        headers,
+        body: form({ command: 'APPEND', media_id: mediaId, segment_index: String(segment), media_data: mediaData }),
+      });
+      if (!apRes.ok) throw new Error(`X media APPEND ${segment} failed: ${apRes.status} ${await apRes.text()}`);
+      segment += 1;
+    }
+
+    // FINALIZE — X assembles the media; for video/gif it returns processing_info we must poll.
+    const finRes = await fetchImpl(endpoint, { method: 'POST', headers, body: form({ command: 'FINALIZE', media_id: mediaId }) });
+    if (!finRes.ok) throw new Error(`X media FINALIZE failed: ${finRes.status} ${await finRes.text()}`);
+    let info = ((await finRes.json()) as MediaInitResponse).processing_info;
+
+    let polls = 0;
+    while (info && (info.state === 'pending' || info.state === 'in_progress')) {
+      if (polls >= maxPolls) throw new Error('X media processing did not finish in time');
+      await sleep(Math.max(1, info.check_after_secs ?? 1) * 1000);
+      const stRes = await fetchImpl(`${endpoint}?command=STATUS&media_id=${mediaId}`, { method: 'GET', headers });
+      if (!stRes.ok) throw new Error(`X media STATUS failed: ${stRes.status} ${await stRes.text()}`);
+      info = ((await stRes.json()) as MediaInitResponse).processing_info;
+      polls += 1;
+    }
+    if (info && info.state === 'failed') throw new Error('X media processing failed');
+
+    return { mediaId };
+  };
+}

@@ -9,7 +9,7 @@ const CLEAN =
   'Shipping the anti-slop engine today: deterministic scoring, real unit tests, and zero external keys. Here is a concrete walkthrough of the pipeline.';
 
 function base() {
-  const xPostCalls: Array<{ accessToken: string; text: string; inReplyToId?: string }> = [];
+  const xPostCalls: Array<{ accessToken: string; text: string; inReplyToId?: string; mediaIds?: string[] }> = [];
   const built = createInMemoryChokepoint({
     masterKeyBase64: LocalKeyKms.generateMasterKey(),
     signingKey: 'sign',
@@ -17,8 +17,8 @@ function base() {
     oauth: { authorizeEndpoint: 'https://x.example/authorize', redirectUri: 'https://capx.example/oauth/callback', scope: 'tweet.write' },
     tokenExchange: async ({ code }) => ({ accessToken: `atok-${code}`, refreshToken: `rtok-${code}` }),
     identity: async () => ({ xUserId: 'x1', username: 'acme', verified: true, createdAtMs: 1_600_000_000_000 }),
-    xPost: async ({ accessToken, text, inReplyToId }) => {
-      xPostCalls.push({ accessToken, text, inReplyToId });
+    xPost: async ({ accessToken, text, inReplyToId, mediaIds }) => {
+      xPostCalls.push({ accessToken, text, inReplyToId, mediaIds });
       return { id: 'tweet-1' };
     },
     byoDefaultClientId: 'client-xyz',
@@ -77,6 +77,29 @@ test('POST /post_now threads a reply via inReplyToId', async () => {
   const bearer = await connectBearer(b);
   await call(b.service, 'POST', '/post_now', { headers: auth(bearer), body: { text: CLEAN, idempotencyKey: 'k1', inReplyToId: 'parent-1' } });
   assert.equal(b.xPostCalls[0]?.inReplyToId, 'parent-1');
+});
+
+test('POST /media uploads bytes and returns a media id', async () => {
+  const b = base();
+  const bearer = await connectBearer(b);
+  const bytesBase64 = Buffer.from([1, 2, 3]).toString('base64');
+  const r = await call(b.service, 'POST', '/media', { headers: auth(bearer), body: { bytesBase64, mediaType: 'image/png', category: 'tweet_image' } });
+  assert.equal(r.status, 200);
+  assert.equal(obj(r.body).mediaId, 'fake-media'); // the in-memory factory's default uploader
+});
+
+test('POST /media requires bytes and a bearer', async () => {
+  const b = base();
+  const bearer = await connectBearer(b);
+  assert.equal((await call(b.service, 'POST', '/media', { body: { bytesBase64: 'x' } })).status, 401);
+  assert.equal((await call(b.service, 'POST', '/media', { headers: auth(bearer), body: {} })).status, 400);
+});
+
+test('POST /post_now attaches media ids to the tweet', async () => {
+  const b = base();
+  const bearer = await connectBearer(b);
+  await call(b.service, 'POST', '/post_now', { headers: auth(bearer), body: { text: CLEAN, idempotencyKey: 'k1', mediaIds: ['m1', 'm2'] } });
+  assert.deepEqual(b.xPostCalls[0]?.mediaIds, ['m1', 'm2']);
 });
 
 test('health is up on /health AND the /healthz alias', async () => {

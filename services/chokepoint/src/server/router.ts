@@ -14,6 +14,7 @@ import type { Admission } from '../admission/index.ts';
 import type { Vault } from '../vault/index.ts';
 import type { OAuthFlow, TokenExchange, IdentityFetch } from '../oauth/index.ts';
 import type { PublishGate } from '../gate/index.ts';
+import type { MediaGateway } from '../media/index.ts';
 import type { Loops } from '../loops/index.ts';
 import type { LoopTicker } from '../loops/tick.ts';
 import { generateSessionNonce } from '../oauth/pkce.ts';
@@ -39,6 +40,7 @@ export interface ServiceDeps {
   vault: Vault;
   oauth: OAuthFlow;
   gate: PublishGate;
+  media: MediaGateway;
   loops: Loops;
   ticker: LoopTicker;
   adminKey: string;
@@ -210,8 +212,24 @@ export function createService(deps: ServiceDeps): ChokepointService {
       const idempotencyKey = String(b.idempotencyKey ?? '');
       if (!idempotencyKey) return json(400, { error: 'idempotencyKey required' });
       const inReplyToId = b.inReplyToId ? String(b.inReplyToId) : undefined;
-      const result = await deps.gate.postNow({ bearer: tok, text, aiGenerated: Boolean(b.aiGenerated), idempotencyKey, inReplyToId });
+      const mediaIds = Array.isArray(b.mediaIds) ? (b.mediaIds as unknown[]).map(String) : undefined;
+      const result = await deps.gate.postNow({ bearer: tok, text, aiGenerated: Boolean(b.aiGenerated), idempotencyKey, inReplyToId, mediaIds });
       return json(200, result);
+    }
+
+    // Upload media (Phase 4). The MCP streamed the user's asset bytes here (base64). casserole does NOT
+    // inspect media — this admits + uploads to X and returns a media id to attach via post_now { mediaIds }.
+    if (route === 'POST /media') {
+      const tok = bearer(req.headers);
+      if (!tok) return json(401, { error: 'missing bearer' });
+      const b = asObj(req.body);
+      const bytesBase64 = String(b.bytesBase64 ?? '');
+      if (!bytesBase64) return json(400, { error: 'bytesBase64 required' });
+      const bytes = Buffer.from(bytesBase64, 'base64');
+      const mediaType = String(b.mediaType ?? 'application/octet-stream');
+      const category = String(b.category ?? 'tweet_image');
+      const result = await deps.media.uploadMedia({ bearer: tok, bytes, mediaType, category });
+      return result.rejected ? json(400, result) : json(200, result);
     }
 
     // Dry-run: casserole verdict for a draft WITHOUT sending (powers draft-review). Read-only.

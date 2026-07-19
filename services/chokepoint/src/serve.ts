@@ -7,7 +7,7 @@ import { createChokepoint, PostgresStore, runMigrations, createHttpServer } from
 import type { TokenExchange } from './index.ts';
 import { createPgPool } from './store/pg-pool.ts';
 import { httpTokenExchange, httpIdentity } from './xclient/x-api.ts';
-import { httpXPoster, type FetchLike } from './xclient/index.ts';
+import { httpXPoster, httpXMediaUploader, type FetchLike } from './xclient/index.ts';
 
 const realFetch: FetchLike = async (url, init) => {
   const r = await fetch(url, { method: init.method, headers: init.headers, body: init.body });
@@ -45,6 +45,7 @@ async function main(): Promise<void> {
     tokenExchange,
     identity: httpIdentity(realFetch),
     xPost: httpXPoster(realFetch),
+    xMediaUpload: httpXMediaUploader(realFetch),
     byoDefaultClientId: capxClientId,
     now: () => Date.now(),
   });
