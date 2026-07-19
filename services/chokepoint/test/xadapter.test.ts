@@ -57,6 +57,30 @@ test('httpXPoster sends a Bearer POST /2/tweets and parses the id', async () => 
   assert.match(calls[0]?.body ?? '', /"text":"gm"/);
 });
 
+test('httpXPoster attaches media ids under media.media_ids (Phase 4), reply under reply', async () => {
+  const calls: Array<{ body?: string }> = [];
+  const fetchImpl: FetchLike = async (_url, init) => {
+    calls.push({ body: init.body });
+    return { ok: true, status: 200, json: async () => ({ data: { id: 'm1' } }), text: async () => '' };
+  };
+  const out = await httpXPoster(fetchImpl)({ accessToken: 't', text: 'with a picture', inReplyToId: 'p9', mediaIds: ['media-1', 'media-2'] });
+  assert.equal(out.id, 'm1');
+  const body = JSON.parse(calls[0]?.body ?? '{}') as { text: string; media?: { media_ids: string[] }; reply?: { in_reply_to_tweet_id: string } };
+  assert.deepEqual(body.media?.media_ids, ['media-1', 'media-2']);
+  assert.equal(body.reply?.in_reply_to_tweet_id, 'p9');
+});
+
+test('httpXPoster omits media when there are no ids', async () => {
+  const calls: Array<{ body?: string }> = [];
+  const fetchImpl: FetchLike = async (_url, init) => {
+    calls.push({ body: init.body });
+    return { ok: true, status: 200, json: async () => ({ data: { id: 'x' } }), text: async () => '' };
+  };
+  await httpXPoster(fetchImpl)({ accessToken: 't', text: 'no media' });
+  const body = JSON.parse(calls[0]?.body ?? '{}') as { media?: unknown };
+  assert.equal(body.media, undefined, 'a text-only post carries no media key');
+});
+
 test('httpXPoster throws on a non-2xx from X', async () => {
   const fetchImpl: FetchLike = async () => ({ ok: false, status: 403, json: async () => ({}), text: async () => 'forbidden' });
   await assert.rejects(() => httpXPoster(fetchImpl)({ accessToken: 't', text: 'x' }), /403/);

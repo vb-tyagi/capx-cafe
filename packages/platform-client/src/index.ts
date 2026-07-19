@@ -10,6 +10,9 @@ export interface PublishRequest {
   aiLabel: boolean;
   /** when set, this post is a reply to that platform post id — the seam for thread reply-chaining. */
   inReplyToId?: string;
+  /** already-uploaded platform media ids to attach (Phase 4). casserole never inspects media — the caption
+   *  text is guarded, the asset rides along un-inspected; the AI-content label is the skill's responsibility. */
+  mediaIds?: string[];
 }
 
 export interface PublishResult {

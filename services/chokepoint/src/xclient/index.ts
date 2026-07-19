@@ -6,7 +6,7 @@
 import type { PlatformClient, PublishRequest, PublishResult } from '@capx-cafe/platform-client';
 import type { Vault } from '../vault/index.ts';
 
-export type XPoster = (input: { accessToken: string; text: string; inReplyToId?: string }) => Promise<{ id: string }>;
+export type XPoster = (input: { accessToken: string; text: string; inReplyToId?: string; mediaIds?: string[] }) => Promise<{ id: string }>;
 
 export interface XAdapterDeps {
   vault: Vault;
@@ -25,7 +25,7 @@ export class XAdapter implements PlatformClient {
   async publish(req: PublishRequest): Promise<PublishResult> {
     // withToken decrypts in-memory, hands the token to the closure, and never leaks it outward.
     const { id } = await this.#vault.withToken(req.channelId, async (accessToken) =>
-      this.#post({ accessToken, text: req.text, inReplyToId: req.inReplyToId }),
+      this.#post({ accessToken, text: req.text, inReplyToId: req.inReplyToId, mediaIds: req.mediaIds }),
     );
     return { platformPostId: id, scheduledAtMs: req.scheduledAtMs };
   }
@@ -45,10 +45,13 @@ export type FetchLike = (
 ) => Promise<MinimalResponse>;
 
 export function httpXPoster(fetchImpl: FetchLike, endpoint = 'https://api.twitter.com/2/tweets'): XPoster {
-  return async ({ accessToken, text, inReplyToId }) => {
+  return async ({ accessToken, text, inReplyToId, mediaIds }) => {
     const payload: Record<string, unknown> = { text };
     // X threads a post by nesting the parent id under `reply.in_reply_to_tweet_id`.
     if (inReplyToId) payload.reply = { in_reply_to_tweet_id: inReplyToId };
+    // Attach already-uploaded media (Phase 4). X takes the ids under `media.media_ids`. casserole never
+    // inspected these — only the caption `text` was guarded upstream.
+    if (mediaIds && mediaIds.length) payload.media = { media_ids: mediaIds };
     const res = await fetchImpl(endpoint, {
       method: 'POST',
       headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
