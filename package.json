@@ -15,7 +15,8 @@
     "guard": "node tools/boundary-guard.mjs",
     "guard:test": "node --test tools/boundary-guard.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "verify": "node --experimental-strip-types --test $(find packages services apps -name '*.test.ts' -not -path '*/node_modules/*') && tsc -p tsconfig.json --noEmit"
+    "verify": "node --experimental-strip-types --test $(find packages services apps -name '*.test.ts' -not -path '*/node_modules/*') && tsc -p tsconfig.json --noEmit",
+    "gen:skills": "node tools/gen-skills.mjs"
   },
   "workspaces": [
     "packages/*",
