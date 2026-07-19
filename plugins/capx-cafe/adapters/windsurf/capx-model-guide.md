@@ -1,0 +1,34 @@
+---
+description: "Reference: which image/video model to reach for by job (photoreal, illustration, product shot, short clip) and the tradeoffs, so you choose well BEFORE generating. capx integrates no provider — you generate with your own connected tools."
+---
+<!-- GENERATED from skills/model-guide/SKILL.md by tools/gen-skills.mjs — do not hand-edit; edit the source. -->
+
+Help pick the **right model for the job** before spending a generation. capx integrates no provider and runs
+no models — this is guidance for choosing among the tools the user connected (via `media-connect`). Match the
+job to a model class; the exact best model shifts fast, so reason from the job, and defer to what the user's
+connected tools actually offer. The job: "$ARGUMENTS"
+
+**How to choose — match the job to what matters:**
+
+| Job | What to optimize for | Reach for |
+|---|---|---|
+| Photoreal scene / product shot | realism, correct materials, few artifacts | a top photoreal image model; add a clean negative list |
+| Illustration / brand graphic | style control, consistency | a model strong at stylized/illustrative output |
+| Diagram / text-in-image | legible text, layout | a model that handles typography (most struggle — often better done in a real design tool) |
+| Logo / precise graphic | exactness | usually NOT generative — use a vector/design tool |
+| Short social clip | motion coherence, a strong first second | a current short-video model; keep it brief |
+| Talking / complex motion | temporal consistency, no morphing | the most coherent video model the user has; keep duration low |
+
+**Guidance to give:**
+
+1. **Name the job precisely** — "photoreal 1:1 product shot on a plain background" beats "a nice image." The
+   sharper the job, the clearer the model choice.
+2. **Prefer the user's connected tools.** Recommend from what they actually have wired (higgsfield / fal /
+   kling / …); if their tool exposes several models, point at the one whose strength matches the row above.
+3. **Call out the known-hard cases.** Text-in-image, logos, hands, and long coherent video are where
+   generative models still fail most — flag these and suggest a non-generative route when that's the honest call.
+4. **Then hand off.** Once a model is chosen, go to **`prompt-engine`** for the prompt and **`image-director`**
+   / **`video-director`** to generate and attach.
+
+**Hard rules:** this is reference only — capx generates nothing and endorses no single vendor. Choose from the
+user's own connected tools, and be honest when a job is better done outside a generative model.

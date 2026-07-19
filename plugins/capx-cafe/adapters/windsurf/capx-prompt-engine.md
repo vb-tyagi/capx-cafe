@@ -1,0 +1,33 @@
+---
+description: "Turn a vague creative ask into a precise, model-optimized prompt for image or video generation — the quality engine the director skills call. It produces a PROMPT; capx never generates the media itself."
+---
+<!-- GENERATED from skills/prompt-engine/SKILL.md by tools/gen-skills.mjs — do not hand-edit; edit the source. -->
+
+Turn a fuzzy ask ("make it look cool") into a **specific, model-shaped prompt** that the user's own image or
+video tool can actually execute well. This skill **only writes the prompt** — the user's connected media tool
+generates from it; capx generates nothing. It's the shared quality engine `image-director` and `video-director`
+call. The idea + medium: "$ARGUMENTS"
+
+Follow these steps:
+
+1. **Read the intent and the medium.** From "$ARGUMENTS": what's the subject, what's it *for* (a launch, a
+   TIL, a product), image or video, and the target model if named. If the medium isn't clear, ask.
+
+2. **Extract the visual spec.** Name the levers explicitly — vague prompts get vague output:
+   - **Subject** — the concrete thing, and what it's doing.
+   - **Composition & framing** — shot type, angle, focal point, aspect ratio (X: 16:9 / 1:1 / 9:16).
+   - **Style** — photoreal / illustration / 3D / diagram; reference an era or medium, not a living artist.
+   - **Light & mood** — lighting direction, palette, tone.
+   - **For video also:** the opening beat (first second), camera motion, pacing, and duration.
+   - **Negatives** — what to exclude (text artifacts, extra fingers, watermarks, clutter).
+
+3. **Write the prompt to the model's shape.** Different models want different phrasing (natural-language vs
+   tag-weighted vs structured). If the target model is known, format for it; otherwise give a clean
+   natural-language prompt plus a short negative list. Keep it tight — precise beats long.
+
+4. **Show it and iterate.** Present the prompt to the user (and the director skill) before a generation is
+   spent. Offer one or two variants if the direction is genuinely ambiguous. After a generation, tune the
+   prompt from what actually came back — that feedback loop is the whole point.
+
+**Hard rules:** this skill outputs a prompt only — capx never generates the media. Keep prompts honest to what
+the user wants to depict, and avoid mimicking a specific living artist's style by name.

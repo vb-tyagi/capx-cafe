@@ -207,7 +207,14 @@ shared server capability all of them flow through.
 ## 7. Build order — LOCKED scope, feature-rich launch (build it all, THEN launch)
 
 Launch shape is feature-rich (STATE §5.10), so v1 = everything below, built before going public. Phased so
-each phase is shippable + testable on its own:
+each phase is shippable + testable on its own.
+
+**✅ Status (2026-07-19): Phases 1–5 all built + committed; `pnpm run verify` green (209 pass).** 24 skills ×
+4 agents. The only thing between "built" and "live" is one **founder-gated redeploy** of the chokepoint
+(preview + audit + reply-chain + media go live together — founder chose "deploy once after Phase 4"), which
+is also the first real tweet. **Note on media AI-label:** X's API has no reliable per-media AI-content flag,
+so disclosure is done at the **caption** (guarded) + the post's `aiGenerated` (Option C) — the director skills
+prompt the user to disclose. The chunked upload carries `media_category`; the honesty label rides the caption.
 
 - **Phase 1 — Skill infrastructure:** the canonical `skills/<name>/SKILL.md` format + the per-agent generator
   (Claude Code / Cursor / Codex / Windsurf). Build **build-in-public (A1)** first, end-to-end across all four
