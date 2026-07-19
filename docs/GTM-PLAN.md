@@ -55,16 +55,21 @@ scheduling (near-term, needs the capx-app lane + pricing).
 
 ## 2. Phase 0 — Launch-ready (before telling anyone)
 
-- [ ] **Repo public** (move to a `capx` GitHub org, not personal). Secret-scan already clean.
-- [ ] **License chosen** (client MIT/Apache; chokepoint permissive-or-BSL — see licensing TBD).
-- [ ] **npm publish** `capx-cafe` (`pnpm --filter @capx-cafe/mcp build` → `cd apps/capx-mcp/dist && npm publish`).
-- [ ] **README** — trust story FIRST, then 60-sec install, then the per-agent matrix. This is the doc most
-      people read; it must be excellent.
-- [ ] **Demo asset** — a 30–60s GIF/video: connect X → ask the agent to post → it appears on X, with the
-      "token never touched my machine" line on screen.
-- [ ] **Security page** — the confused-deputy problem, the mailroom/vault architecture, the red-team proof,
-      self-host option. This converts skeptics.
-- [ ] **Directory listings** prepared (MCP registry entry, Smithery/Glama/mcp.so, awesome-mcp-servers PR).
+_Canonical asset checklist — folded in from the earlier `GTM.md` draft (now removed 2026-07-19) with
+statuses updated to current reality._
+
+| # | Asset | Notes | Status |
+|---|---|---|---|
+| 0.1 | License | **LOCKED**: MIT (client + `core`/`config`/`platform-client` + skills/docs) / AGPL-3.0 (chokepoint + casserole/captain/counter/canteen/chef) — STATE §5.9–5.10 | ✅ decided |
+| 0.2 | `npm publish capx-cafe` | Bundle built + verified standalone; needs npm login + MIT `LICENSE` files + version bump (`pnpm --filter @capx-cafe/mcp build` → `cd apps/capx-mcp/dist && npm publish`) | ⏸ founder action |
+| 0.3 | Repo public under a `capx` GitHub org | Secret-scan clean (audited); **no git remote configured yet** — add one first | ⏸ founder action |
+| 0.4 | **Beast README** | Trust story FIRST, 60-sec quickstart, per-agent matrix, demo GIF at top | to build |
+| 0.5 | Demo GIF/video (30–60s) | connect X → ask agent to post → appears on X, with "token never touched my machine" on screen; record with the real product | to build |
+| 0.6 | Landing page (capx.cafe or capx.ai/cafe) | One page: hook, demo, install, security, self-host | to build |
+| 0.7 | Docs: per-agent install matrix (Claude Code/Cursor/Codex/Windsurf/Cline/Zed), `~/.capx/config.json` guide, BYO wizard link, self-host guide, troubleshooting | in-repo `/docs` first; docs site later | to build |
+| 0.8 | **Security page** — the single highest-value marketing asset | Architecture diagram, threat model, "what we can/can't see" table, red-team tests linked to source, self-host option | to build |
+| 0.9 | Legal pack: ToS + privacy policy (consumer lane requires it) | First drafts in `docs/legal/` (2026-07-19) — need counsel review + the bracketed TODOs. Blocks creator-lane marketing, not the dev launch | 🟡 draft |
+| 0.10 | Directory listings prepared | MCP registry entry, Smithery/Glama/mcp.so, awesome-mcp-servers PR | to build |
 
 ## 3. Phase 1 — The meta-launch (the unfair move)
 
