@@ -38,6 +38,26 @@ export interface PostResp {
   finalReasons: string[];
   platformPostId?: string;
 }
+export interface PreviewResp {
+  verdict: string;
+  requiresHumanReview: boolean;
+  finalReasons: string[];
+  wouldSend: boolean;
+  rejected?: string;
+}
+export interface AuditEntryResp {
+  idempotencyKey: string;
+  text: string;
+  state: string;
+  aiGenerated: boolean;
+  lane: string;
+  scheduledAtMs: number;
+  createdAtMs: number;
+}
+export interface AuditResp {
+  entries: AuditEntryResp[];
+  rejected?: string;
+}
 export interface LoopResp {
   id: string;
   timezone: string;
@@ -47,12 +67,14 @@ export interface LoopResp {
   paused: boolean;
   pausedReason?: string;
   lastFiredDayKey?: string;
+  aiGenerated?: boolean;
 }
 export interface CreateLoopBody {
   timezone: string;
   timeOfDayMinutes: number;
   daysOfWeek: number[];
   posts: string[];
+  aiGenerated?: boolean;
 }
 
 export class ChokepointClient {
@@ -85,8 +107,14 @@ export class ChokepointClient {
   whoami(bearer: string): Promise<WhoamiResp> {
     return this.#post<WhoamiResp>('/whoami', {}, bearer);
   }
-  postNow(bearer: string, input: { text: string; aiGenerated: boolean; idempotencyKey: string }): Promise<PostResp> {
+  postNow(bearer: string, input: { text: string; aiGenerated: boolean; idempotencyKey: string; inReplyToId?: string }): Promise<PostResp> {
     return this.#post<PostResp>('/post_now', input, bearer);
+  }
+  preview(bearer: string, input: { text: string; aiGenerated: boolean }): Promise<PreviewResp> {
+    return this.#post<PreviewResp>('/preview', input, bearer);
+  }
+  audit(bearer: string, limit?: number): Promise<AuditResp> {
+    return this.#post<AuditResp>('/audit', { limit }, bearer);
   }
 
   // ---- Loops ----

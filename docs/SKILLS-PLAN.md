@@ -238,20 +238,23 @@ each phase is shippable + testable on its own:
 5. **Naming convention = `capx-<skill>`** everywhere (`capx-build-in-public`, `capx-ship-note`, …) so muscle
    memory ports across agents.
 
-## 9. Phase-2 review follow-ups (from the consistency critic, 2026-07-18)
+## 9. Phase-2 review follow-ups — ✅ RESOLVED (2026-07-19)
 
-The 16-skill authoring pass + critic surfaced two real items to settle (the blocker — cross-skill `capx-`
-prefix refs — is already fixed):
+Both items the consistency critic raised are now settled and implemented:
 
-1. **Reply-chain capability gap (real).** `post_now` posts **standalone** posts — there is no `in_reply_to`
-   chaining. So the thread skills (repurpose, thread-builder, launch-thread, changelog-thread) currently
-   produce *numbered standalone posts*, NOT a native connected reply-chain. Either (a) add reply-chain support
-   to `post_now` (an `in_reply_to_tweet_id` param + x-adapter support — a Phase-3/4 capability), or (b) keep
-   the numbered-standalone style and make every thread skill say so plainly. **Decision needed.**
-2. **`aiGenerated` policy — pick one rule.** The flag is set true in some skills, false in one (til), silent in
-   most, despite the agent drafting in all. Settle a single rule (e.g. "agent drafted the text → `aiGenerated:
-   true`, uniformly") — noting it's a product/honesty call (it drives casserole's audit AI-label; for text it
-   sets a flag, it does not block). Then normalize across all skills via the canonical `SKILL.md`s.
+1. **Reply-chain capability — ✅ ADDED.** `post_now` now takes an optional `inReplyToId` (a prior post's
+   `platformPostId`); the gate threads it to the x-adapter, which nests it under X's
+   `reply.in_reply_to_tweet_id`. The thread skills (repurpose, thread-builder, launch-thread, changelog-thread)
+   now chain natively — post the first, then pass its `platformPostId` as the next post's `inReplyToId`. The
+   old "numbered standalone" caveat has been removed from those skills.
+2. **`aiGenerated` policy — ✅ LOCKED = Option C (the user decides).** capx never forces the flag. Uniform rule
+   across every write path: **before posting/scheduling, ask the user whether to label the post(s) AI-assisted
+   and pass `aiGenerated` per their answer; default `false` (opt-in) when unspecified.** It is an honesty
+   label: for text it does not block — casserole decides sending on its own rules. Implemented end-to-end:
+   `post_now` + `preview` take it from the caller (default false); loops carry a **per-loop** choice
+   (`loops.ai_generated`, default false — the old hard-coded `true` in `postFromLoop` is gone); the four skills
+   that hard-coded/conditioned it (repurpose, launch-thread, quickstart, til) now state the uniform rule, and
+   the silent skills inherit the default. **This is the "no inconsistency anywhere" resolution.**
 
 _Related: `GTM-PLAN.md` §6 (skills = the content engine), `STATE.md` §5.9 (skills are permissive-licensed),
 `HANDOVER-SEEDS.md` TBD ledger #1._

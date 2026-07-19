@@ -9,7 +9,7 @@ const CLEAN =
   'Shipping the anti-slop engine today: deterministic scoring, real unit tests, and zero external keys. Here is a concrete walkthrough of the pipeline.';
 
 function base() {
-  const xPostCalls: Array<{ accessToken: string; text: string }> = [];
+  const xPostCalls: Array<{ accessToken: string; text: string; inReplyToId?: string }> = [];
   const built = createInMemoryChokepoint({
     masterKeyBase64: LocalKeyKms.generateMasterKey(),
     signingKey: 'sign',
@@ -17,8 +17,8 @@ function base() {
     oauth: { authorizeEndpoint: 'https://x.example/authorize', redirectUri: 'https://capx.example/oauth/callback', scope: 'tweet.write' },
     tokenExchange: async ({ code }) => ({ accessToken: `atok-${code}`, refreshToken: `rtok-${code}` }),
     identity: async () => ({ xUserId: 'x1', username: 'acme', verified: true, createdAtMs: 1_600_000_000_000 }),
-    xPost: async ({ accessToken, text }) => {
-      xPostCalls.push({ accessToken, text });
+    xPost: async ({ accessToken, text, inReplyToId }) => {
+      xPostCalls.push({ accessToken, text, inReplyToId });
       return { id: 'tweet-1' };
     },
     byoDefaultClientId: 'client-xyz',
@@ -45,6 +45,39 @@ async function connectBearer(b: ReturnType<typeof base>): Promise<string> {
   await call(b.service, 'POST', '/oauth/confirm', { headers: auth(bearer), body: { pendingId: start.pendingId, sessionNonce: start.sessionNonce } });
   return bearer;
 }
+
+test('POST /preview returns a verdict without sending', async () => {
+  const b = base();
+  const bearer = await connectBearer(b);
+  const r = await call(b.service, 'POST', '/preview', { headers: auth(bearer), body: { text: CLEAN } });
+  assert.equal(r.status, 200);
+  assert.equal(obj(r.body).wouldSend, true);
+  assert.equal(b.xPostCalls.length, 0, 'preview must not send');
+});
+
+test('POST /preview requires a bearer', async () => {
+  const { service } = base();
+  const r = await call(service, 'POST', '/preview', { body: { text: CLEAN } });
+  assert.equal(r.status, 401);
+});
+
+test('POST /audit lists the caller\'s sent history', async () => {
+  const b = base();
+  const bearer = await connectBearer(b);
+  await call(b.service, 'POST', '/post_now', { headers: auth(bearer), body: { text: CLEAN, idempotencyKey: 'k1' } });
+  const r = await call(b.service, 'POST', '/audit', { headers: auth(bearer), body: {} });
+  assert.equal(r.status, 200);
+  const entries = obj(r.body).entries as Array<Record<string, unknown>>;
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0]?.state, 'SENT');
+});
+
+test('POST /post_now threads a reply via inReplyToId', async () => {
+  const b = base();
+  const bearer = await connectBearer(b);
+  await call(b.service, 'POST', '/post_now', { headers: auth(bearer), body: { text: CLEAN, idempotencyKey: 'k1', inReplyToId: 'parent-1' } });
+  assert.equal(b.xPostCalls[0]?.inReplyToId, 'parent-1');
+});
 
 test('health is up on /health AND the /healthz alias', async () => {
   const { service } = base();

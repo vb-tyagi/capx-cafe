@@ -60,10 +60,35 @@ async function main(): Promise<void> {
     'post_now',
     {
       description:
-        'Post text to X now. Every post passes the casserole guardrail at the chokepoint; blocked/held posts are never sent, and the token never touches this machine.',
-      inputSchema: { text: z.string(), aiGenerated: z.boolean().optional(), idempotencyKey: z.string().optional() },
+        'Post text to X now. Every post passes the casserole guardrail at the chokepoint; blocked/held posts are never sent, and the token never touches this machine. Set aiGenerated only if the user wants this post labelled AI-assisted (default off — it is the user\'s choice). Pass inReplyToId with a prior post\'s platformPostId to chain a native reply/thread.',
+      inputSchema: {
+        text: z.string(),
+        aiGenerated: z.boolean().optional().describe('label this post AI-assisted — the USER decides; default false'),
+        idempotencyKey: z.string().optional(),
+        inReplyToId: z.string().optional().describe('platformPostId of the post this replies to (for threads)'),
+      },
     },
     async (args) => ({ content: [{ type: 'text', text: (await mcp.postNow(args)).text }] }),
+  );
+
+  server.registerTool(
+    'preview',
+    {
+      description:
+        'Dry-run a draft through the casserole guardrail WITHOUT posting: returns whether it would pass, be held, or be blocked, and why. Use it to fix a draft before posting or scheduling. This is a linter, never a way to bypass the guard.',
+      inputSchema: { text: z.string(), aiGenerated: z.boolean().optional() },
+    },
+    async (args) => ({ content: [{ type: 'text', text: (await mcp.preview(args)).text }] }),
+  );
+
+  server.registerTool(
+    'audit',
+    {
+      description:
+        'Show the durable history of what capx has posted or attempted on your behalf (most recent first, with delivery state). A trust feature — read-only, your own handle only.',
+      inputSchema: { limit: z.number().optional().describe('max rows (default 50)') },
+    },
+    async (args) => ({ content: [{ type: 'text', text: (await mcp.auditTrail(args)).text }] }),
   );
 
   server.registerTool(
@@ -76,6 +101,7 @@ async function main(): Promise<void> {
         daysOfWeek: z.array(z.number()).describe('0=Sunday .. 6=Saturday, e.g. [1,3,5]'),
         posts: z.array(z.string()).describe('the posts YOU wrote; one is sent per fire, in order'),
         timezone: z.string().optional().describe('IANA zone (defaults to this machine\'s), e.g. Asia/Kolkata'),
+        aiGenerated: z.boolean().optional().describe('label this loop\'s posts AI-assisted — the USER decides; default false'),
       },
     },
     async (args) => ({ content: [{ type: 'text', text: (await mcp.createLoop(args)).text }] }),

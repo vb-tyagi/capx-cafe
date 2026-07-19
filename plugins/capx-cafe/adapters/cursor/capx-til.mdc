@@ -43,9 +43,9 @@ Follow these steps:
 4. **Show it and get approval.** Present the draft. Let the user tighten, swap the lesson, or kill it. Never
    post without showing them first.
 
-5. **Ship it.** On approval, call `post_now` with `{ text }`. This post is your own words, so leave
-   `aiGenerated` false (only set it true if the user actually asked you to write it wholesale). Pass an
-   `idempotencyKey` so a retry can't double-post.
+5. **Ship it.** On approval, call `post_now` with `{ text }`. Ask whether to label it AI-assisted and set
+   `aiGenerated` to the user's choice (default off — it's their call). Pass an `idempotencyKey` so a retry
+   can't double-post.
 
 6. **Handle the guard honestly.** If `post_now` comes back `blocked` or `held`, show the reason and fix the
    **content** — make the lesson more concrete, cut the bait, dedupe against a near-identical past post. Never

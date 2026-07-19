@@ -209,7 +209,26 @@ export function createService(deps: ServiceDeps): ChokepointService {
       const text = String(b.text ?? '');
       const idempotencyKey = String(b.idempotencyKey ?? '');
       if (!idempotencyKey) return json(400, { error: 'idempotencyKey required' });
-      const result = await deps.gate.postNow({ bearer: tok, text, aiGenerated: Boolean(b.aiGenerated), idempotencyKey });
+      const inReplyToId = b.inReplyToId ? String(b.inReplyToId) : undefined;
+      const result = await deps.gate.postNow({ bearer: tok, text, aiGenerated: Boolean(b.aiGenerated), idempotencyKey, inReplyToId });
+      return json(200, result);
+    }
+
+    // Dry-run: casserole verdict for a draft WITHOUT sending (powers draft-review). Read-only.
+    if (route === 'POST /preview') {
+      const tok = bearer(req.headers);
+      if (!tok) return json(401, { error: 'missing bearer' });
+      const b = asObj(req.body);
+      const result = await deps.gate.preview({ bearer: tok, text: String(b.text ?? ''), aiGenerated: Boolean(b.aiGenerated) });
+      return json(200, result);
+    }
+
+    // Read-only audit: the caller's own durable send history (powers audit-trail). Own-handle only.
+    if (route === 'POST /audit') {
+      const tok = bearer(req.headers);
+      if (!tok) return json(401, { error: 'missing bearer' });
+      const b = asObj(req.body);
+      const result = await deps.gate.audit({ bearer: tok, limit: b.limit === undefined ? undefined : Number(b.limit) });
       return json(200, result);
     }
 
@@ -231,6 +250,7 @@ export function createService(deps: ServiceDeps): ChokepointService {
           posts: Array.isArray(b.posts) ? (b.posts as unknown[]).map(String) : [],
           autonomy: b.autonomy === 'USER_REVIEWED' ? 'USER_REVIEWED' : 'AUTONOMOUS',
           trainingWheelsRemaining: b.trainingWheelsRemaining === undefined ? 0 : Number(b.trainingWheelsRemaining),
+          aiGenerated: Boolean(b.aiGenerated),
         });
         return problems.length ? json(400, { problems }) : json(200, { loop });
       }

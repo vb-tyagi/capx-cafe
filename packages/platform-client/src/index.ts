@@ -8,6 +8,8 @@ export interface PublishRequest {
   text: string;
   scheduledAtMs: number;
   aiLabel: boolean;
+  /** when set, this post is a reply to that platform post id — the seam for thread reply-chaining. */
+  inReplyToId?: string;
 }
 
 export interface PublishResult {

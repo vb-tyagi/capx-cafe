@@ -25,6 +25,8 @@ export interface LoopRecord {
   /** local-day key ('YYYY-MM-DD' in `timezone`) of the last fire ATTEMPT — the exactly-once-per-day guard. */
   lastFiredDayKey?: string;
   createdAtMs: number;
+  /** Option-C AI-assist label for THIS loop's posts — the user's choice at create (default false). */
+  aiGenerated?: boolean;
 }
 
 export interface LoopStore {
@@ -45,6 +47,8 @@ export interface CreateLoopInput {
   posts: string[];
   autonomy?: Autonomy;
   trainingWheelsRemaining?: number;
+  /** Option-C: the user's AI-assist labelling choice for this loop's posts (default false). */
+  aiGenerated?: boolean;
 }
 
 /**
@@ -97,6 +101,7 @@ export class Loops {
       trainingWheelsRemaining: input.trainingWheelsRemaining ?? 0,
       paused: false,
       createdAtMs: this.#now(),
+      aiGenerated: input.aiGenerated ?? false,
     };
     await this.#store.createLoop(loop);
     return { loop, problems: [] };

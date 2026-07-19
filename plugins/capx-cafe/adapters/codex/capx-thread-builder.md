@@ -39,8 +39,10 @@ Follow these steps:
    cut, reorder, or merge beats before anything is sent. Never post without showing them first.
 
 8. **Ship it in order — sequence or queue.** Ask which the user wants:
-   - **Post now as an ordered sequence** — call `post_now` for each post in order, 1…N. Give each a stable
-     `idempotencyKey` so a retry can't double-send. capx ships each one; each passes casserole at send.
+   - **Post now as an ordered sequence** — call `post_now` for each post in order, 1…N, chained into a native
+     thread: post 1 first, then pass its returned `platformPostId` as the next post's `inReplyToId`, and so on.
+     Give each a stable `idempotencyKey` so a retry can't double-send, and set `aiGenerated` to the user's
+     labelling choice (default off — the user decides). Each post passes casserole at send.
    - **Queue it** — call `create_loop` with `{ time, daysOfWeek (0=Sun..6=Sat), posts: [...], timezone }` to
      drip one post per fire, in order. A loop needs a **verified X account at least 30 days old** — if
      create_loop rejects it for that, explain the requirement instead of retrying.

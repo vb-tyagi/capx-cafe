@@ -32,6 +32,33 @@ export interface PostNowInput {
   text: string;
   aiGenerated?: boolean;
   idempotencyKey: string;
+  /** thread chaining: the platform post id this post replies to (from a prior post_now's platformPostId). */
+  inReplyToId?: string;
+}
+
+/** casserole verdict for a draft WITHOUT sending — powers the draft-review skill. */
+export interface PreviewResult {
+  verdict: Verdict;
+  requiresHumanReview: boolean;
+  finalReasons: string[];
+  /** true iff a real post_now would actually send it (PASS && !requiresHumanReview). */
+  wouldSend: boolean;
+  rejected?: string;
+}
+
+/** One durable send-history row for the audit-trail skill. */
+export interface AuditEntry {
+  idempotencyKey: string;
+  text: string;
+  state: OutboxState;
+  aiGenerated: boolean;
+  lane: Lane;
+  scheduledAtMs: number;
+  createdAtMs: number;
+}
+export interface AuditResult {
+  entries: AuditEntry[];
+  rejected?: string;
 }
 
 export interface GateDeps {
@@ -78,7 +105,59 @@ export class PublishGate {
     if (!adm.admitted || !adm.emailHash) {
       return { outcome: 'rejected', finalReasons: [adm.reason ?? 'not admitted'] };
     }
-    return this.#publish({ emailHash: adm.emailHash, text: input.text, aiGenerated: input.aiGenerated, idempotencyKey: input.idempotencyKey, now });
+    return this.#publish({ emailHash: adm.emailHash, text: input.text, aiGenerated: input.aiGenerated, idempotencyKey: input.idempotencyKey, now, inReplyToId: input.inReplyToId });
+  }
+
+  /**
+   * Dry-run: run the SAME admission + draft-normalize + casserole a real post_now would, but do NOT send,
+   * meter, or record anything. Read-only (no mutex, no outbox). Powers the draft-review skill — "here is
+   * why this would be blocked/held" — before the user schedules or posts.
+   */
+  async preview(input: { bearer: string; text: string; aiGenerated?: boolean }): Promise<PreviewResult> {
+    const now = this.#now();
+    const adm = await this.#admission.admit(input.bearer, now);
+    if (!adm.admitted || !adm.emailHash) return { verdict: Verdict.BLOCK, requiresHumanReview: false, finalReasons: [], wouldSend: false, rejected: adm.reason ?? 'not admitted' };
+    const emailHash = adm.emailHash;
+    const vaultRef = await this.#vault.refByEmailHash(emailHash);
+    if (!vaultRef) return { verdict: Verdict.BLOCK, requiresHumanReview: false, finalReasons: [], wouldSend: false, rejected: 'no connected X account' };
+    const conn = await this.#vault.getMetadata(vaultRef);
+    if (!conn) return { verdict: Verdict.BLOCK, requiresHumanReview: false, finalReasons: [], wouldSend: false, rejected: 'connection metadata missing' };
+
+    const norm = normalizeDraft(input.text, { aiGenerated: input.aiGenerated ?? false });
+    if (norm.problems.length) return { verdict: Verdict.BLOCK, requiresHumanReview: false, finalReasons: norm.problems, wouldSend: false };
+
+    const history = this.#recent ? await this.#recent.recent(emailHash, now) : [];
+    const killSwitch = await this.#admission.resolveKillSwitch(emailHash, conn.xUserId);
+    const ageDays = conn.createdAtMs > 0 ? Math.floor((now - conn.createdAtMs) / 86_400_000) : 0;
+    const handle: Handle = { id: conn.xUserId, workspaceId: '', platform: Platform.X, username: conn.username, verified: conn.verified, ageDays, standing: conn.standing, connectedAt: conn.createdAtMs };
+    const g = runGauntlet(norm.draft, { tier: 'SOLO', handle, history, now, accountDailyCeiling: MANUAL_DAILY_CEILING, killSwitch });
+    return { verdict: g.verdict, requiresHumanReview: g.requiresHumanReview, finalReasons: g.finalReasons, wouldSend: g.verdict === Verdict.PASS && !g.requiresHumanReview };
+  }
+
+  /**
+   * Read-only audit: the durable send history for the caller's own handle (most recent first). Powers
+   * the audit-trail skill — "everything capx has posted / attempted on your behalf, and its delivery
+   * state." Requires the outbox (the durable record); returns empty without it. Blocked/held drafts are
+   * surfaced live at post/preview time and are not persisted here.
+   */
+  async audit(input: { bearer: string; limit?: number }): Promise<AuditResult> {
+    const now = this.#now();
+    const adm = await this.#admission.admit(input.bearer, now);
+    if (!adm.admitted || !adm.emailHash) return { entries: [], rejected: adm.reason ?? 'not admitted' };
+    if (!this.#outbox) return { entries: [] };
+    const limit = Math.min(Math.max(1, input.limit ?? 50), 200);
+    const jobs = await this.#outbox.history(adm.emailHash, limit);
+    return {
+      entries: jobs.map((j) => ({
+        idempotencyKey: j.idempotencyKey,
+        text: j.text,
+        state: j.state,
+        aiGenerated: j.aiGenerated,
+        lane: j.lane,
+        scheduledAtMs: j.scheduledAtMs,
+        createdAtMs: j.createdAtMs,
+      })),
+    };
   }
 
   /**
@@ -96,14 +175,16 @@ export class PublishGate {
     return this.#publish({
       emailHash: input.emailHash,
       text: input.text,
-      aiGenerated: true, // loop posts are agent-authored by construction
+      // Option-C: the AI-assist label is the user's choice, captured on the loop at create (default false).
+      // capx does not presume the flag even though the agent drafted the buffer — the user owns the label.
+      aiGenerated: input.loop.aiGenerated ?? false,
       idempotencyKey: input.idempotencyKey,
       now: input.now,
       loop: input.loop,
     });
   }
 
-  async #publish(input: { emailHash: string; text: string; aiGenerated?: boolean; idempotencyKey: string; now: number; loop?: LoopRecord }): Promise<PostResult> {
+  async #publish(input: { emailHash: string; text: string; aiGenerated?: boolean; idempotencyKey: string; now: number; loop?: LoopRecord; inReplyToId?: string }): Promise<PostResult> {
     const now = input.now;
     const emailHash = input.emailHash;
 
@@ -233,6 +314,7 @@ export class PublishGate {
           text: norm.draft.text,
           scheduledAtMs: g.scheduledAtMs ?? now,
           aiLabel: norm.draft.aiGenerated,
+          inReplyToId: input.inReplyToId,
         });
         if (this.#outbox && jobId) await this.#outbox.markSent(jobId);
         if (conn.lane === Lane.CAPX_APP && this.#metering) await this.#metering.record(emailHash, now);

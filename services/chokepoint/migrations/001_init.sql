@@ -94,6 +94,9 @@ create table if not exists loops (
 );
 create index if not exists loops_email_hash_idx on loops (email_hash);
 create index if not exists loops_active_idx on loops (paused) where paused = false;
+-- Option-C AI-assist labelling (2026-07-19): the flag is the USER's choice, captured per loop at create
+-- (default false = opt-in). Idempotent add so it lands on both fresh (pg-mem) and the live DB at deploy.
+alter table loops add column if not exists ai_generated boolean not null default false;
 
 -- Per-handle recent-post cache feeding casserole L2/L3 (dedup + ceiling).
 create table if not exists recent_posts (

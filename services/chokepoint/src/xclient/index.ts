@@ -6,7 +6,7 @@
 import type { PlatformClient, PublishRequest, PublishResult } from '@capx-cafe/platform-client';
 import type { Vault } from '../vault/index.ts';
 
-export type XPoster = (input: { accessToken: string; text: string }) => Promise<{ id: string }>;
+export type XPoster = (input: { accessToken: string; text: string; inReplyToId?: string }) => Promise<{ id: string }>;
 
 export interface XAdapterDeps {
   vault: Vault;
@@ -25,7 +25,7 @@ export class XAdapter implements PlatformClient {
   async publish(req: PublishRequest): Promise<PublishResult> {
     // withToken decrypts in-memory, hands the token to the closure, and never leaks it outward.
     const { id } = await this.#vault.withToken(req.channelId, async (accessToken) =>
-      this.#post({ accessToken, text: req.text }),
+      this.#post({ accessToken, text: req.text, inReplyToId: req.inReplyToId }),
     );
     return { platformPostId: id, scheduledAtMs: req.scheduledAtMs };
   }
@@ -45,11 +45,14 @@ export type FetchLike = (
 ) => Promise<MinimalResponse>;
 
 export function httpXPoster(fetchImpl: FetchLike, endpoint = 'https://api.twitter.com/2/tweets'): XPoster {
-  return async ({ accessToken, text }) => {
+  return async ({ accessToken, text, inReplyToId }) => {
+    const payload: Record<string, unknown> = { text };
+    // X threads a post by nesting the parent id under `reply.in_reply_to_tweet_id`.
+    if (inReplyToId) payload.reply = { in_reply_to_tweet_id: inReplyToId };
     const res = await fetchImpl(endpoint, {
       method: 'POST',
       headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`X /2/tweets failed: ${res.status} ${await res.text()}`);
     const data = (await res.json()) as { data?: { id?: string } };

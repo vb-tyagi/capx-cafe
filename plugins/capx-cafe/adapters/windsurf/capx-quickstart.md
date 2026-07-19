@@ -31,8 +31,8 @@ Do these in order, and **pause after each step** — don't run ahead. One thing 
    - **Within X's length** — ≤ 280 weighted chars.
    Show the draft and let them edit or rewrite. Never send without a clear yes.
 
-5. **Post it.** On their go-ahead, call `post_now` with `{ text }` (set `aiGenerated: true` if the wording is mostly
-   yours-the-agent's, not theirs). Then explain the verdict in plain terms:
+5. **Post it.** On their go-ahead, call `post_now` with `{ text }`. Ask if they'd like the post labelled
+   AI-assisted and set `aiGenerated` to their choice (default off — it's their call). Then explain the verdict in plain terms:
    - **Sent** → celebrate briefly and show the result / link.
    - **Held or blocked** → this is the guardrail doing its job, not an error. Show the reason it gave, then fix the
      **content** together — make it more specific, drop the bait, de-duplicate — and try again. Never route around

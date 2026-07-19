@@ -9,6 +9,8 @@ export interface OutboxStore {
   findByIdempotencyKey(key: string): Promise<OutboxJob | null>;
   insert(job: OutboxJob): Promise<void>;
   setState(id: string, state: OutboxState): Promise<void>;
+  /** most-recent-first send history for one handle — the durable source for the audit-trail skill. */
+  listByEmailHash(emailHash: string, limit: number): Promise<OutboxJob[]>;
 }
 
 export interface EnqueueResult {
@@ -44,5 +46,10 @@ export class Outbox {
   }
   async markFailed(id: string): Promise<void> {
     await this.#store.setState(id, OutboxState.PUBLISH_FAILED);
+  }
+
+  /** Read the handle's durable send history (most recent first). Powers the audit-trail skill. */
+  history(emailHash: string, limit = 50): Promise<OutboxJob[]> {
+    return this.#store.listByEmailHash(emailHash, limit);
   }
 }

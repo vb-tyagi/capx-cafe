@@ -92,6 +92,13 @@ export class InMemoryStore
     if (!job) throw new Error(`outbox: no job ${id}`);
     this.#outbox.set(id, { ...job, state });
   }
+  async listByEmailHash(emailHash: string, limit: number): Promise<OutboxJob[]> {
+    return [...this.#outbox.values()]
+      .filter((j) => j.emailHash === emailHash)
+      .sort((a, b) => b.createdAtMs - a.createdAtMs)
+      .slice(0, limit)
+      .map((j) => ({ ...j }));
+  }
 
   // ---- PendingStore ----
   async putPending(p: PendingConnection): Promise<void> {

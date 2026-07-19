@@ -38,9 +38,11 @@ Follow these steps:
    cut, reorder, or drop the version label before anything ships. Never post without showing them first.
 
 6. **Ship it — post now or queue.** Ask which the user wants:
-   - **Thread it now** (default): call `post_now` for each post **in order**, hook first, so they land as a
-     sequence. Pass a distinct `idempotencyKey` per post so a retry can't double-send. capx ships each post
-     individually through the guard — it does not stitch a reply chain for you, so send them close together.
+   - **Thread it now** (default): call `post_now` for each post **in order**, hook first, chained into a native
+     reply-thread — post the hook, then pass its returned `platformPostId` as the next post's `inReplyToId`, and
+     so on down the range. Pass a distinct `idempotencyKey` per post so a retry can't double-send, and set
+     `aiGenerated` to the user's labelling choice (default off — the user decides). Each post still passes
+     casserole individually at send.
    - **Queue it** (drip on a schedule): call `create_loop` with
      `{ time, daysOfWeek (0=Sun..6=Sat), posts: [...in order], timezone }` — one post per fire. A loop needs a
      **verified X account at least 30 days old**; if create_loop rejects it for that, explain the requirement

@@ -46,10 +46,11 @@ Follow these steps:
    the launch. **Post nothing until the user gives an explicit go**, and if they edit, read the final thread
    back once before posting.
 
-6. **Post the parts in order.** For each part *in sequence* call `post_now` with its `text`, a distinct
-   `idempotencyKey` per part (so a retry can't double-post a part), and `aiGenerated: true` since you drafted
-   it. Send `1/n`, then `2/n`, and so on, in order, so they land as the launch thread — each part passes
-   casserole individually at send.
+6. **Post the parts in order, chained.** For each part *in sequence* call `post_now` with its `text`, a
+   distinct `idempotencyKey` per part (so a retry can't double-post a part), and `aiGenerated` set to the
+   user's labelling choice (default off — the user decides). Send `1/n` first, then pass its returned
+   `platformPostId` as `2/n`'s `inReplyToId`, and so on, so the parts land as a native connected reply-thread —
+   each part still passes casserole individually at send.
 
 7. **If the guard stops a part, stop the thread.** On `blocked` or `held`, do NOT keep posting the rest on top
    of a broken part. Show the reason, fix *that part's content* (be more specific, drop the hype/bait, remove

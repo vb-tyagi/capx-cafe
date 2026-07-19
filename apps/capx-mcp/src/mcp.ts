@@ -2,7 +2,7 @@
 // the chokepoint; the MCP holds only a short-TTL session bearer (lazily obtained/refreshed) and the
 // transient connect pending-ref. It renders the chokepoint's verdict so the agent can explain a
 // blocked/held post WITHOUT re-running or being able to skip the guard (assume-compromised posture).
-import type { ChokepointClient, PostResp, LoopResp } from './client.ts';
+import type { ChokepointClient, PostResp, LoopResp, PreviewResp, AuditResp } from './client.ts';
 
 export interface McpConfig {
   emailHash: string;
@@ -154,7 +154,7 @@ export class CapxMcp {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   }
 
-  async createLoop(args: { time: string; daysOfWeek: number[]; posts: string[]; timezone?: string }): Promise<ToolResult> {
+  async createLoop(args: { time: string; daysOfWeek: number[]; posts: string[]; timezone?: string; aiGenerated?: boolean }): Promise<ToolResult> {
     const bearer = await this.#ensureSession();
     const minutes = CapxMcp.parseTime(args.time);
     if (minutes === null) return { text: `Could not read time "${args.time}". Use HH:MM, e.g. "09:00".`, data: { ok: false } };
@@ -166,7 +166,13 @@ export class CapxMcp {
     }
     const timezone = args.timezone ?? CapxMcp.localZone();
     try {
-      const { loop } = await this.#client.createLoop(bearer, { timezone, timeOfDayMinutes: minutes, daysOfWeek: args.daysOfWeek, posts: args.posts });
+      const { loop } = await this.#client.createLoop(bearer, {
+        timezone,
+        timeOfDayMinutes: minutes,
+        daysOfWeek: args.daysOfWeek,
+        posts: args.posts,
+        aiGenerated: args.aiGenerated ?? false, // Option-C: the user's label choice for this loop
+      });
       return { text: `Loop created: ${renderLoop(loop)}`, data: { ok: true, ...loop } };
     } catch (e) {
       return { text: `Could not create the loop: ${e instanceof Error ? e.message : String(e)}`, data: { ok: false } };
@@ -212,11 +218,41 @@ export class CapxMcp {
     }
   }
 
-  async postNow(args: { text: string; aiGenerated?: boolean; idempotencyKey?: string }): Promise<ToolResult> {
+  async postNow(args: { text: string; aiGenerated?: boolean; idempotencyKey?: string; inReplyToId?: string }): Promise<ToolResult> {
     const bearer = await this.#ensureSession();
     // A stable idempotency key so a retried tool call can't double-post (chokepoint dedups on it).
     const key = args.idempotencyKey ?? `${this.#cfg.emailHash}:${this.#now()}:${args.text.length}`;
-    const r = await this.#client.postNow(bearer, { text: args.text, aiGenerated: args.aiGenerated ?? false, idempotencyKey: key });
+    // Option-C: aiGenerated is the user's label choice; default false when unspecified.
+    // inReplyToId chains a reply to a prior post's platformPostId — the seam for native threads.
+    const r = await this.#client.postNow(bearer, { text: args.text, aiGenerated: args.aiGenerated ?? false, idempotencyKey: key, inReplyToId: args.inReplyToId });
     return { text: renderOutcome(r), data: { ...r } };
+  }
+
+  /** Dry-run: show the guardrail verdict for a draft WITHOUT sending. Powers the draft-review skill. */
+  async preview(args: { text: string; aiGenerated?: boolean }): Promise<ToolResult> {
+    const bearer = await this.#ensureSession();
+    const p: PreviewResp = await this.#client.preview(bearer, { text: args.text, aiGenerated: args.aiGenerated ?? false });
+    if (p.rejected) return { text: `Cannot preview: ${p.rejected}`, data: { ...p } };
+    const reasons = p.finalReasons.length ? ` Reasons: ${p.finalReasons.join('; ')}` : '';
+    const head = p.wouldSend
+      ? 'Would post ✓ — passes the guardrail.'
+      : p.requiresHumanReview
+        ? 'Would be HELD for your review — not auto-posted.'
+        : `Would be ${String(p.verdict).toLowerCase()} — not posted as-is.`;
+    return { text: `${head}${reasons}`, data: { ...p } };
+  }
+
+  /** Read-only: the durable history of what capx has sent/attempted for you. Powers the audit-trail skill. */
+  async auditTrail(args: { limit?: number } = {}): Promise<ToolResult> {
+    const bearer = await this.#ensureSession();
+    const a: AuditResp = await this.#client.audit(bearer, args.limit);
+    if (a.rejected) return { text: `Cannot read the audit trail: ${a.rejected}`, data: { ...a } };
+    if (!a.entries.length) return { text: 'No posts on record — capx has not sent or attempted anything on your behalf yet.', data: { entries: [] } };
+    const lines = a.entries.map((e) => {
+      const when = new Date(e.createdAtMs).toISOString().replace('T', ' ').slice(0, 16);
+      const snippet = e.text.length > 60 ? `${e.text.slice(0, 57)}…` : e.text;
+      return `• [${e.state}] ${when} — "${snippet}"${e.aiGenerated ? ' (AI-assisted)' : ''}`;
+    });
+    return { text: lines.join('\n'), data: { entries: a.entries } };
   }
 }

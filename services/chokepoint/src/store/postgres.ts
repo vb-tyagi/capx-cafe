@@ -128,6 +128,13 @@ export class PostgresStore
   async setState(id: string, state: OutboxState): Promise<void> {
     await this.#pool.query(`update outbox set state=$2 where id=$1`, [id, state]);
   }
+  async listByEmailHash(emailHash: string, limit: number): Promise<OutboxJob[]> {
+    const { rows } = await this.#pool.query(
+      `select * from outbox where email_hash=$1 order by created_at_ms desc limit $2`,
+      [emailHash, limit],
+    );
+    return rows.map((r) => this.#toOutboxJob(r));
+  }
   #toOutboxJob(r: Record<string, unknown>): OutboxJob {
     return {
       id: String(r.id),
@@ -200,9 +207,9 @@ export class PostgresStore
   // ---- LoopStore ----
   async createLoop(l: LoopRecord): Promise<void> {
     await this.#pool.query(
-      `insert into loops (id,email_hash,timezone,time_of_day_minutes,days_of_week,buffer,autonomy,training_wheels_remaining,paused,paused_reason,last_fired_day_key,created_at_ms)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-      [l.id, l.emailHash, l.timezone, l.timeOfDayMinutes, l.daysOfWeek, l.buffer, l.autonomy, l.trainingWheelsRemaining, l.paused, l.pausedReason ?? null, l.lastFiredDayKey ?? null, l.createdAtMs],
+      `insert into loops (id,email_hash,timezone,time_of_day_minutes,days_of_week,buffer,autonomy,training_wheels_remaining,paused,paused_reason,last_fired_day_key,created_at_ms,ai_generated)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+      [l.id, l.emailHash, l.timezone, l.timeOfDayMinutes, l.daysOfWeek, l.buffer, l.autonomy, l.trainingWheelsRemaining, l.paused, l.pausedReason ?? null, l.lastFiredDayKey ?? null, l.createdAtMs, l.aiGenerated ?? false],
     );
   }
   async getLoop(id: string): Promise<LoopRecord | null> {
@@ -241,6 +248,7 @@ export class PostgresStore
       pausedReason: r.paused_reason == null ? undefined : String(r.paused_reason),
       lastFiredDayKey: r.last_fired_day_key == null ? undefined : String(r.last_fired_day_key),
       createdAtMs: Number(r.created_at_ms),
+      aiGenerated: Boolean(r.ai_generated),
     };
   }
 }

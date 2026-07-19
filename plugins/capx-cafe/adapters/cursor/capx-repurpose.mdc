@@ -40,9 +40,11 @@ Follow these steps:
 
 5. **Pick the delivery — thread now, or drip queue.** Ask which the user wants (or use what "$ARGUMENTS"
    already said):
-   - **Post the thread now** → call `post_now` once per post, **in order, first post first**. Set
-     `aiGenerated: true` since you drafted the text, and pass a distinct `idempotencyKey` per post so a retry
-     never double-ships. Keep the numbering so it reads as one thread.
+   - **Post the thread now** → call `post_now` once per post, **in order, first post first**. Ask the user
+     whether to label the thread AI-assisted and pass `aiGenerated` per their choice (default off — it's their
+     call); pass a distinct `idempotencyKey` per post so a retry never double-ships. **Chain it into a native
+     thread:** post 1 first, then pass each post's returned `platformPostId` as the next call's `inReplyToId`,
+     so the posts connect as a real reply-thread (keep the numbering too).
    - **Drip it as a queue** → call `create_loop` with `{ time, daysOfWeek (0=Sun..6=Sat), posts: [...],
      timezone }` to release the points one-per-fire over a schedule instead of all at once. A loop needs a
      **verified X account at least 30 days old** — if create_loop rejects it for that, explain the requirement
