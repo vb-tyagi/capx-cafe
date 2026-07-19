@@ -47,6 +47,25 @@ scheduling / management happens **inside their agent session**, driven by the ha
 6. **✅ Onboarding: full BYO wizard early (P1–P2)** — hosted guided page (screenshots, deep links, pre-filled callback — the chokepoint serves it) + in-flow preflight validation with specific fix messages. The creator lane needs no wizard (no registration at all).
 7. **✅ OAuth: hosted-callback only** — the chokepoint holds the PKCE verifier + HTTPS callback; consent works from any browser on any device; **the token never touches the user's machine** — no keychain, no pinned port, no loopback flow at all. Cross-harness promise = identical tool surface; capability detection only picks auto-open-browser vs print-URL.
 8. **✅ License verification folds into the chokepoint** — MoR webhooks → allowlist of email hashes + subscription state; short-TTL session creds with a cached grace window. The separate Ed25519 offline edge fn (an Option-A artifact) is dropped. MoR pick (Lemon Squeezy vs Polar) deferred to a P4 bake-off; creator-lane pricing must cover capx's metered X API cost.
+9. **✅ SOFTWARE LICENSING — LOCKED 2026-07-18.** Two-license split by half:
+   - **Permissive (client + everything it bundles + skills/docs/guides):** the published `capx-cafe`
+     package (`apps/capx-mcp`), and the shared packages it inlines — `@capx-cafe/core`, `@capx-cafe/config`,
+     `@capx-cafe/platform-client` — plus all skills, tool-use, guides, and docs. *(Non-negotiable CONSTRAINT,
+     not a preference: the permissive client bundle legally cannot contain copyleft code, so these three
+     shared packages MUST be permissive.)* Permissive flavour (MIT vs Apache-2.0) still to pin at publish —
+     Apache-2.0 recommended for its patent grant.
+   - **AGPL-3.0 (the server half / the moat):** `services/chokepoint` and the server-only packages it
+     compiles in — **`@capx-cafe/casserole`**, `@capx-cafe/captain`, `@capx-cafe/counter`, `@capx-cafe/canteen`,
+     `@capx-cafe/chef`. A network-service user must open-source their modifications. (capx is never bound by
+     its own license — dual-licensing stays available.)
+   - **casserole = AGPL-3.0** (answer to the founder's Q): it is server-only (never in the permissive client
+     bundle — verified: the client depends on core/config/platform-client, not casserole), and it is the
+     guardrail moat, so copyleft-protecting it is both natural and correct. Tradeoff accepted: this weakens
+     the "casserole as a free drop-in library for CLOSED commercial products" hook — OSS/self-host reuse
+     still works fine; only a closed competitor embedding it is deterred, which is the point.
+   - **Still open (not blocking):** exact permissive flavour (MIT/Apache), a **CLA/DCO** before the first
+     outside PR (keeps relicensing possible), and **trademark** on "capx café" (the truly un-forkable moat —
+     license governs code, never the name).
 
 ## 6. 🔴 The critical flaw to get right (if this direction proceeds)
 "The harness writes, casserole decides what ships" is **false in a pure-local design**: a live X token in the
