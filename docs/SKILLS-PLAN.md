@@ -238,5 +238,20 @@ each phase is shippable + testable on its own:
 5. **Naming convention = `capx-<skill>`** everywhere (`capx-build-in-public`, `capx-ship-note`, …) so muscle
    memory ports across agents.
 
+## 9. Phase-2 review follow-ups (from the consistency critic, 2026-07-18)
+
+The 16-skill authoring pass + critic surfaced two real items to settle (the blocker — cross-skill `capx-`
+prefix refs — is already fixed):
+
+1. **Reply-chain capability gap (real).** `post_now` posts **standalone** posts — there is no `in_reply_to`
+   chaining. So the thread skills (repurpose, thread-builder, launch-thread, changelog-thread) currently
+   produce *numbered standalone posts*, NOT a native connected reply-chain. Either (a) add reply-chain support
+   to `post_now` (an `in_reply_to_tweet_id` param + x-adapter support — a Phase-3/4 capability), or (b) keep
+   the numbered-standalone style and make every thread skill say so plainly. **Decision needed.**
+2. **`aiGenerated` policy — pick one rule.** The flag is set true in some skills, false in one (til), silent in
+   most, despite the agent drafting in all. Settle a single rule (e.g. "agent drafted the text → `aiGenerated:
+   true`, uniformly") — noting it's a product/honesty call (it drives casserole's audit AI-label; for text it
+   sets a flag, it does not block). Then normalize across all skills via the canonical `SKILL.md`s.
+
 _Related: `GTM-PLAN.md` §6 (skills = the content engine), `STATE.md` §5.9 (skills are permissive-licensed),
 `HANDOVER-SEEDS.md` TBD ledger #1._

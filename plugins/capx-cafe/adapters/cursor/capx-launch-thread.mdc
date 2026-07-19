@@ -1,0 +1,65 @@
+---
+description: "Turn a README + release into a launch thread: hook, problem, solution, proof, CTA. You draft every part from the repo's reality; capx never writes — it ships each guarded. Heavy approval before live."
+alwaysApply: false
+---
+<!-- GENERATED from skills/launch-thread/SKILL.md by tools/gen-skills.mjs — do not hand-edit; edit the source. -->
+
+# capx-launch-thread
+
+Turn a project's README and its first release into a full launch thread — the one-shot public moment that
+says *this exists, and here's why it matters.* **You (the agent) write every part** from what the repo
+actually is; capx never generates content — it only ships each part, guarded by casserole at send. A launch
+amplifies, so the bar for being *true* is higher here than anywhere. User's extra intent, if any: "$ARGUMENTS"
+
+Follow these steps:
+
+1. **Connect and confirm who's launching.** Run `whoami`. If no account is connected, stop and point the
+   user at the **connect** skill — a launch has to go out under the right handle. Show the handle it will
+   post from and confirm it's the one they want to launch on.
+
+2. **Read the repo's reality.** Pull the launch facts from the source, not your imagination: the `README` (the
+   top "what is this / why / how" section), and the first release — `git tag`, `git show` on the tag, release
+   notes or `CHANGELOG`, and `package.json` name + version + description. If "$ARGUMENTS" names a file, tag, or
+   angle, use it. **If there's no release yet**, say so and ask whether to launch off the README alone or wait
+   for the tag.
+
+3. **Extract the load-bearing facts and check them back.** List for the user: the one-line pitch, the concrete
+   problem it solves, the 2–4 things it *actually* does today, any real proof (a benchmark, a test count, a
+   working demo — only if it exists in the repo), the canonical link (repo / docs / landing), the real
+   install-or-try command, and the version. **Flag anything you can't verify from the repo** — unverifiable
+   claims do not go in the thread.
+
+4. **Draft the whole thread as an arc** — write every part before posting any:
+   - **1/ Hook** — the single line that earns the scroll-stop: the problem or the promise, stated concretely.
+     No "excited to announce" / "🚀 big news" — the guardrail eats vague hype, and so do readers.
+   - **2/ Problem** — why this was worth building; the real pain, named.
+   - **3/ Solution** — what it is, plus the 2–4 concrete capabilities from step 3.
+   - **4/ Proof / how** — a real snippet, the actual command, or a true number. Grounded, never invented.
+   - **5/ CTA** — the canonical link and one clear ask (try it, star it, read the docs).
+
+   Each part: ≤ 280 weighted chars, concrete and specific, **no line repeated across parts** (the guard blocks
+   duplicates), no hashtag stuffing. Match the user's voice — use the **voice-match** skill if available,
+   else mirror their recent posts. Number the parts `1/n … n/n`.
+
+5. **Heavy approval — a launch is one-shot.** Present the full thread as a numbered list with the part count
+   and the CTA link visible. Explicitly invite edits to the **hook** and the **CTA** — the two parts that carry
+   the launch. **Post nothing until the user gives an explicit go**, and if they edit, read the final thread
+   back once before posting.
+
+6. **Post the parts in order.** For each part *in sequence* call `post_now` with its `text`, a distinct
+   `idempotencyKey` per part (so a retry can't double-post a part), and `aiGenerated: true` since you drafted
+   it. Send `1/n`, then `2/n`, and so on, in order, so they land as the launch thread — each part passes
+   casserole individually at send.
+
+7. **If the guard stops a part, stop the thread.** On `blocked` or `held`, do NOT keep posting the rest on top
+   of a broken part. Show the reason, fix *that part's content* (be more specific, drop the hype/bait, remove
+   any duplicate line), get a quick re-approval, then resume posting from where it stopped. Never route around
+   the guard.
+
+8. **Confirm the launch.** Report each part's posted status and link, in order, and confirm the thread is live
+   end-to-end. If any part is still blocked, say which one and what it needs.
+
+**Hard rules:** you draft, casserole decides — never route around a block, fix the content. **Never fabricate**
+a feature, number, or outcome the repo doesn't back — a launch that overpromises is exactly the one that gets
+caught, and the hook is a claim too: it has to be true. **Connect first** via **connect**; a launch only
+goes out under a real, connected account.

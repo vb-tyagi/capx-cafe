@@ -1,0 +1,47 @@
+---
+description: "First-time walkthrough — check the connection, link X if needed, then help the user post their first thing and read the guardrail verdict. Warm, one step at a time."
+argument-hint: "[optional: what they want to post about, or just 'start']"
+---
+<!-- GENERATED from skills/quickstart/SKILL.md by tools/gen-skills.mjs — do not hand-edit; edit the source. -->
+
+Walk a brand-new user from zero to their first posted tweet through capx — one small step at a time, warm and
+unhurried. **You (the agent) write any post text; capx never generates content** — it only ships, and every send
+passes the casserole guardrail. What they told you they're here to do, if anything: "$ARGUMENTS"
+
+Do these in order, and **pause after each step** — don't run ahead. One thing at a time.
+
+1. **Say hi and check the connection.** Greet them in a line, then call `whoami` to see where they stand.
+   - If it returns their X handle, they're already connected → skip to step 3.
+   - If it errors or says "not connected," that's expected for a first run → go to step 2. Don't treat it as
+     something broken.
+
+2. **Connect their X account.** Tell them capx posts from *their own* X account — no shared database, they stay in
+   control — and that connecting is a quick browser sign-in. Then hand off to the **`connect`** skill to run
+   the OAuth flow. When it's done, call `whoami` again to confirm the handle before moving on. Don't paste tokens
+   or ask for their password yourself — the connect flow does it in the browser.
+
+3. **Find out what to post.** Ask what they'd like to say — a shipped feature, something they learned, what they're
+   building today. If "$ARGUMENTS" already tells you, use it. Keep the ask light; one good post beats a plan.
+
+4. **Draft it with them.** Write ONE post from what they told you:
+   - **Concrete and specific** — name the real thing. "Shipped dark mode so late-night users stop getting flashed"
+     beats "excited to share an update!". Specificity is both what reads well *and* what clears the guard (it
+     blocks vague hype, engagement-bait, hashtag-stuffing, and duplicates).
+   - **True** — only what they actually did. Don't invent features, numbers, or outcomes. If unsure, ask or leave
+     it out.
+   - **Within X's length** — ≤ 280 weighted chars.
+   Show the draft and let them edit or rewrite. Never send without a clear yes.
+
+5. **Post it.** On their go-ahead, call `post_now` with `{ text }` (set `aiGenerated: true` if the wording is mostly
+   yours-the-agent's, not theirs). Then explain the verdict in plain terms:
+   - **Sent** → celebrate briefly and show the result / link.
+   - **Held or blocked** → this is the guardrail doing its job, not an error. Show the reason it gave, then fix the
+     **content** together — make it more specific, drop the bait, de-duplicate — and try again. Never route around
+     the guard or resend the same text hoping it passes.
+
+6. **Point at what's next.** One or two lines: they can post anytime by just asking, or set up a recurring schedule
+   (a "loop," which needs a verified X account 30+ days old) with the **`build-in-public`** or **`loop`**
+   skills. Leave them somewhere they can take the next step on their own.
+
+**The one rule to hold:** you draft, casserole decides. If a post comes back held or blocked, the fix is always the
+words — never a workaround. And keep it real: capx ships what's true, nothing invented.

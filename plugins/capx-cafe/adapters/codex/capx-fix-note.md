@@ -1,0 +1,46 @@
+<!-- GENERATED from skills/fix-note/SKILL.md by tools/gen-skills.mjs — do not hand-edit; edit the source. -->
+# capx-fix-note
+
+Turn a bug the developer just closed into one honest "we fixed X" X post. **You write it** from the real
+debugging — the failing test that's now green, the root cause you tracked down, the diff that shipped. capx
+never generates content; it only ships (the post passes the casserole guardrail at send). Which fix, if the
+user named one: "$ARGUMENTS"
+
+Follow these steps:
+
+1. **Find the real fix.** Default to the debugging you just did *this session* — the bug you closed, the
+   root cause you found, the test now passing. If "$ARGUMENTS" points at something specific (an issue, PR,
+   or commit), read it: `git show <sha>`, `git log --oneline`, and `gh issue view` / `gh pr view` if
+   available. You need three *true* things: the **symptom** (what was broken, as someone actually hit it),
+   the **cause** (why), and the **fix** (what changed). If you can't ground all three in the real work,
+   ask — do not invent a bug or a fix.
+
+2. **Check it's worth a post.** A user-facing bug, a nasty crash, data that was silently wrong, a hard root
+   cause — those are worth telling people about. A typo fix, an internal refactor nobody hit, a lint tweak —
+   skip it. If the fix isn't interesting to anyone outside the repo, say so and stop.
+
+3. **Draft ONE post — symptom → fix.** The shape that lands is "*here's what was broken → here's what caused
+   it → it's fixed now*," concrete throughout. Make it:
+   - **Specific about the symptom** — name what actually broke and who felt it. "Loops silently dropped the
+     last post when the queue hit exactly one left — fixed" beats "squashed a nasty bug!". (The guardrail
+     blocks vague hype, engagement-bait, and hashtag stuffing — specificity is what gets through *and* what
+     people read.)
+   - **Grounded in the diff** — do NOT overstate. If you don't know how many users hit it or how long it was
+     live, don't put a number on it. No severity theater, no invented impact.
+   - **In the user's voice** — if a voice profile is available (`voice-match`), match it; otherwise
+     mirror their recent posts, or ask.
+   - **Within X's length** — ≤ 280 weighted chars; if the story genuinely needs the cause spelled out, make
+     it a short thread and say so.
+
+4. **Show it and get approval.** Present the draft. Let the user edit, sharpen, or kill it. Never post
+   without showing them first.
+
+5. **Ship it.** Call `post_now` with `{ text, idempotencyKey }` — pass a stable `idempotencyKey` so a retry
+   can't double-post the same fix. This sends once, now (it's not scheduled — if the user wants a batch or a
+   queue, point them at `build-in-public`).
+
+**When a post comes back `blocked` or `held`,** show the reason and fix the *content* — get more specific,
+drop the bait, cut the duplicate. Never try to route around the guard.
+
+**Hard rules:** you draft, casserole decides. And never fabricate — a "we fixed X" about a bug that wasn't
+real, or a fix that didn't actually ship, is the fastest way to burn trust. Post it only when it's true.

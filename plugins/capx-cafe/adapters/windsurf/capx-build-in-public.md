@@ -23,7 +23,7 @@ Follow these steps:
      hashtag stuffing, and duplicates — specificity is what gets through *and* what people actually read.)
    - **Grounded in the commits** — do NOT invent features, numbers, or outcomes that aren't real. If you're
      unsure a claim is true, leave it out or ask.
-   - **In the user's voice** — if a voice profile is available (the `capx-voice-match` skill), match it;
+   - **In the user's voice** — if a voice profile is available (the `voice-match` skill), match it;
      otherwise mirror the tone of their recent posts, or ask.
    - **Within X's length** — one post ≤ 280 weighted chars; if a story needs more, make it a short thread and
      say so.
@@ -41,7 +41,7 @@ Follow these steps:
 
 7. **Confirm.** Call `list_loops` and show the created loop, its schedule, and the queued posts.
 
-**When the queue later runs low** it pauses and asks for more — re-run this skill (or `capx-loop`) to top it
+**When the queue later runs low** it pauses and asks for more — re-run this skill (or `loop`) to top it
 up from the newer commits. Your normal work keeps the queue full.
 
 **Hard rules:** you draft, casserole decides — if a post comes back `blocked` or `held`, show the reason and
