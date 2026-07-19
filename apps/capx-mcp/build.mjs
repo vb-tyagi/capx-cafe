@@ -39,7 +39,7 @@ const publishPkg = {
   name: 'capx-cafe',
   version: pkg.version,
   description:
-    'Agent-native X posting for Claude Code / Cursor / Codex. Connect X, post, and schedule from inside your agent — every post passes a guardrail at the boundary; the token never touches your machine.',
+    'Agent-native X posting for Claude Code / Cursor / Codex / Windsurf. Connect X, post, and schedule from inside your agent — every post passes a server-side guardrail; the token never touches your machine.',
   type: 'module',
   bin: { 'capx-cafe': './capx-cafe.mjs' },
   dependencies: {
@@ -48,9 +48,11 @@ const publishPkg = {
   },
   engines: { node: '>=22' },
   files: ['capx-cafe.mjs', 'README.md'],
-  // TODO(publish): pick a real license before the first `npm publish`. MIT keeps it private-safe.
   license: 'MIT',
-  keywords: ['mcp', 'claude', 'x', 'twitter', 'agent', 'posting', 'model-context-protocol'],
+  homepage: 'https://github.com/vb-tyagi/capx-cafe#readme',
+  repository: { type: 'git', url: 'git+https://github.com/vb-tyagi/capx-cafe.git' },
+  bugs: { url: 'https://github.com/vb-tyagi/capx-cafe/issues' },
+  keywords: ['mcp', 'model-context-protocol', 'claude', 'claude-code', 'cursor', 'codex', 'windsurf', 'x', 'twitter', 'agent', 'ai-agent', 'posting', 'scheduling'],
 };
 writeFileSync(new URL('./dist/package.json', here), JSON.stringify(publishPkg, null, 2) + '\n');
 copyFileSync(new URL('./README.md', here), new URL('./dist/README.md', here));

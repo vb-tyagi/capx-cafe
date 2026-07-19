@@ -1,44 +1,34 @@
-# @capx-cafe/mcp
+# capx café — `capx-cafe`
 
-The agent-co-resident **MCP server** (stdio) for Claude Code / Codex / Cursor. Exposes `connect_x`,
-`whoami`, `post_now`. Design: [`docs/P1-CHOKEPOINT.md`](../../docs/P1-CHOKEPOINT.md).
+**The safe way to let your AI run your X.** An [MCP](https://modelcontextprotocol.io) server for **Claude
+Code / Cursor / Codex / Windsurf**: connect your X (Twitter) account once, then create, schedule, and post
+from inside your agent — with your **token never on your machine** and **every post cleared by a server-side
+guardrail** before it ships.
 
-**Status:** S5 — wired. Tools run over the `@modelcontextprotocol/sdk` stdio transport; all tool logic
-is `CapxMcp` (unit-tested end-to-end against the real chokepoint service).
+> **Full docs, architecture & security model → https://github.com/vb-tyagi/capx-cafe**
 
-## Security posture
-Holds **no X token and no secret** — only a short-TTL **session handle** + non-secret `~/.capx/config.json`.
-Assume-compromised: its only capability is to call the gated chokepoint. The X token never touches this
-process or the machine it runs on. Every post passes casserole **at the chokepoint**; a blocked/held post is
-never sent and the token is never even decrypted.
+## Why
 
-## Config (host-agnostic)
-Resolved `env → ~/.capx/config.json → chokepoint session` (first-defined wins; absent file tolerated;
-**no secret on disk**).
+To let an agent post, other tools have you paste your X token into a config **next to an autonomous agent
+that reads untrusted web pages, issues, and code** — one prompt-injection and it tweets a scam. capx café
+structurally can't be: OAuth completes on a hosted callback, the token lives in a **server-side vault**, and
+your agent holds only a short-TTL session handle. A deterministic guardrail (**casserole**) runs at the only
+door to X and checks every post — a blocked post never even decrypts the token.
 
-| Var | Required | Meaning |
-|---|---|---|
-| `CAPX_CHOKEPOINT_URL` | yes | points the server at any chokepoint (hosted or self-hosted) |
-| `CAPX_EMAIL` | yes | your allowlisted email (hashed locally to the identity key; raw email never sent) |
-| `CAPX_LANE` | no | `byo` (default) or `capx-app` |
-| `X_CLIENT_ID` | BYO lane | your **own** X app Client ID (non-secret) |
+## Install
 
-## Tools
-- **`connect_x`** `{ confirm?, lane?, clientId? }` — two-phase. First call returns a consent URL; authorize
-  in any browser, then call again with `{ confirm: true }`. The token lands in the chokepoint vault, never here.
-- **`whoami`** `{}` — the connected account + status (incl. `needs-reauth`).
-- **`post_now`** `{ text, aiGenerated?, idempotencyKey? }` — posts via the guardrail; renders the verdict
-  (`published` / `blocked` / `held` / …). A stable idempotency key makes a retried call at-most-once.
+```bash
+npx -y capx-cafe
+```
 
-## Install into your agent
+Add it to your agent's MCP config:
 
-**Claude Code / Cursor** (`.mcp.json` / `~/.cursor/mcp.json`):
 ```json
 {
   "mcpServers": {
     "capx": {
       "command": "npx",
-      "args": ["-y", "@capx-cafe/mcp"],
+      "args": ["-y", "capx-cafe"],
       "env": {
         "CAPX_CHOKEPOINT_URL": "https://your-chokepoint.example",
         "CAPX_EMAIL": "you@example.com",
@@ -49,18 +39,44 @@ Resolved `env → ~/.capx/config.json → chokepoint session` (first-defined win
 }
 ```
 
-**Codex** (`~/.codex/config.toml`):
+Codex (`~/.codex/config.toml`):
+
 ```toml
 [mcp_servers.capx]
 command = "npx"
-args = ["-y", "@capx-cafe/mcp"]
+args = ["-y", "capx-cafe"]
 env = { CAPX_CHOKEPOINT_URL = "https://your-chokepoint.example", CAPX_EMAIL = "you@example.com", X_CLIENT_ID = "your-x-app-client-id" }
 ```
 
-**Local dev** (before the package is published) — point `command`/`args` at the source entry:
-```json
-{ "command": "node", "args": ["--experimental-strip-types", "/abs/path/to/apps/capx-mcp/src/server.ts"] }
-```
+Claude Code users can skip the manual config: `/plugin marketplace add vb-tyagi/capx-cafe` →
+`/plugin install capx-cafe` (bundles the server + slash commands + skills).
 
-Headless/SSH (no system browser): `connect_x` prints the consent URL for you to open anywhere — no loopback,
-no keychain, no pinned port (hosted-callback OAuth). Same tool surface on every harness.
+## Config
+
+| Var | Required | Meaning |
+|---|---|---|
+| `CAPX_CHOKEPOINT_URL` | yes | the chokepoint to use — capx provides yours when you're whitelisted (alpha); self-hosters set their own |
+| `CAPX_EMAIL` | yes | your whitelisted email (hashed locally to an identity key; the raw email is never sent) |
+| `CAPX_LANE` | no | `byo` (default) or `capx-app` |
+| `X_CLIENT_ID` | BYO lane | your **own** X app OAuth2 Client ID (non-secret) |
+
+No secret ever lands on disk — the client holds a revocable session handle, never a token.
+
+## Tools your agent gets
+
+`connect_x` · `whoami` · `post_now` (reply-chains + media) · `preview` (dry-run the guardrail, no send) ·
+`audit` · `create_loop` / `list_loops` / `pause_loop` / `top_up_loop` / `delete_loop` · `upload_media`
+
+Plus **skills** that turn your git log / PRs / releases into posts — `build-in-public`, `ship-note`,
+`repurpose`, `thread-builder`, and more — one canonical source, generated for every agent.
+
+## Security & self-host
+
+The token, the guardrail, and the send are **one inseparable server-side unit**. Self-host the identical
+open-source chokepoint with your own keys — the guarantee is per-operator. Threat model + the "what we
+can/can't see" table: **https://github.com/vb-tyagi/capx-cafe/blob/main/docs/SECURITY.md**
+
+## License
+
+**MIT** (this client). The server-side chokepoint is **AGPL-3.0**. Map:
+https://github.com/vb-tyagi/capx-cafe/blob/main/LICENSING.md
