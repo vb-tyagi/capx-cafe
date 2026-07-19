@@ -166,33 +166,39 @@ preview endpoint alongside v1.
 Media is a **meaty** addition, not a checkbox — it roughly doubles the posting surface. Honest breakdown so
 the decisions are informed:
 
-**What it requires (regardless of choices):**
+**What it requires:**
 1. **X media-upload flow** — X media isn't a single call: it's INIT → APPEND (chunked bytes) → FINALIZE →
    get `media_id` → attach to the tweet. New code in the x-adapter + a new chokepoint path.
-2. **Getting the image bytes to the server** — either the MCP reads the local file and streams it to the
-   chokepoint, or the chokepoint fetches a URL. (The token still never leaves the server; only the image does.)
-3. **AI-content labeling** — X policy requires disclosing AI-generated media. casserole already computes an
-   `aiLabelRequired` flag and holds AI graphics for review; media posts inherit that. **This is a given, not
-   a choice:** AI images get labeled + routed through casserole's HOLD path.
+2. **Getting the asset bytes to the server** — either the MCP reads the local file and streams it to the
+   chokepoint, or the chokepoint fetches a URL. (The token still never leaves the server; only the asset does.)
+3. **AI-content labeling = a SKILL's job, NOT casserole's** (founder, 2026-07-18) — X policy requires
+   disclosing AI media; the **agent/skill sets the AI-label flag before upload** and capx carries it to X.
+
+**⛔ casserole does NOT touch media (founder, 2026-07-18):** no gate, no review, no audit — **all media passes
+by default.** Only the post's **caption text** goes through casserole; the asset rides along un-inspected.
+(Deliberate stance: capx does not moderate media content — the user owns what they attach.) casserole's
+dormant L3-"AI-graphic→HOLD" + L6-`aiLabelRequired` rules stay **unused** (they never fired — the gate only
+ever produces TEXT drafts). Build impact: the media path is just **upload + attach + carry-label** — no
+casserole wiring, no HOLD path.
 
 **✅ LOCKED (2026-07-18):**
 - **Scope = images + video** (both in v1).
-- **Generation model = BYO + "director" skills.** capx never runs the models — the user's own image/video
-  tools do (image MCP, higgsfield, OpenAI-image, Veo/Runway/etc.). But capx ships a **suite of media skills**
-  that make the output *good* and then handle the guarded upload:
+- **Generation model = the user's OWN media-gen MCPs + capx "director" skills.** capx runs **no** models and
+  integrates **no** provider. The user connects their own media-gen MCP servers (**higgsfield, fal, kling**, …)
+  to their agent; capx ships skills that orchestrate them and then upload:
 
 | # | Media skill | What it does |
 |---|---|---|
-| G1 | **image-director** | Picks the right image model for the goal + drives the user's tool to a high-quality result, then hands off to upload | 
+| G0 | **media-connect** | Guide: how to connect the user's own media-gen MCP servers (higgsfield / fal / kling / …) to Claude Code / Cursor / Codex / Windsurf |
+| G1 | **image-director** | Picks the right image model for the goal + drives the user's *own* tool to a high-quality result, then hands to upload |
 | G2 | **video-director** | Same for short video (hook, aspect ratio, length norms for X) |
-| G3 | **prompt-engine** | Reusable prompt-engineering skill — turns a vague ask into a model-optimized prompt (image or video); the quality engine the directors call |
-| G4 | **model-guide** | Reference knowledge: which model for which job, current best options, tradeoffs (a "guide" skill, not a workflow) |
-| G5 | **media-attach** (capability) | The server side: chunked upload → `media_id` → attach → **AI-label** → casserole HOLD-if-AI. The pipe every director ends in. |
+| G3 | **prompt-engine** | Reusable prompt-engineering skill — vague ask → model-optimized prompt (image or video); the quality engine the directors call |
+| G4 | **model-guide** | Reference: which model for which job, current best options, tradeoffs (a "guide" skill) |
+| G5 | **media-attach** (capability) | Server side: chunked upload → `media_id` → attach, **carrying the skill-set AI-label flag**. **No casserole** (media passes by default). The pipe every director ends in. |
 
-  Rationale for BYO-over-integrated: philosophy-consistent (capx never generates content), zero provider
-  cost/lock-in for capx, and works with whatever models the user already has — while the director + prompt-
-  engine skills still deliver a turnkey-feeling "great media" experience. capx-integrated generation is
-  explicitly rejected for v1 (would put capx into paid generation + provider lock-in).
+  Rationale: capx never generates content (philosophy-consistent), zero provider cost/lock-in, works with
+  whatever media MCPs the user already has — while G0–G4 still deliver a turnkey-feeling "great media"
+  experience. capx-integrated generation is explicitly rejected for v1.
 
 **Media as a layer, not a silo:** the directors produce an asset; any A/B content skill can then attach it —
 **build-in-public** adds a diagram, **launch-thread** a hero image/clip, **ship-note** a screencap. G5 is the
@@ -210,11 +216,11 @@ each phase is shippable + testable on its own:
   the Phase-1 pattern.
 - **Phase 3 — server additions:** the **casserole preview endpoint** (§6.1) + the **audit-read endpoint**
   (§6.2) → unlocks **draft-review (B3)** and **audit-trail (E2)**. *(Chokepoint code + tests + redeploy.)*
-- **Phase 4 — media pipeline:** the **media-attach capability (G5)** — X chunked upload in the x-adapter,
-  a chokepoint media path, AI-labeling + casserole HOLD-if-AI. *(Chokepoint code + tests + redeploy; the
-  biggest server slice.)*
-- **Phase 5 — media director skills:** image-director (G1), video-director (G2), prompt-engine (G3),
-  model-guide (G4) — the BYO generation-quality layer that ends in G5.
+- **Phase 4 — media pipeline:** the **media-attach capability (G5)** — X chunked upload in the x-adapter +
+  a chokepoint media path that **carries the skill-set AI-label flag**. **No casserole for media** (passes by
+  default; only the caption text is guarded). *(Chokepoint code + tests + redeploy; simpler than first scoped.)*
+- **Phase 5 — media skills:** media-connect (G0), image-director (G1), video-director (G2), prompt-engine
+  (G3), model-guide (G4) — the BYO orchestration + quality layer that ends in G5.
 - **Then:** GTM launch (see `GTM-PLAN.md`), led by the build-in-public demo.
 
 **Spun out, not built here:** Category D (analytics/replies) → the separate "capx-scope" read product.

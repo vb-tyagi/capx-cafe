@@ -72,11 +72,19 @@ scheduling / management happens **inside their agent session**, driven by the ha
       for **all agents up front** (canonical `SKILL.md` → Claude Code / Cursor / Codex / Windsurf). **Tier-3
       read-skills (analytics, reply-draft, mention-triage) are SPUN OUT** to a separate independent read-side
       product ("capx-scope", TBD) — clean seam: **capx-cafe = write, capx-scope = read.**
-    - **Media IN v1 = images + video.** Model = **BYO generation** (the agent's own image/video tools make
-      the asset — capx never generates) **PLUS capx ships "director" skills**: image-director, video-director,
-      a reusable **prompt-engine** skill, and model-selection guides — to get best-quality output from whatever
-      models the user has; capx then **uploads + AI-labels + attaches** (X chunked upload; casserole holds/labels
-      AI media). NOT capx-integrated generation (no provider cost/lock-in; philosophy-consistent).
+    - **Media IN v1 = images + video.** capx **generates nothing** — the user connects their **own** media-gen
+      MCP servers (higgsfield / fal / kling / …) to their agent; capx ships **skills that (a) guide connecting
+      those MCPs, (b) pick the right model for the job, (c) prompt-engineer great output** (image-director,
+      video-director, prompt-engine, model-guide), then capx **uploads + attaches** to the post (X chunked
+      upload). **CLARIFIED 2026-07-18 (founder):**
+        · **casserole does NOT touch media** — no gate, no review, no audit; all media passes by default. The
+          post's **caption text is still guarded** by casserole; the asset rides along un-inspected. (Deliberate:
+          capx does not moderate media content — the user owns what they attach.)
+        · **AI-labeling is a SKILL responsibility** — the agent sets the AI-content label before upload; capx
+          just carries the flag to X. casserole's dormant L3-AI-graphic-HOLD + L6-aiLabelRequired logic stays
+          unused (never fired anyway — the gate only ever produced TEXT drafts).
+        · Build impact: the media pipeline (Phase 4) is just upload+attach+carry-label — no casserole wiring,
+          no HOLD path. Intelligence lives in the markdown director/prompt skills.
     - **GTM launch shape = FEATURE-RICH** — build write-skills + media first, THEN publish + launch with a wow.
     - **GTM defaults locked** (were recommend-by-default, no objection): repo → a `capx` GitHub org before
       public; **CLA** before the first outside PR; register the **"capx café" trademark**; docs in-repo `/docs`
