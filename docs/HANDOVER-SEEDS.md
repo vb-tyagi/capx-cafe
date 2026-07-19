@@ -180,15 +180,17 @@ the judge is not an AI. (Full architecture: `docs/P1-CHOKEPOINT.md`; adversarial
 
 ## 📋 TBD LEDGER (decisions/work parked by the founder, 2026-07-18 — do not lose)
 
-1. **Skills plan** — "where the real value is." Needs an actual prioritized plan. Candidates already
-   identified: build-in-public-from-git-log (the bet), PR/release → announcement thread, blog/README →
-   thread, voice-matching, best-time-to-post; later (new X scopes + guardrail review): replies/engagement,
-   analytics. Sequence write-skills before read-skills.
-2. **Legal/compliance pack** — license choice (client permissive; chokepoint permissive vs BSL/AGPL —
-   founder leaning discussed, not decided), ToS, privacy policy (hosted chokepoint = data processor),
-   plus the comprehensive user documentation: per-agent install guides, walkthroughs, self-host guide,
-   security page.
-3. **Launch assets** — "absolute beast" GitHub README + capx-cafe landing page/site. Explicitly gated
-   until build/publish decisions are made; part of GTM execution.
-4. **GTM strategy** — full plan lives in `docs/GTM-PLAN.md` (created 2026-07-18).
+1. **Skills plan** — ✅ LOCKED + documented: `docs/SKILLS-PLAN.md`. Build ALL write-skills (all agents) +
+   media (images+video, BYO + director/prompt-engine skills). Tier-3 read-skills (analytics/replies) SPUN
+   OUT to a separate read product ("capx-scope", TBD). Build is phased (infra → write-skills → server
+   endpoints → media pipeline → media directors) — NOT yet built.
+2. **Legal/compliance pack** — license ✅ LOCKED (MIT client / AGPL-3.0 server, STATE §5.9–5.10). Still to do:
+   **ToS + privacy policy** (hosted chokepoint = data processor; the capx-scope read product raises this
+   further), **CLA** setup before first outside PR, **trademark** filing on "capx café", and the comprehensive
+   user docs (per-agent install, walkthroughs, self-host guide, security page).
+3. **Launch assets** — "absolute beast" GitHub README + capx-cafe landing/docs site + demo video. Gated on
+   the feature-rich build finishing (STATE §5.10); part of GTM execution.
+4. **GTM strategy** — ✅ plan + LOCKED decisions in `docs/GTM-PLAN.md` (2026-07-18). Delivered separately.
 5. **P4 monetization** — still deferred (MoR pick gates webhook code); see Deferred work section above.
+6. **capx-scope** (NEW, spun out 2026-07-18) — the separate read-side product: X-profile scrape + analytics +
+   reply drafting. Own scopes, own privacy surface, own repo/brand. Detailed spec is a future exercise.

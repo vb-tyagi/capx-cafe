@@ -175,46 +175,62 @@ the decisions are informed:
    `aiLabelRequired` flag and holds AI graphics for review; media posts inherit that. **This is a given, not
    a choice:** AI images get labeled + routed through casserole's HOLD path.
 
-**The two real forks:**
+**✅ LOCKED (2026-07-18):**
+- **Scope = images + video** (both in v1).
+- **Generation model = BYO + "director" skills.** capx never runs the models — the user's own image/video
+  tools do (image MCP, higgsfield, OpenAI-image, Veo/Runway/etc.). But capx ships a **suite of media skills**
+  that make the output *good* and then handle the guarded upload:
 
-- **M-Decision 1 — Scope:** images only in v1, or images + video? *(Recommend images-only; video adds a much
-  heavier upload + processing path and most dev/creator posts are image-first. Video = fast-follow.)*
-- **M-Decision 2 — Who generates the image?**
-  - **BYO (recommended):** the *agent's own* image tool generates it (the user already has one — an image
-    MCP, higgsfield, an OpenAI-image tool, etc.); capx **uploads + labels + attaches**. Pros: philosophy-
-    consistent (capx never generates content — the agent does), zero provider cost/lock-in for capx, works
-    with whatever the user already has. Cons: the user needs *some* image tool; capx doesn't offer a turnkey
-    "make me an image" button.
-  - **capx-integrated:** capx calls an image provider (OpenAI/Replicate/etc.) server-side. Pros: turnkey.
-    Cons: capx pays per image (metering hit, esp. lane B), a provider key + lock-in, and it shifts capx into
-    content *generation* (a stance change). Could be a later premium feature.
+| # | Media skill | What it does |
+|---|---|---|
+| G1 | **image-director** | Picks the right image model for the goal + drives the user's tool to a high-quality result, then hands off to upload | 
+| G2 | **video-director** | Same for short video (hook, aspect ratio, length norms for X) |
+| G3 | **prompt-engine** | Reusable prompt-engineering skill — turns a vague ask into a model-optimized prompt (image or video); the quality engine the directors call |
+| G4 | **model-guide** | Reference knowledge: which model for which job, current best options, tradeoffs (a "guide" skill, not a workflow) |
+| G5 | **media-attach** (capability) | The server side: chunked upload → `media_id` → attach → **AI-label** → casserole HOLD-if-AI. The pipe every director ends in. |
 
-**Media-touched skills (once media lands):** any A/B skill can attach an image — e.g. **build-in-public**
-can add a generated diagram, **launch-thread** a hero image, **ship-note** a screenshot. So media is a
-capability layered under the existing skills, not a separate skill.
+  Rationale for BYO-over-integrated: philosophy-consistent (capx never generates content), zero provider
+  cost/lock-in for capx, and works with whatever models the user already has — while the director + prompt-
+  engine skills still deliver a turnkey-feeling "great media" experience. capx-integrated generation is
+  explicitly rejected for v1 (would put capx into paid generation + provider lock-in).
 
-## 7. Recommended build order
+**Media as a layer, not a silo:** the directors produce an asset; any A/B content skill can then attach it —
+**build-in-public** adds a diagram, **launch-thread** a hero image/clip, **ship-note** a screencap. G5 is the
+shared server capability all of them flow through.
 
-- **v1 (launch batch):** A1 build-in-public · A2 ship-note · A3 repurpose · B1 voice-match · B3 draft-review
-  · F2 quickstart — plus the **preview endpoint** (§6.1). Author each for Claude Code + Cursor + Codex up
-  front (per the locked decision), off one canonical `SKILL.md`.
-- **v2 (fast-follow, each a mini-launch):** A4, A5, A6, A7 · B2, B4, B5 · C1, C2, C3 · E2, E3 · F3.
-- **v3 (gated):** D1–D4, A8 — after the scope + privacy-policy decision.
+## 7. Build order — LOCKED scope, feature-rich launch (build it all, THEN launch)
 
-**Ship A1 first** — it's the GTM launch-week-2 headliner and the clearest "nothing else does this" moment.
+Launch shape is feature-rich (STATE §5.10), so v1 = everything below, built before going public. Phased so
+each phase is shippable + testable on its own:
+
+- **Phase 1 — Skill infrastructure:** the canonical `skills/<name>/SKILL.md` format + the per-agent generator
+  (Claude Code / Cursor / Codex / Windsurf). Build **build-in-public (A1)** first, end-to-end across all four
+  agents, as the pattern-setter. *(Pure markdown + generator; no chokepoint change; low risk.)*
+- **Phase 2 — the rest of the write-skills:** A2–A7 · B1, B2, B4, B5 · C1, C2, C3 · E3 · F2, F3 — fan out off
+  the Phase-1 pattern.
+- **Phase 3 — server additions:** the **casserole preview endpoint** (§6.1) + the **audit-read endpoint**
+  (§6.2) → unlocks **draft-review (B3)** and **audit-trail (E2)**. *(Chokepoint code + tests + redeploy.)*
+- **Phase 4 — media pipeline:** the **media-attach capability (G5)** — X chunked upload in the x-adapter,
+  a chokepoint media path, AI-labeling + casserole HOLD-if-AI. *(Chokepoint code + tests + redeploy; the
+  biggest server slice.)*
+- **Phase 5 — media director skills:** image-director (G1), video-director (G2), prompt-engine (G3),
+  model-guide (G4) — the BYO generation-quality layer that ends in G5.
+- **Then:** GTM launch (see `GTM-PLAN.md`), led by the build-in-public demo.
+
+**Spun out, not built here:** Category D (analytics/replies) → the separate "capx-scope" read product.
 
 ---
 
-## 8. Still-open decisions to lock (even after today's answers)
+## 8. Micro-decisions — ✅ LOCKED 2026-07-18 (defaults accepted)
 
-1. **Confirm the v1 list** above (A1, A2, A3, B1, B3, F2 + preview endpoint) — or adjust.
-2. **Canonical-source + generator** vs hand-authoring each agent's files? *(Recommend canonical + a tiny
-   generator to prevent N-way drift.)*
-3. **Which agents in the "up front" set for v1?** Claude Code + Cursor + Codex is the high-coverage trio;
-   Windsurf/others can be a v1.1. *(Recommend the trio for v1.)*
-4. **Build the preview endpoint in v1?** *(Recommend yes — it lifts draft-review and every other write-skill.)*
-5. **Naming convention** for invocations across agents (e.g. everywhere: `capx-build-in-public`,
-   `capx-ship-note`…) so muscle memory ports between agents.
+1. **v1 skill set = ALL write-skills** (categories A + B + C) + the **media suite** (G1–G5). Not the small
+   subset — the founder chose comprehensive.
+2. **Canonical source + a tiny generator** — YES. One `skills/<name>/SKILL.md` is the source of truth; a
+   small generator emits the per-agent files to prevent N-way drift.
+3. **Agents up front = Claude Code + Cursor + Codex + Windsurf** (founder said "all agents up front").
+4. **Preview endpoint = YES in v1** (lifts draft-review + lets every skill show "why this would be blocked").
+5. **Naming convention = `capx-<skill>`** everywhere (`capx-build-in-public`, `capx-ship-note`, …) so muscle
+   memory ports across agents.
 
 _Related: `GTM-PLAN.md` §6 (skills = the content engine), `STATE.md` §5.9 (skills are permissive-licensed),
 `HANDOVER-SEEDS.md` TBD ledger #1._

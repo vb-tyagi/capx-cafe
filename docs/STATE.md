@@ -66,6 +66,21 @@ scheduling / management happens **inside their agent session**, driven by the ha
    - **Still open (not blocking):** exact permissive flavour (MIT/Apache), a **CLA/DCO** before the first
      outside PR (keeps relicensing possible), and **trademark** on "capx café" (the truly un-forkable moat —
      license governs code, never the name).
+10. **✅ ROUND-2 LOCKS — 2026-07-18 (skills / media / GTM).** Detail in `docs/SKILLS-PLAN.md` + `docs/GTM-PLAN.md`.
+    - **Permissive flavour = MIT** (founder pick; over Apache-2.0).
+    - **Skills:** build ALL write-skills (coding-context + voice/quality + scheduling intelligence), authored
+      for **all agents up front** (canonical `SKILL.md` → Claude Code / Cursor / Codex / Windsurf). **Tier-3
+      read-skills (analytics, reply-draft, mention-triage) are SPUN OUT** to a separate independent read-side
+      product ("capx-scope", TBD) — clean seam: **capx-cafe = write, capx-scope = read.**
+    - **Media IN v1 = images + video.** Model = **BYO generation** (the agent's own image/video tools make
+      the asset — capx never generates) **PLUS capx ships "director" skills**: image-director, video-director,
+      a reusable **prompt-engine** skill, and model-selection guides — to get best-quality output from whatever
+      models the user has; capx then **uploads + AI-labels + attaches** (X chunked upload; casserole holds/labels
+      AI media). NOT capx-integrated generation (no provider cost/lock-in; philosophy-consistent).
+    - **GTM launch shape = FEATURE-RICH** — build write-skills + media first, THEN publish + launch with a wow.
+    - **GTM defaults locked** (were recommend-by-default, no objection): repo → a `capx` GitHub org before
+      public; **CLA** before the first outside PR; register the **"capx café" trademark**; docs in-repo `/docs`
+      first, dedicated site at launch.
 
 ## 6. 🔴 The critical flaw to get right (if this direction proceeds)
 "The harness writes, casserole decides what ships" is **false in a pure-local design**: a live X token in the
