@@ -13,8 +13,8 @@ COPY packages ./packages
 COPY apps ./apps
 COPY services/chokepoint ./services/chokepoint
 
-# `@capx/chokepoint...` = the chokepoint plus its workspace deps only (not the MCP's deps).
-RUN pnpm install --frozen-lockfile --filter @capx/chokepoint...
+# `@capx-cafe/chokepoint...` = the chokepoint plus its workspace deps only (not the MCP's deps).
+RUN pnpm install --frozen-lockfile --filter @capx-cafe/chokepoint...
 
 ENV NODE_ENV=production
 
