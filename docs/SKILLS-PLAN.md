@@ -1,8 +1,19 @@
 # capx café — Skills Plan (PROPOSED — for founder lock, then build)
 
-_Created 2026-07-18. Comprehensive by request. This is the plan to review + lock; no skills built yet.
-Locked inputs (founder, 2026-07-18): **(a) comprehensive scope — don't be conservative; (b) author for ALL
-agents up front; (c) text-only, media parked.**_
+_Created 2026-07-18. Comprehensive by request._
+
+## ✅ LOCKED SCOPE (founder, 2026-07-18)
+
+- **Author for ALL agents up front** (canonical `SKILL.md` → Claude Code / Cursor / Codex / Windsurf adapters).
+- **Build Tier 1 + Tier 2** = every **write-skill**: Category **A** (coding-context content), **B** (voice/
+  quality), **C** (scheduling intelligence). This is v1's skill body.
+- **Tier 3 = SPUN OUT.** The read-skills (Category **D**: analytics, draft-replies, mention-triage) are NOT
+  part of capx-cafe. They become **a separate, independent tool/service** — one that scrapes an X profile,
+  serves analytics, and drafts replies — discussed in detail later. capx-cafe v1 ships write-only; the
+  read/analytics product is its own thing (own scopes, own privacy surface, own repo/brand). *(Placeholder
+  name in this doc: "capx-scope" — the analytics+engagement service. TBD.)*
+- **Tier 4 = MEDIA, pulled INTO v1** (supersedes the earlier "text-only" call). See §M below — media has
+  real decisions to lock before build (provider model, upload flow, AI-labeling).
 
 ---
 
@@ -84,14 +95,21 @@ Grouped by category. Each: **what it does · reads · produces · X scope · gua
 | C2 | **cadence-planner** | Turns a backlog of drafts into a sensible multi-loop schedule | draft list, tz | one or more loops | v2 |
 | C3 | **gap-alert / auto-refill** | When a loop is running low, prompts the agent to draft more from recent git activity — *closes the loop with A1* | `list_loops` + git log | tops up the loop | v2 |
 
-### D. Read-skills (v3 — GATED on new X scopes + a privacy policy)
+### D. Read-skills → ⬛ SPUN OUT to a separate service ("capx-scope", TBD)
 
-| # | Skill | What it does | New scope needed | Prio |
-|---|---|---|---|---|
-| D1 | **analytics** | "How did my last 10 posts do?" — impressions/likes/reposts | metrics read (tiered on X plan) | v3 |
-| D2 | **what-resonated** | Analyzes best past posts → feeds voice-match + topic picks | metrics read | v3 |
-| D3 | **reply-draft** | Drafts replies to mentions (guardrailed like any write) | mentions read | v3 |
-| D4 | **mention-triage** | Summarizes mentions, flags what needs a response | mentions read | v3 |
+These are **no longer part of capx-cafe.** They require read scopes (X profile scrape, engagement metrics,
+mentions), a distinct privacy surface, and a different data-retention posture — so they become an
+independent analytics + engagement product. Listed here only to record the boundary; not built in this repo.
+
+| # | Skill | Belongs to the separate service | New scope needed |
+|---|---|---|---|
+| D1 | **analytics** | "How did my last N posts do?" | metrics read (tiered on X plan) |
+| D2 | **what-resonated** | Best past posts → topic/voice signal | metrics read |
+| D3 | **reply-draft** | Drafts replies to mentions | mentions read |
+| D4 | **mention-triage** | Summarizes mentions | mentions read |
+
+_The clean seam: capx-cafe = **write** (guarded posting from your work). capx-scope = **read** (profile scrape
++ analytics + reply drafting). Two products, one brand. Detailed spec is a separate future exercise._
 
 ### E. Trust & ops (mixed)
 
@@ -142,6 +160,38 @@ Both are small, both are AGPL (server side), both make skills materially better.
 preview endpoint alongside v1.
 
 ---
+
+## M. Media (Tier 4) — pulled into v1 (decisions to lock)
+
+Media is a **meaty** addition, not a checkbox — it roughly doubles the posting surface. Honest breakdown so
+the decisions are informed:
+
+**What it requires (regardless of choices):**
+1. **X media-upload flow** — X media isn't a single call: it's INIT → APPEND (chunked bytes) → FINALIZE →
+   get `media_id` → attach to the tweet. New code in the x-adapter + a new chokepoint path.
+2. **Getting the image bytes to the server** — either the MCP reads the local file and streams it to the
+   chokepoint, or the chokepoint fetches a URL. (The token still never leaves the server; only the image does.)
+3. **AI-content labeling** — X policy requires disclosing AI-generated media. casserole already computes an
+   `aiLabelRequired` flag and holds AI graphics for review; media posts inherit that. **This is a given, not
+   a choice:** AI images get labeled + routed through casserole's HOLD path.
+
+**The two real forks:**
+
+- **M-Decision 1 — Scope:** images only in v1, or images + video? *(Recommend images-only; video adds a much
+  heavier upload + processing path and most dev/creator posts are image-first. Video = fast-follow.)*
+- **M-Decision 2 — Who generates the image?**
+  - **BYO (recommended):** the *agent's own* image tool generates it (the user already has one — an image
+    MCP, higgsfield, an OpenAI-image tool, etc.); capx **uploads + labels + attaches**. Pros: philosophy-
+    consistent (capx never generates content — the agent does), zero provider cost/lock-in for capx, works
+    with whatever the user already has. Cons: the user needs *some* image tool; capx doesn't offer a turnkey
+    "make me an image" button.
+  - **capx-integrated:** capx calls an image provider (OpenAI/Replicate/etc.) server-side. Pros: turnkey.
+    Cons: capx pays per image (metering hit, esp. lane B), a provider key + lock-in, and it shifts capx into
+    content *generation* (a stance change). Could be a later premium feature.
+
+**Media-touched skills (once media lands):** any A/B skill can attach an image — e.g. **build-in-public**
+can add a generated diagram, **launch-thread** a hero image, **ship-note** a screenshot. So media is a
+capability layered under the existing skills, not a separate skill.
 
 ## 7. Recommended build order
 
