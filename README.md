@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="docs/assets/cover.png" alt="capx café — the safe way to let your AI run your X" width="100%">
-
 # capx café
 
 ### The safe way to let your AI run your X.
@@ -31,8 +29,6 @@
 Every other "let your AI post" tool has the same flaw: to let an agent post, you paste your X token into a
 plaintext config **right next to an autonomous agent that reads untrusted web pages, issues, and code.** One
 prompt-injection and your account tweets a scam. **capx café is the only one that structurally can't be.**
-
-<img src="docs/assets/security.png" alt="the agent asks; a guard at the only door decides; the token stays locked in the vault" width="100%">
 
 - 🔒 **Your X token never touches your machine.** OAuth completes on capx's hosted callback; the token lives
   **encrypted in a server-side vault.** Your agent holds only a short-TTL, revocable session handle.
@@ -130,8 +126,6 @@ Set `CAPX_EMAIL` (your whitelisted email) and, for the BYO lane, `X_CLIENT_ID` (
 
 capx lives inside a *coding* agent, so it has what no social scheduler does: your **repo, commits, PRs,
 releases.** Skills turn that into posts — automatically, and always through the guardrail.
-
-<img src="docs/assets/engine.png" alt="your git history becomes a scheduled queue of posts" width="100%">
 
 ```mermaid
 flowchart LR
