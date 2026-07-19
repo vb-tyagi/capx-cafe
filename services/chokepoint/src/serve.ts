@@ -6,7 +6,7 @@ import { parseEnv, serverEnvSchema } from '@capx-cafe/config';
 import { createChokepoint, PostgresStore, runMigrations, createHttpServer } from './index.ts';
 import type { TokenExchange } from './index.ts';
 import { createPgPool } from './store/pg-pool.ts';
-import { httpTokenExchange, httpIdentity } from './xclient/x-api.ts';
+import { httpTokenExchange, httpRefreshExchange, httpIdentity } from './xclient/x-api.ts';
 import { httpXPoster, httpXMediaUploader, type FetchLike } from './xclient/index.ts';
 
 const realFetch: FetchLike = async (url, init) => {
@@ -43,10 +43,14 @@ async function main(): Promise<void> {
       scope: 'tweet.read tweet.write users.read offline.access',
     },
     tokenExchange,
+    // The refresh grant reuses the same public/confidential rules as the exchange: BYO sends client_id
+    // in the body; the CAPX_APP lane adds the server secret (the Refresher gates that by lane).
+    refreshExchange: httpRefreshExchange(realFetch),
     identity: httpIdentity(realFetch),
     xPost: httpXPoster(realFetch),
     xMediaUpload: httpXMediaUploader(realFetch),
     byoDefaultClientId: capxClientId,
+    capxAppClientSecret: capxClientSecret,
     now: () => Date.now(),
   });
 

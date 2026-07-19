@@ -16,6 +16,10 @@ export interface VaultRow {
   /** blue tick + X account creation time, captured at connect; casserole L1 gates Loops on both. */
   verified: boolean;
   createdAtMs: number;
+  /** the OAuth client id of the app this connection was made with, so a BYO refresh uses the RIGHT app
+   *  (each BYO user registers their own X app). Optional: rows predating this field (legacy live
+   *  connections) carry undefined and fall back to the server default client id at refresh time. */
+  clientId?: string;
   access: SealedToken;
   refresh: SealedToken;
   refreshRotatedAt: number;
@@ -44,6 +48,9 @@ export interface ConnectMeta {
   standing: AccountStanding;
   verified: boolean;
   createdAtMs: number;
+  /** the OAuth client id used for this connection (from the PendingConnection) — persisted so refresh
+   *  uses the right app. Optional so legacy call-sites/rows without it still type-check. */
+  clientId?: string;
 }
 
 export class Vault {
@@ -88,6 +95,18 @@ export class Vault {
   async refByEmailHash(emailHash: string): Promise<string | null> {
     const row = await this.#store.getByEmailHash(emailHash);
     return row ? row.vaultRef : null;
+  }
+
+  /**
+   * The OAuth app coordinates the Refresher needs to refresh THIS connection: the per-connection client
+   * id (BYO users each register their own app) and the lane (only CAPX_APP is a confidential client that
+   * uses the server-held secret). Never a token — safe to read outside withToken. clientId is undefined
+   * for rows predating the field; the Refresher falls back to the server default there.
+   */
+  async connectionApp(vaultRef: string): Promise<{ clientId?: string; lane: Lane } | null> {
+    const row = await this.#store.getByRef(vaultRef);
+    if (!row) return null;
+    return { clientId: row.clientId, lane: row.lane };
   }
 
   /**

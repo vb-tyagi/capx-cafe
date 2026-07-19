@@ -76,6 +76,8 @@ export interface StartResult {
 export interface ConfirmedConnection {
   emailHash: string;
   lane: Lane;
+  /** the OAuth client id the flow was started with — persisted to the vault so refresh uses this app. */
+  clientId: string;
   xUserId: string;
   username: string;
   verified: boolean;
@@ -169,6 +171,7 @@ export class OAuthFlow {
     return {
       emailHash: pending.emailHash,
       lane: pending.lane,
+      clientId: pending.clientId,
       xUserId: pending.resolved.xUserId,
       username: pending.resolved.username,
       verified: pending.resolved.verified,

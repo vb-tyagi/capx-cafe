@@ -5,6 +5,7 @@
 //     a silently-dead connection;
 //   - treat rotate() (the store commit) as the atomic point: a crash BEFORE commit leaves the old
 //     tokens, so the next refresh invalid_grants -> needs-reauth (surfaced honestly, not a silent brick).
+import { Lane } from '@capx-cafe/core';
 import type { Vault } from '../vault/index.ts';
 import { KeyedMutex } from '../outbox/mutex.ts';
 
@@ -18,7 +19,11 @@ export type RefreshResult = { ok: true } | { ok: false; needsReauth: true; reaso
 
 export interface RefresherDeps {
   vault: Vault;
+  /** default/fallback client id (byoDefaultClientId) used when a connection predates per-connection
+   *  client-id storage. Per-connection ids captured at connect take precedence. */
   clientId: string;
+  /** the confidential-client secret (capx-app's own app). Applied ONLY on the CAPX_APP lane — BYO is a
+   *  public client with no secret. */
   clientSecret?: string;
   mutex?: KeyedMutex;
 }
@@ -41,10 +46,16 @@ export class Refresher {
       if (await this.#vault.needsReauth(vaultRef)) {
         return { ok: false, needsReauth: true, reason: 'connection already flagged needs-reauth' };
       }
+      // Refresh with THIS connection's own app: BYO users each register their own X app, so the client
+      // id must be the one the tokens were minted under. Legacy rows (no stored client id) fall back to
+      // the server default. The confidential-client secret is sent ONLY on the CAPX_APP lane.
+      const app = await this.#vault.connectionApp(vaultRef);
+      const clientId = app?.clientId || this.#clientId;
+      const clientSecret = app?.lane === Lane.CAPX_APP ? this.#clientSecret : undefined;
       let next: { accessToken: string; refreshToken: string };
       try {
         next = await this.#vault.withRefreshToken(vaultRef, (rt) =>
-          exchange({ refreshToken: rt, clientId: this.#clientId, clientSecret: this.#clientSecret }),
+          exchange({ refreshToken: rt, clientId, clientSecret }),
         );
       } catch (e) {
         await this.#vault.markNeedsReauth(vaultRef);

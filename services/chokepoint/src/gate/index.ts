@@ -8,12 +8,14 @@ import type { Handle, LoopConfig } from '@capx-cafe/core';
 import type { LoopRecord } from '../loops/index.ts';
 import { runGauntlet } from '@capx-cafe/casserole';
 import type { GauntletContext } from '@capx-cafe/casserole';
-import type { PlatformClient } from '@capx-cafe/platform-client';
+import type { PlatformClient, PublishResult } from '@capx-cafe/platform-client';
 import type { Admission } from '../admission/index.ts';
 import type { Vault } from '../vault/index.ts';
 import type { Metering } from '../metering/index.ts';
 import type { RecentPosts } from '../recent/index.ts';
 import type { Outbox } from '../outbox/index.ts';
+import type { Refresher, RefreshExchange } from '../oauth/refresh.ts';
+import { isXAuthError } from '../xclient/index.ts';
 import { KeyedMutex } from '../outbox/mutex.ts';
 import { normalizeDraft } from './draft.ts';
 
@@ -72,6 +74,11 @@ export interface GateDeps {
   metering?: Metering; // lane-B (capx-app) cost cap; unused on the BYO lane
   recentPosts?: RecentPosts; // per-handle history feeding casserole L2/L3 (dedup + ceiling)
   outbox?: Outbox; // durable at-most-once send: idempotent on idempotencyKey
+  /** X access tokens expire ~2h after connect. When a send 401s, the gate refreshes THIS connection's
+   *  token via the Refresher + injected RefreshExchange and retries once. Both omitted (tests/dev with a
+   *  fake client) => no refresh-retry; a 401 fails the send with the real X error surfaced. */
+  refresher?: Refresher;
+  refreshExchange?: RefreshExchange;
 }
 
 /** A manual per-day cap (the loop 1/day + 5-min spacing do not apply to manual posts). */
@@ -86,6 +93,8 @@ export class PublishGate {
   readonly #metering?: Metering;
   readonly #recent?: RecentPosts;
   readonly #outbox?: Outbox;
+  readonly #refresher?: Refresher;
+  readonly #refreshExchange?: RefreshExchange;
 
   constructor(deps: GateDeps) {
     this.#admission = deps.admission;
@@ -96,6 +105,8 @@ export class PublishGate {
     this.#metering = deps.metering;
     this.#recent = deps.recentPosts;
     this.#outbox = deps.outbox;
+    this.#refresher = deps.refresher;
+    this.#refreshExchange = deps.refreshExchange;
   }
 
   /** Manual path: the agent is present and holds a session. */
@@ -310,8 +321,8 @@ export class PublishGate {
         jobId = enq.job.id;
         await this.#outbox.markSending(jobId);
       }
-      try {
-        const pub = await this.#client.publish({
+      const send = (): Promise<PublishResult> =>
+        this.#client.publish({
           channelId: vaultRef,
           text: norm.draft.text,
           scheduledAtMs: g.scheduledAtMs ?? now,
@@ -319,6 +330,29 @@ export class PublishGate {
           inReplyToId: input.inReplyToId,
           mediaIds: input.mediaIds,
         });
+      try {
+        let pub: PublishResult;
+        try {
+          pub = await send();
+        } catch (err) {
+          // The token aged out (X 401 ~2h after connect). Refresh THIS connection's token via the
+          // Refresher (right client id + lane-gated secret) and retry the send exactly ONCE. Any other
+          // failure — or a missing refresher — rethrows to the publish_failed handler below.
+          if (!isXAuthError(err) || !this.#refresher || !this.#refreshExchange) throw err;
+          const rr = await this.#refresher.refresh(vaultRef, this.#refreshExchange);
+          if (!rr.ok) {
+            // The refresh itself failed (invalid_grant) — the Refresher already flagged needs-reauth.
+            // Surface it honestly rather than as an opaque publish failure.
+            if (this.#outbox && jobId) await this.#outbox.markFailed(jobId);
+            return {
+              outcome: 'rejected',
+              verdict: g.verdict,
+              requiresHumanReview: false,
+              finalReasons: [...g.finalReasons, 'connection needs re-auth — run connect_x again'],
+            };
+          }
+          pub = await send(); // retry once with the freshly-rotated access token
+        }
         if (this.#outbox && jobId) await this.#outbox.markSent(jobId);
         if (conn.lane === Lane.CAPX_APP && this.#metering) await this.#metering.record(emailHash, now);
         // record into the recent-post cache (still inside the lock) so the next post dedups against it.
@@ -330,13 +364,16 @@ export class PublishGate {
           finalReasons: g.finalReasons,
           platformPostId: pub.platformPostId,
         };
-      } catch {
+      } catch (err) {
         if (this.#outbox && jobId) await this.#outbox.markFailed(jobId);
+        // Surface the REAL X error (e.g. "X /2/tweets failed: 401 ...") — not a secret, and essential for
+        // debugging — instead of swallowing it behind a generic message.
+        const detail = err instanceof Error ? err.message : String(err);
         return {
           outcome: 'publish_failed',
           verdict: g.verdict,
           requiresHumanReview: false,
-          finalReasons: [...g.finalReasons, 'publish failed at the X boundary'],
+          finalReasons: [...g.finalReasons, `publish failed at the X boundary: ${detail}`],
         };
       }
     });

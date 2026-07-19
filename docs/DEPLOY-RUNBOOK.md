@@ -9,17 +9,26 @@ tweet ever sent**. Nothing here runs without the founder's explicit go. Ops fact
 
 ## 0. What this deploy changes (all additive, low-risk)
 
+- **P0 token-refresh fix (2026-07-19):** the publish path now refreshes an expired X access token and retries
+  once. X OAuth2 access tokens die ~2h after connect, so before this, any `post_now`/loop post more than ~2h
+  after connect returned `publish_failed`. Now: on a 401 from X the gate refreshes THIS connection's token
+  (via the Refresher, using the connection's own client id) and retries the send once; a failed refresh
+  (`invalid_grant`) flags `needsReauth` and returns "needs re-auth". Loops get this automatically (same
+  `#publish` path). The real X error is now surfaced in `publish_failed` reasons (was swallowed).
 - **New routes:** `POST /preview` (dry-run guardrail), `POST /audit` (send history), `POST /media` (chunked
   upload). **Extended:** `POST /post_now` gains `inReplyToId` + `mediaIds`.
 - **New MCP tools** (client-side, already publishable): `preview`, `audit`, `upload_media`.
-- **DB migration at boot:** `runMigrations` re-runs `001_init.sql`, which now includes
-  `alter table loops add column if not exists ai_generated boolean not null default false`. **Idempotent** —
-  it adds one column to the `loops` table and no-ops if already present. No data change, no destructive DDL.
-- **No secret/env changes required** — `run deploy --image` preserves existing env vars + secret refs.
+- **DB migration at boot:** `runMigrations` re-runs `001_init.sql`, which now includes **two** idempotent
+  `add column if not exists`: `loops.ai_generated boolean … default false` and, new for the P0 fix,
+  `vault.client_id text` (nullable — legacy rows stay NULL and fall back to the server default client id at
+  refresh time). Both no-op if already present. No data change, no destructive DDL.
+- **No secret/env changes required** — `run deploy --image` preserves existing env vars + secret refs. The
+  refresh works on the BYO lane with the connection's client id alone; `X_CLIENT_SECRET` is only consulted
+  when refreshing a `CAPX_APP`-lane connection (already wired via `capxAppClientSecret` in `serve.ts`).
 
 ## 1. Pre-flight checklist (verify BEFORE building)
 
-- [ ] `pnpm run verify` green locally (currently: 209 pass / 1 skip, tsc clean).
+- [ ] `pnpm run verify` green locally (currently: 214 pass / 1 skip, tsc clean — includes the P0 refresh tests).
 - [ ] On branch `track2/decision-lock-and-p0`, working tree clean (`git status`).
 - [ ] gcloud robot env active: `cd` into repo so `.envrc` sets `CLOUDSDK_CONFIG=.gcp/gcloud-home`; confirm
       `gcloud config get-value project` = `capx-cafe` and account = the scoped robot.
@@ -59,7 +68,11 @@ deploy as the build/deploy identity. The migration runs on the new container's f
 **Post-deploy verify (before trusting it):**
 - [ ] `curl -s <printed Service URL>/health` → 200 `{"ok":true}` (NOT `/healthz` — GFE reserves it, foot-gun #2).
 - [ ] `POST /preview` with a session bearer returns a verdict (proves the new route + DB migration booted OK).
-- [ ] Cloud Run logs: no boot errors, migration statement ran once.
+- [ ] Cloud Run logs: no boot errors, both migration statements ran once (`loops.ai_generated`, `vault.client_id`).
+- [ ] **P0 fix proof:** `post_now` succeeds on a connection that is **> 2h old** (the exact case that failed on
+      2026-07-19). If a fresh reconnect is easier to arrange, a `post_now` still works; the real signal is that
+      re-connecting is no longer required after ~2h. On logs, a refreshed send shows a 401 followed by a
+      successful retry, not a `publish_failed`.
 
 ## 4. Metering cap (lane B) — do this before real creators
 

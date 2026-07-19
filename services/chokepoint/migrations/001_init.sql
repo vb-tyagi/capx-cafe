@@ -23,6 +23,11 @@ create index if not exists vault_email_hash_idx on vault (email_hash);
 -- age gate closed — deliberate.
 alter table vault add column if not exists verified      boolean not null default false;
 alter table vault add column if not exists created_at_ms bigint  not null default 0;
+-- The OAuth client id this connection was made with (2026-07-19), so a token refresh uses the RIGHT app
+-- (BYO users each register their own X app). Nullable: rows connected before this lands carry NULL and
+-- fall back to the server default client id at refresh time. Idempotent add so it lands on both fresh
+-- (pg-mem) and the live DB at deploy.
+alter table vault add column if not exists client_id text;
 
 -- License allowlist — hashed emails only.
 create table if not exists allowlist (

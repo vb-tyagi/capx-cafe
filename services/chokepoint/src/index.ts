@@ -34,7 +34,7 @@ import { Admission } from './admission/index.ts';
 import type { AdmissionStore } from './admission/index.ts';
 import { OAuthFlow, type OAuthConfig, type TokenExchange, type IdentityFetch } from './oauth/index.ts';
 import type { PendingStore } from './oauth/index.ts';
-import { Refresher } from './oauth/refresh.ts';
+import { Refresher, type RefreshExchange } from './oauth/refresh.ts';
 import { XAdapter, type XPoster } from './xclient/index.ts';
 import { PublishGate } from './gate/index.ts';
 import { Metering } from './metering/index.ts';
@@ -67,11 +67,16 @@ export interface ChokepointConfig {
   sessionGraceMs?: number;
   oauth: OAuthConfig;
   tokenExchange: TokenExchange;
+  /** X refresh-token grant, injected like tokenExchange (mock in tests, real endpoint in prod). Omit to
+   *  disable the gate's refresh-on-401 retry (an expired token then just fails the send). */
+  refreshExchange?: RefreshExchange;
   identity: IdentityFetch;
   xPost: XPoster;
   /** X chunked media upload (Phase 4). Omit in tests/dev to get a fake that returns a canned media id. */
   xMediaUpload?: XMediaUploader;
   byoDefaultClientId?: string;
+  /** capx-app (confidential client) secret — applied ONLY when refreshing a CAPX_APP-lane connection. */
+  capxAppClientSecret?: string;
   /** lane-B (capx-app) per-day post cap; omit to leave the capx-app lane uncapped. */
   capxAppDailyCap?: number;
   now?: () => number;
@@ -97,9 +102,12 @@ export function createChokepoint(store: ChokepointStore, cfg: ChokepointConfig) 
   const recentPosts = new RecentPosts(store);
   const outbox = new Outbox(store);
   const loops = new Loops(store, now);
-  const gate = new PublishGate({ admission, vault, client: new XAdapter({ vault, post: cfg.xPost }), now, metering, recentPosts, outbox });
+  // The Refresher is built before the gate so the gate can refresh-and-retry a 401 send. It holds the
+  // fallback client id (byoDefault) and the capx-app secret; per-connection client id + lane are read
+  // from the vault at refresh time.
+  const refresher = new Refresher({ vault, clientId: cfg.byoDefaultClientId ?? '', clientSecret: cfg.capxAppClientSecret });
+  const gate = new PublishGate({ admission, vault, client: new XAdapter({ vault, post: cfg.xPost }), now, metering, recentPosts, outbox, refresher, refreshExchange: cfg.refreshExchange });
   const media = new MediaGateway({ admission, vault, upload: cfg.xMediaUpload ?? (async () => ({ mediaId: 'fake-media' })), now });
-  const refresher = new Refresher({ vault, clientId: cfg.byoDefaultClientId ?? '' });
   const ticker = new LoopTicker({ loops, gate, now });
   const service = createService({
     admission,

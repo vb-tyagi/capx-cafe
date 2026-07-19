@@ -49,13 +49,13 @@ export class PostgresStore
   // ---- VaultStore ----
   async put(row: VaultRow): Promise<void> {
     await this.#pool.query(
-      `insert into vault (vault_ref,email_hash,x_user_id,username,lane,standing,access,refresh,refresh_rotated_at,needs_reauth,verified,created_at_ms)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+      `insert into vault (vault_ref,email_hash,x_user_id,username,lane,standing,access,refresh,refresh_rotated_at,needs_reauth,verified,created_at_ms,client_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        on conflict (vault_ref) do update set
          access=excluded.access, refresh=excluded.refresh,
          refresh_rotated_at=excluded.refresh_rotated_at, needs_reauth=excluded.needs_reauth,
-         verified=excluded.verified, created_at_ms=excluded.created_at_ms`,
-      [row.vaultRef, row.emailHash, row.xUserId, row.username, row.lane, row.standing, row.access, row.refresh, row.refreshRotatedAt, row.needsReauth, row.verified, row.createdAtMs],
+         verified=excluded.verified, created_at_ms=excluded.created_at_ms, client_id=excluded.client_id`,
+      [row.vaultRef, row.emailHash, row.xUserId, row.username, row.lane, row.standing, row.access, row.refresh, row.refreshRotatedAt, row.needsReauth, row.verified, row.createdAtMs, row.clientId ?? null],
     );
   }
   async getByRef(vaultRef: string): Promise<VaultRow | null> {
@@ -86,6 +86,8 @@ export class PostgresStore
       needsReauth: Boolean(r.needs_reauth),
       verified: Boolean(r.verified),
       createdAtMs: Number(r.created_at_ms),
+      // null for rows connected before client_id was captured — refresh falls back to the server default.
+      clientId: r.client_id == null ? undefined : String(r.client_id),
     };
   }
 

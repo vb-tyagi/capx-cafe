@@ -6,7 +6,7 @@ import { Vault } from '../src/vault/index.ts';
 import { HmacSessionSigner } from '../src/admission/session.ts';
 import { Admission } from '../src/admission/index.ts';
 import { PublishGate } from '../src/gate/index.ts';
-import { XAdapter, httpXPoster } from '../src/xclient/index.ts';
+import { XAdapter, httpXPoster, XApiError, isXAuthError } from '../src/xclient/index.ts';
 import type { FetchLike, XPoster } from '../src/xclient/index.ts';
 
 const NOW = 1_700_000_000_000;
@@ -84,6 +84,23 @@ test('httpXPoster omits media when there are no ids', async () => {
 test('httpXPoster throws on a non-2xx from X', async () => {
   const fetchImpl: FetchLike = async () => ({ ok: false, status: 403, json: async () => ({}), text: async () => 'forbidden' });
   await assert.rejects(() => httpXPoster(fetchImpl)({ accessToken: 't', text: 'x' }), /403/);
+});
+
+test('httpXPoster throws a typed XApiError carrying the status; 401 reads as an auth failure', async () => {
+  const fetchImpl: FetchLike = async () => ({ ok: false, status: 401, json: async () => ({}), text: async () => 'Unauthorized' });
+  await assert.rejects(
+    () => httpXPoster(fetchImpl)({ accessToken: 'expired', text: 'x' }),
+    (e: unknown) => {
+      assert.ok(e instanceof XApiError, 'a typed error, not a bare Error');
+      assert.equal(e.status, 401, 'carries the HTTP status the gate keys on');
+      assert.equal(e.body, 'Unauthorized', 'carries X\'s error body for debugging');
+      assert.equal(isXAuthError(e), true);
+      assert.match(e.message, /401/);
+      return true;
+    },
+  );
+  // a non-401 X error is NOT an auth failure — it must not trigger a token refresh.
+  assert.equal(isXAuthError(new XApiError(500, 'boom', 'X /2/tweets failed: 500 boom')), false);
 });
 
 test('END-TO-END: gate + XAdapter publishes a clean post using the vaulted token', async () => {

@@ -183,6 +183,8 @@ export function createService(deps: ServiceDeps): ChokepointService {
             // Real account facts from X — casserole L1 gates Loops on these.
             verified: conn.verified,
             createdAtMs: conn.createdAtMs,
+            // The app this connection was made with — so a later token refresh uses the right client id.
+            clientId: conn.clientId,
           },
           { access: conn.accessToken, refresh: conn.refreshToken },
         );

@@ -44,6 +44,27 @@ export type FetchLike = (
   init: { method: string; headers: Record<string, string>; body?: string },
 ) => Promise<MinimalResponse>;
 
+/**
+ * A non-2xx from X, carrying the HTTP status + response body so a caller can act on it. The publish gate
+ * inspects `status === 401` to tell an expired/invalid access token (refresh-and-retry) from any other
+ * failure (fail the send). The body is X's own error text — NOT a secret — and is surfaced for debugging.
+ */
+export class XApiError extends Error {
+  readonly status: number;
+  readonly body: string;
+  constructor(status: number, body: string, message: string) {
+    super(message);
+    this.name = 'XApiError';
+    this.status = status;
+    this.body = body;
+  }
+}
+
+/** True iff the error is X rejecting the access token as unauthorized (HTTP 401) — the refresh trigger. */
+export function isXAuthError(e: unknown): boolean {
+  return e instanceof XApiError && e.status === 401;
+}
+
 export function httpXPoster(fetchImpl: FetchLike, endpoint = 'https://api.twitter.com/2/tweets'): XPoster {
   return async ({ accessToken, text, inReplyToId, mediaIds }) => {
     const payload: Record<string, unknown> = { text };
@@ -57,7 +78,12 @@ export function httpXPoster(fetchImpl: FetchLike, endpoint = 'https://api.twitte
       headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`X /2/tweets failed: ${res.status} ${await res.text()}`);
+    // Throw a typed error (not a bare Error) so the gate can distinguish a 401 (expired token — X access
+    // tokens die ~2h after connect) and refresh-then-retry, instead of failing every aged-out post.
+    if (!res.ok) {
+      const body = await res.text();
+      throw new XApiError(res.status, body, `X /2/tweets failed: ${res.status} ${body}`);
+    }
     const data = (await res.json()) as { data?: { id?: string } };
     const id = data.data?.id;
     if (!id) throw new Error('X /2/tweets: missing tweet id in response');
