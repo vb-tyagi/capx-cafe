@@ -66,6 +66,7 @@ async function main(): Promise<void> {
         aiGenerated: z.boolean().optional().describe('label this post AI-assisted — the USER decides; default false'),
         idempotencyKey: z.string().optional(),
         inReplyToId: z.string().optional().describe('platformPostId of the post this replies to (for threads)'),
+        mediaIds: z.array(z.string()).optional().describe('media ids from upload_media to attach to this post'),
       },
     },
     async (args) => ({ content: [{ type: 'text', text: (await mcp.postNow(args)).text }] }),
@@ -89,6 +90,16 @@ async function main(): Promise<void> {
       inputSchema: { limit: z.number().optional().describe('max rows (default 50)') },
     },
     async (args) => ({ content: [{ type: 'text', text: (await mcp.auditTrail(args)).text }] }),
+  );
+
+  server.registerTool(
+    'upload_media',
+    {
+      description:
+        'Upload a local image or video (produced by your own media tool) so it can be attached to a post. Reads the file, streams the bytes to the chokepoint, and returns a media id to pass to post_now as mediaIds. Media is not moderated by casserole — you set the AI-content label per the media skills.',
+      inputSchema: { path: z.string().describe('local file path to the image/video, e.g. ./out/hero.png') },
+    },
+    async (args) => ({ content: [{ type: 'text', text: (await mcp.uploadMedia(args)).text }] }),
   );
 
   server.registerTool(

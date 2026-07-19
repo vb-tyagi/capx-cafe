@@ -4,6 +4,7 @@ import { createInMemoryChokepoint, LocalKeyKms } from '../../../services/chokepo
 import { ChokepointClient } from '../src/client.ts';
 import type { FetchLike } from '../src/client.ts';
 import { CapxMcp } from '../src/mcp.ts';
+import type { MediaReader } from '../src/mcp.ts';
 import { emailHash, resolveClientConfig } from '../src/config.ts';
 
 const NOW = 1_700_000_000_000;
@@ -11,7 +12,7 @@ const EMAIL = 'founder@capx.ai';
 const CLEAN =
   'Shipping the anti-slop engine today: deterministic scoring, real unit tests, and zero external keys. Here is a concrete walkthrough of the pipeline.';
 
-function wire(cfg: { clientId?: string } = { clientId: 'test-client-id-0123456789' }) {
+function wire(cfg: { clientId?: string } = { clientId: 'test-client-id-0123456789' }, readMedia?: MediaReader) {
   const built = createInMemoryChokepoint({
     masterKeyBase64: LocalKeyKms.generateMasterKey(),
     signingKey: 'sign',
@@ -44,9 +45,38 @@ function wire(cfg: { clientId?: string } = { clientId: 'test-client-id-012345678
   };
   const client = new ChokepointClient('https://cp.example', fetchImpl);
   const eh = emailHash(EMAIL);
-  const mcp = new CapxMcp({ client, config: { emailHash: eh, lane: 'byo', clientId: cfg.clientId }, now: () => NOW });
+  const mcp = new CapxMcp({ client, config: { emailHash: eh, lane: 'byo', clientId: cfg.clientId }, now: () => NOW, readMedia });
   return { built, mcp, eh, sessionCalls: () => sessionCalls };
 }
+
+async function connected(readMedia?: MediaReader) {
+  const w = wire({ clientId: 'test-client-id-0123456789' }, readMedia);
+  await w.built.store.addAllowlisted(w.eh);
+  const start = await w.mcp.connectX();
+  await w.built.service.handle({ method: 'GET', path: '/oauth/callback', query: { state: String(start.data.pending_id), code: 'abc' }, body: undefined, headers: {} });
+  await w.mcp.connectX({ confirm: true });
+  return w;
+}
+
+test('END-TO-END: upload_media streams bytes, post_now attaches the returned id', async () => {
+  const read: MediaReader = async () => ({ bytes: new Uint8Array([1, 2, 3]), mediaType: 'image/png', category: 'tweet_image' });
+  const w = await connected(read);
+  const up = await w.mcp.uploadMedia({ path: './hero.png' });
+  assert.equal(up.data.ok, true);
+  assert.equal(up.data.mediaId, 'fake-media'); // the in-memory factory's default uploader
+  const posted = await w.mcp.postNow({ text: CLEAN, mediaIds: [String(up.data.mediaId)] });
+  assert.equal(posted.data.outcome, 'published');
+});
+
+test('upload_media surfaces a read error without throwing', async () => {
+  const read: MediaReader = async () => {
+    throw new Error('no such file');
+  };
+  const w = await connected(read);
+  const up = await w.mcp.uploadMedia({ path: './missing.png' });
+  assert.equal(up.data.ok, false);
+  assert.match(up.text, /Could not read/);
+});
 
 test('unallowlisted user cannot even whoami (session denied)', async () => {
   const { mcp } = wire();

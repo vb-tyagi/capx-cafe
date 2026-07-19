@@ -58,6 +58,10 @@ export interface AuditResp {
   entries: AuditEntryResp[];
   rejected?: string;
 }
+export interface MediaUploadResp {
+  mediaId?: string;
+  rejected?: string;
+}
 export interface LoopResp {
   id: string;
   timezone: string;
@@ -107,7 +111,7 @@ export class ChokepointClient {
   whoami(bearer: string): Promise<WhoamiResp> {
     return this.#post<WhoamiResp>('/whoami', {}, bearer);
   }
-  postNow(bearer: string, input: { text: string; aiGenerated: boolean; idempotencyKey: string; inReplyToId?: string }): Promise<PostResp> {
+  postNow(bearer: string, input: { text: string; aiGenerated: boolean; idempotencyKey: string; inReplyToId?: string; mediaIds?: string[] }): Promise<PostResp> {
     return this.#post<PostResp>('/post_now', input, bearer);
   }
   preview(bearer: string, input: { text: string; aiGenerated: boolean }): Promise<PreviewResp> {
@@ -115,6 +119,9 @@ export class ChokepointClient {
   }
   audit(bearer: string, limit?: number): Promise<AuditResp> {
     return this.#post<AuditResp>('/audit', { limit }, bearer);
+  }
+  uploadMedia(bearer: string, input: { bytesBase64: string; mediaType: string; category: string }): Promise<MediaUploadResp> {
+    return this.#post<MediaUploadResp>('/media', input, bearer);
   }
 
   // ---- Loops ----

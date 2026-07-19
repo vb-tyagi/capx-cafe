@@ -2,7 +2,34 @@
 // the chokepoint; the MCP holds only a short-TTL session bearer (lazily obtained/refreshed) and the
 // transient connect pending-ref. It renders the chokepoint's verdict so the agent can explain a
 // blocked/held post WITHOUT re-running or being able to skip the guard (assume-compromised posture).
+import { readFileSync } from 'node:fs';
 import type { ChokepointClient, PostResp, LoopResp, PreviewResp, AuditResp } from './client.ts';
+
+/** A local asset the MCP read on the user's machine, ready to stream to the chokepoint. */
+export interface LocalMedia {
+  bytes: Uint8Array;
+  mediaType: string;
+  category: string;
+}
+export type MediaReader = (path: string) => Promise<LocalMedia>;
+
+// Map a file extension to X's media_type + media_category. The bytes never leave the user's control except
+// to their OWN chokepoint upload; casserole does not inspect them (media is not moderated).
+const MEDIA_BY_EXT: Record<string, { mediaType: string; category: string }> = {
+  png: { mediaType: 'image/png', category: 'tweet_image' },
+  jpg: { mediaType: 'image/jpeg', category: 'tweet_image' },
+  jpeg: { mediaType: 'image/jpeg', category: 'tweet_image' },
+  webp: { mediaType: 'image/webp', category: 'tweet_image' },
+  gif: { mediaType: 'image/gif', category: 'tweet_gif' },
+  mp4: { mediaType: 'video/mp4', category: 'tweet_video' },
+  mov: { mediaType: 'video/quicktime', category: 'tweet_video' },
+};
+
+const defaultReadMedia: MediaReader = async (path) => {
+  const ext = path.toLowerCase().split('.').pop() ?? '';
+  const kind = MEDIA_BY_EXT[ext] ?? { mediaType: 'application/octet-stream', category: 'tweet_image' };
+  return { bytes: new Uint8Array(readFileSync(path)), ...kind };
+};
 
 export interface McpConfig {
   emailHash: string;
@@ -41,6 +68,8 @@ export interface CapxMcpDeps {
   config: McpConfig;
   now: () => number;
   sessionTtlMs?: number;
+  /** reads a local asset off disk; injectable so the tool layer unit-tests with no filesystem. */
+  readMedia?: MediaReader;
 }
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -76,6 +105,7 @@ export class CapxMcp {
   readonly #cfg: McpConfig;
   readonly #now: () => number;
   readonly #ttl: number;
+  readonly #readMedia: MediaReader;
   #bearer: string | null = null;
   #bearerExp = 0;
   #pending: { pendingId: string; sessionNonce: string } | null = null;
@@ -85,6 +115,7 @@ export class CapxMcp {
     this.#cfg = deps.config;
     this.#now = deps.now;
     this.#ttl = deps.sessionTtlMs ?? 15 * 60_000;
+    this.#readMedia = deps.readMedia ?? defaultReadMedia;
   }
 
   async #ensureSession(): Promise<string> {
@@ -218,14 +249,38 @@ export class CapxMcp {
     }
   }
 
-  async postNow(args: { text: string; aiGenerated?: boolean; idempotencyKey?: string; inReplyToId?: string }): Promise<ToolResult> {
+  async postNow(args: { text: string; aiGenerated?: boolean; idempotencyKey?: string; inReplyToId?: string; mediaIds?: string[] }): Promise<ToolResult> {
     const bearer = await this.#ensureSession();
     // A stable idempotency key so a retried tool call can't double-post (chokepoint dedups on it).
     const key = args.idempotencyKey ?? `${this.#cfg.emailHash}:${this.#now()}:${args.text.length}`;
     // Option-C: aiGenerated is the user's label choice; default false when unspecified.
     // inReplyToId chains a reply to a prior post's platformPostId — the seam for native threads.
-    const r = await this.#client.postNow(bearer, { text: args.text, aiGenerated: args.aiGenerated ?? false, idempotencyKey: key, inReplyToId: args.inReplyToId });
+    // mediaIds attach assets already uploaded via upload_media.
+    const r = await this.#client.postNow(bearer, { text: args.text, aiGenerated: args.aiGenerated ?? false, idempotencyKey: key, inReplyToId: args.inReplyToId, mediaIds: args.mediaIds });
     return { text: renderOutcome(r), data: { ...r } };
+  }
+
+  /**
+   * Read a local asset the user's own media tool produced and stream its bytes to the chokepoint, which
+   * uploads it to X and returns a media id. The token never leaves the server; casserole never inspects the
+   * asset (media is not moderated). Attach the returned id via post_now { mediaIds }.
+   */
+  async uploadMedia(args: { path: string }): Promise<ToolResult> {
+    const bearer = await this.#ensureSession();
+    let media;
+    try {
+      media = await this.#readMedia(args.path);
+    } catch (e) {
+      return { text: `Could not read "${args.path}": ${e instanceof Error ? e.message : String(e)}`, data: { ok: false } };
+    }
+    if (!media.bytes.length) return { text: `"${args.path}" is empty — nothing to upload.`, data: { ok: false } };
+    const bytesBase64 = Buffer.from(media.bytes).toString('base64');
+    const r = await this.#client.uploadMedia(bearer, { bytesBase64, mediaType: media.mediaType, category: media.category });
+    if (r.rejected) return { text: `Media upload rejected: ${r.rejected}`, data: { ok: false, ...r } };
+    return {
+      text: `Uploaded ${media.mediaType} (media id ${r.mediaId}). Attach it by calling post_now with mediaIds: ["${r.mediaId}"].`,
+      data: { ok: true, mediaId: r.mediaId },
+    };
   }
 
   /** Dry-run: show the guardrail verdict for a draft WITHOUT sending. Powers the draft-review skill. */
