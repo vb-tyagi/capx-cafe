@@ -48,8 +48,8 @@ const publishPkg = {
   },
   engines: { node: '>=22' },
   files: ['capx-cafe.mjs', 'README.md'],
-  // TODO(publish): pick a real license before the first `npm publish`. UNLICENSED keeps it private-safe.
-  license: 'UNLICENSED',
+  // TODO(publish): pick a real license before the first `npm publish`. MIT keeps it private-safe.
+  license: 'MIT',
   keywords: ['mcp', 'claude', 'x', 'twitter', 'agent', 'posting', 'model-context-protocol'],
 };
 writeFileSync(new URL('./dist/package.json', here), JSON.stringify(publishPkg, null, 2) + '\n');

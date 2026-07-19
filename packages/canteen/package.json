@@ -3,12 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "dependencies": {
     "@capx-cafe/core": "workspace:*",
     "@capx-cafe/casserole": "workspace:*",
     "@capx-cafe/counter": "workspace:*",
     "@capx-cafe/platform-client": "workspace:*",
     "@capx-cafe/chef": "workspace:*"
-  }
+  },
+  "license": "AGPL-3.0-only"
 }
