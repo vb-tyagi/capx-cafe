@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/cover.png" alt="capx café — the safe way to let your AI run your X" width="100%">
+
 # capx café
 
 ### The safe way to let your AI run your X.
