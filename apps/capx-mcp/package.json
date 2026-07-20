@@ -1,6 +1,6 @@
 {
   "name": "@capx-cafe/mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "The agent-co-resident MCP server (stdio). Exposes connect_x / whoami / post_now. Holds NO X token and NO secret — only a short-TTL session handle + non-secret ~/.capx/config.json. Assume-compromised posture. See docs/P1-CHOKEPOINT.md.",

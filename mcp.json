@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "capx-cafe": {
+      "command": "npx",
+      "args": ["-y", "capx-cafe"],
+      "env": {
+        "CAPX_CHOKEPOINT_URL": "",
+        "CAPX_EMAIL": "",
+        "CAPX_LANE": "byo",
+        "X_CLIENT_ID": ""
+      }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+# Smithery configuration for capx café
+# Local/stdio MCP server started via `npx -y capx-cafe` (Node >= 22).
+# Reference: https://smithery.ai/docs/build/project-config/smithery.yaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - chokepointUrl
+      - email
+    properties:
+      chokepointUrl:
+        type: string
+        title: Chokepoint URL
+        description: URL of the capx café server-side chokepoint (guardrail + posting engine). Maps to CAPX_CHOKEPOINT_URL.
+      email:
+        type: string
+        title: Email
+        description: Your whitelisted account email. Maps to CAPX_EMAIL.
+      lane:
+        type: string
+        title: Lane
+        enum: [byo, capx-app]
+        default: byo
+        description: "Credential lane: 'byo' = bring your own X app; 'capx-app' = use the capx-hosted X app. Maps to CAPX_LANE."
+      xClientId:
+        type: string
+        title: X Client ID
+        description: Your X (Twitter) OAuth2 client ID. Required when lane is 'byo'. Maps to X_CLIENT_ID.
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'capx-cafe'],
+      env: {
+        CAPX_CHOKEPOINT_URL: config.chokepointUrl,
+        CAPX_EMAIL: config.email,
+        CAPX_LANE: config.lane || 'byo',
+        ...(config.xClientId ? { X_CLIENT_ID: config.xClientId } : {})
+      }
+    })
+  exampleConfig:
+    chokepointUrl: https://chokepoint.capx.example/mcp
+    email: you@example.com
+    lane: byo
+    xClientId: your-x-oauth2-client-id

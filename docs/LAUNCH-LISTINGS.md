@@ -1,77 +1,64 @@
-# Launch Listings — ready-to-paste copy + where to submit
+# Launch Listings — verified submission runbook (2026-07-20)
 
-Everything you need to list capx café across the MCP ecosystem. Reuse the copy below verbatim.
+Repo: https://github.com/vb-tyagi/capx-cafe · npm: **`capx-cafe`** (live) · install: `npx -y capx-cafe`
 
-- **Repo:** https://github.com/vb-tyagi/capx-cafe
-- **npm:** `capx-cafe` · **install:** `npx -y capx-cafe`
-- **Security page:** https://github.com/vb-tyagi/capx-cafe/blob/main/docs/SECURITY.md
+## Reusable copy
+- **Name:** capx café · **package:** `capx-cafe` · **category:** Social / Communication
+- **One-liner:** The safe way to let your AI run your X — one MCP server, token never on the agent.
+- **Short:** Agent-native X (Twitter) posting as one MCP server for Claude Code / Cursor / Codex / Windsurf. Your X token never touches the agent; every post clears a server-side guardrail before it ships.
+- **Config surfaced:** `CAPX_CHOKEPOINT_URL` (req), `CAPX_EMAIL` (req), `CAPX_LANE` (byo|capx-app), `X_CLIENT_ID` (BYO).
+- **License:** MIT (client) / AGPL-3.0 (server).
 
----
-
-## Reusable copy (paste these)
-
-**Name:** capx café  ·  **package:** `capx-cafe`
-
-**One-liner (≤ 80 chars):**
-> The safe way to let your AI run your X — one MCP server, token never on the agent.
-
-**Short (≤ 160):**
-> Agent-native X posting as one MCP server (Claude Code / Cursor / Codex / Windsurf). Your token never touches the agent; every post clears a server-side guardrail.
-
-**Medium (≤ 350 — matches the GitHub About):**
-> Agent-native X poster — one MCP server for any coding agent (Claude Code / Cursor / Codex / Windsurf). Connect X once, then create/schedule/post from your agent session. Token + casserole guardrail + send are one server-side unit; your agent holds only a short-TTL handle, never the token. "The AI writes; casserole decides what ships."
-
-**Long (paragraph):**
-> capx café installs as one MCP server into any coding agent. A whitelisted user connects their X account
-> once; after that they create, schedule, and post from inside their agent session. Its security thesis: the
-> X token, the guardrail (casserole), and the send are one inseparable server-side unit — the agent on your
-> laptop only ever holds a short-TTL session handle, never the token — so it structurally can't be
-> prompt-injected into tweeting a scam. Skills turn your git log, PRs, and releases into posts, automatically,
-> and every post rides the guardrail. "The AI writes; casserole decides what ships."
-
-**Tags / keywords:** `mcp` `model-context-protocol` `x` `twitter` `social` `posting` `scheduling` `agent`
-`ai-agent` `claude` `claude-code` `cursor` `codex` `windsurf` `security` `guardrail`
-
-**Category:** Social / Communication (secondary: Developer Tools, Productivity)
-
-**Config the listing should surface:** `CAPX_CHOKEPOINT_URL` (required), `CAPX_EMAIL` (required),
-`CAPX_LANE` (optional: byo|capx-app), `X_CLIENT_ID` (BYO lane).
-
-**License:** MIT (client) / AGPL-3.0 (server).
+## ✅ Done in the repo (machine-readable manifests the directories auto-read)
+| File | For |
+|---|---|
+| `server.json` | Official MCP registry (schema 2025-12-11) |
+| `smithery.yaml` | Smithery (stdio startCommand + config schema) |
+| `glama.json` | Glama (claims ownership under `vb-tyagi`) |
+| `mcp.json` | Cursor directory auto-detect |
+| `build.mjs` + `package.json` | bumped to **0.1.1** + `mcpName` added (required for the MCP registry) |
 
 ---
 
-## Where to list — in fit order (verify each site's current submission flow)
+## Submissions — grouped by who does it
 
-1. **npm** — `capx-cafe`. Publishing *is* the listing (see the publish steps below). Highest intent.
-2. **Official MCP registry** — `github.com/modelcontextprotocol/registry`. Add a `server.json` (name,
-   description, `repository`, the `capx-cafe` npm package + the env config schema) and submit via their
-   publish CLI / PR flow. This is the canonical index other tools pull from.
-3. **Smithery** — `smithery.ai/new`. Connect the GitHub repo, define the config (the four env vars above),
-   category Social, publish. Consider adding a `smithery.yaml` to the repo.
-4. **Glama** — `glama.ai/mcp/servers`. Auto-indexes public MCP repos; the repo README + the `mcp` topic
-   carry it. Add the `mcp` / `model-context-protocol` GitHub **topics** to the repo to help discovery.
-5. **mcp.so** — submit the repo URL + short description.
-6. **PulseMCP** — `pulsemcp.com` submit form; repo URL + description + category.
-7. **awesome-mcp-servers** — PR to `github.com/punkpeye/awesome-mcp-servers` (and `wong2/awesome-mcp-servers`).
-   Suggested entry under a Social/Communication section:
-   > `- [capx café](https://github.com/vb-tyagi/capx-cafe) — agent-native X posting; the token never touches the agent and every post clears a server-side guardrail.`
-8. **Cursor MCP directory** — provide an "Add to Cursor" deeplink + the config.
+### 🔑 Needs YOU (OAuth / web form / npm token) — I can't do these headlessly
 
-## Repo housekeeping that boosts discovery
+**1. Official MCP registry** (`registry.modelcontextprotocol.io`) — CLI + GitHub OAuth
+```sh
+# a) republish npm at 0.1.1 (adds mcpName so the registry can verify ownership)
+pnpm --filter @capx-cafe/mcp build && cd apps/capx-mcp/dist && npm publish --access public   # your granular token
+# b) publish to the registry (server.json is already in the repo root)
+brew install mcp-publisher
+mcp-publisher login github        # opens browser — your GitHub (vb-tyagi)
+mcp-publisher publish             # reads ./server.json
+curl "https://registry.modelcontextprotocol.io/v0/servers?search=capx-cafe"   # verify
+```
+> PulseMCP + others ingest from this registry, so it's the highest-leverage one.
 
-- Add GitHub **topics**: `mcp`, `model-context-protocol`, `x`, `twitter`, `ai-agent`, `claude-code`, `cursor`,
-  `codex`, `windsurf`, `security` (Settings → About → topics, or `gh` API).
-- Ensure the README trust story + install are above the fold (done).
+**2. Smithery** — https://smithery.ai/new → sign in with GitHub → select `vb-tyagi/capx-cafe` (it reads `smithery.yaml`) → Deploy. Goes live at `smithery.ai/server/@vb-tyagi/capx-cafe`.
 
-## The meta-launch (highest-leverage, costs nothing)
+**3. Glama** — https://glama.ai/mcp/servers/add → paste `https://github.com/vb-tyagi/capx-cafe` → GitHub OAuth (verifies you're a maintainer; `glama.json` already claims it).
 
-Post the launch thread **through capx itself** (GTM-PLAN §3): *"this thread was posted by my agent,
-guardrailed, and my X token never touched my laptop — here's how."* Then **Show HN** with the security angle
-("How we keep an X token out of reach of a co-resident AI agent"), Tue–Thu morning ET (GTM-PLAN §4). Product
-Hunt after HN.
+**4. mcp.so** — https://mcp.so/submit?type=server → sign in → paste the repo URL → **Free submission** (queued review; it auto-reads the repo).
 
-## Per-directory checklist
+**5. PulseMCP** — https://www.pulsemcp.com/submit → choose *MCP Server* → paste the repo URL → submit (no account). Also auto-updates from #1.
 
-For each site: ☐ name ☐ one-liner ☐ description ☐ repo URL ☐ npm `capx-cafe` ☐ `npx -y capx-cafe`
-☐ config/env schema ☐ category + tags ☐ license ☐ security-page link.
+**6. Cursor directory** — https://cursor.directory/plugins/new → sign in → paste the repo URL (it auto-detects `mcp.json`).
+
+**7. wong2 list** — https://mcpservers.org/submit (web form; that list doesn't take PRs). Name: capx café · Link: repo URL.
+
+### 🤝 I can do WITH your go-ahead (posts under your GitHub identity)
+
+**awesome-mcp-servers PR** (punkpeye/awesome-mcp-servers) — add this line under `### 🌐 Social Media`, alphabetized under `v`:
+```md
+- [vb-tyagi/capx-cafe](https://github.com/vb-tyagi/capx-cafe) 📇 🏠 - Agent-native X (Twitter) posting as one MCP server for Claude Code / Cursor / Codex / Windsurf. Your X token never touches the agent; every post clears a server-side guardrail before it ships.
+```
+Fork → add line → PR. Say the word and I'll open it.
+
+---
+
+## Optional: "Add to Cursor" one-click badge (drop into README)
+```md
+[![Add to Cursor](https://img.shields.io/badge/Add%20to-Cursor-000?logo=cursor)](cursor://anysphere.cursor-deeplink/mcp/install?name=capx-cafe&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImNhcHgtY2FmZSJdLCJlbnYiOnsiQ0FQWF9DSE9LRVBPSU5UX1VSTCI6IiIsIkNBUFhfRU1BSUwiOiIiLCJDQVBYX0xBTkUiOiJieW8iLCJYX0NMSUVOVF9JRCI6IiJ9fQ==)
+```

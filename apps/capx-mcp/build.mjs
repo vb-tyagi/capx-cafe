@@ -38,6 +38,8 @@ chmodSync(outPath, 0o755);
 const publishPkg = {
   name: 'capx-cafe',
   version: pkg.version,
+  // Official MCP registry ownership check reads this from the live package.json on npm.
+  mcpName: 'io.github.vb-tyagi/capx-cafe',
   description:
     'Agent-native X posting for Claude Code / Cursor / Codex / Windsurf. Connect X, post, and schedule from inside your agent — every post passes a server-side guardrail; the token never touches your machine.',
   type: 'module',

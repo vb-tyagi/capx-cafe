@@ -1,0 +1,51 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.vb-tyagi/capx-cafe",
+  "title": "capx café",
+  "description": "Agent-native X (Twitter) posting as one MCP server; every post clears a server-side guardrail.",
+  "websiteUrl": "https://github.com/vb-tyagi/capx-cafe/blob/main/docs/SECURITY.md",
+  "repository": {
+    "url": "https://github.com/vb-tyagi/capx-cafe",
+    "source": "github"
+  },
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "capx-cafe",
+      "version": "0.1.1",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CAPX_CHOKEPOINT_URL",
+          "description": "URL of the hosted capx chokepoint that enforces the server-side guardrail on every post",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "CAPX_EMAIL",
+          "description": "Whitelisted user email used to authenticate to the chokepoint",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "CAPX_LANE",
+          "description": "Connection lane: 'byo' (bring your own X app) or 'capx-app' (capx-managed app)",
+          "isRequired": false,
+          "isSecret": false,
+          "choices": ["byo", "capx-app"]
+        },
+        {
+          "name": "X_CLIENT_ID",
+          "description": "X (Twitter) OAuth client ID; required only on the BYO lane",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}
