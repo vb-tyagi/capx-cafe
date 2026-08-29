@@ -12,6 +12,8 @@ import type { PlatformClient, PublishResult } from '@capx-cafe/platform-client';
 import type { Admission } from '../admission/index.ts';
 import type { Vault } from '../vault/index.ts';
 import type { Metering } from '../metering/index.ts';
+import { PlanMetering } from '../metering/plans.ts';
+import type { ParentResolution, PlanCheck } from '../metering/plans.ts';
 import type { RecentPosts } from '../recent/index.ts';
 import type { Outbox } from '../outbox/index.ts';
 import type { Refresher, RefreshExchange } from '../oauth/refresh.ts';
@@ -72,6 +74,9 @@ export interface GateDeps {
   now: () => number;
   mutex?: KeyedMutex;
   metering?: Metering; // lane-B (capx-app) cost cap; unused on the BYO lane
+  /** plan metering v2 (Short/Tall/Grande). When set it REPLACES the legacy daily cap on the capx-app
+   *  lane and switches on the replies-onto-own-posts-only policy (both lanes). */
+  planMetering?: PlanMetering;
   recentPosts?: RecentPosts; // per-handle history feeding casserole L2/L3 (dedup + ceiling)
   outbox?: Outbox; // durable at-most-once send: idempotent on idempotencyKey
   /** X access tokens expire ~2h after connect. When a send 401s, the gate refreshes THIS connection's
@@ -91,6 +96,7 @@ export class PublishGate {
   readonly #now: () => number;
   readonly #mutex: KeyedMutex;
   readonly #metering?: Metering;
+  readonly #plans?: PlanMetering;
   readonly #recent?: RecentPosts;
   readonly #outbox?: Outbox;
   readonly #refresher?: Refresher;
@@ -103,6 +109,7 @@ export class PublishGate {
     this.#now = deps.now;
     this.#mutex = deps.mutex ?? new KeyedMutex();
     this.#metering = deps.metering;
+    this.#plans = deps.planMetering;
     this.#recent = deps.recentPosts;
     this.#outbox = deps.outbox;
     this.#refresher = deps.refresher;
@@ -225,6 +232,30 @@ export class PublishGate {
       const norm = normalizeDraft(input.text, { aiGenerated: input.aiGenerated ?? false });
       if (norm.problems.length) return { outcome: 'rejected', finalReasons: norm.problems };
 
+      // 3b. REPLY POLICY + THREAD RESOLUTION (plan metering v2, both lanes). Replies chain ONLY onto
+      //     the caller's own posts — the registered use case promises X exactly that. A parent we sent
+      //     is in the thread index (zero-cost); anything else is verified own-authored via ONE metered
+      //     X read, and a missing lookup capability fails CLOSED. Chain position (start/continuation +
+      //     depth) feeds the plan engine's thread rules.
+      let parent: ParentResolution = { kind: 'none' };
+      if (this.#plans && input.inReplyToId) {
+        const node = await this.#plans.resolveParent(emailHash, input.inReplyToId);
+        if (node) {
+          parent = { kind: 'known', node };
+        } else {
+          const lookup = this.#client.lookupPostAuthor?.bind(this.#client);
+          if (!lookup) {
+            return { outcome: 'rejected', finalReasons: ['reply verification unavailable on this deployment — cannot confirm the parent post is yours'] };
+          }
+          const author = await lookup(vaultRef, input.inReplyToId);
+          if (!author) return { outcome: 'rejected', finalReasons: [`reply target ${input.inReplyToId} not found on X`] };
+          if (author.authorId !== conn.xUserId) {
+            return { outcome: 'rejected', finalReasons: ['replies can only chain onto your own posts — capx does not post replies to other accounts'] };
+          }
+          parent = { kind: 'foreign-own' };
+        }
+      }
+
       // 4. CTX — manual (no loop => spacing-exempt); killSwitch REQUIRED (populated live).
       //    history comes from the per-handle recent-post cache (read inside the lock) so casserole
       //    L2 (daily ceiling) + L3 (near-duplicate dedup) enforce on real history.
@@ -289,7 +320,21 @@ export class PublishGate {
 
       // 6. METER (lane B only) — capx eats the capx-app-lane X cost, so cap it. Meter ACTUAL sends:
       //    checked after casserole PASS, before the call. BYO lane is uncapped (user pays X directly).
-      if (conn.lane === Lane.CAPX_APP && this.#metering) {
+      //    Plan metering v2 (Short/Tall/Grande monthly quotas + packs) replaces the legacy daily cap
+      //    when configured; thread depth/link/media rules ride the same verdict.
+      let planCheck: PlanCheck | undefined;
+      if (conn.lane === Lane.CAPX_APP && this.#plans) {
+        const kind = PlanMetering.classify({ hasLink: norm.draft.hasLink, hasMedia: (input.mediaIds?.length ?? 0) > 0, parent });
+        planCheck = await this.#plans.check(emailHash, kind, now);
+        if (!planCheck.verdict.allowed) {
+          return {
+            outcome: 'rejected',
+            verdict: g.verdict,
+            requiresHumanReview: false,
+            finalReasons: [...g.finalReasons, ...planCheck.verdict.reasons],
+          };
+        }
+      } else if (conn.lane === Lane.CAPX_APP && this.#metering) {
         const m = await this.#metering.check(emailHash, now);
         if (!m.allowed) {
           return {
@@ -354,7 +399,13 @@ export class PublishGate {
           pub = await send(); // retry once with the freshly-rotated access token
         }
         if (this.#outbox && jobId) await this.#outbox.markSent(jobId);
-        if (conn.lane === Lane.CAPX_APP && this.#metering) await this.#metering.record(emailHash, now);
+        if (this.#plans) {
+          // thread index: every send gets a chain position (roots at depth 1) so later replies resolve free.
+          await this.#plans.recordThreadNode(emailHash, pub.platformPostId, parent, input.inReplyToId);
+          if (planCheck) await this.#plans.recordSend(emailHash, planCheck.verdict.draws, now);
+        } else if (conn.lane === Lane.CAPX_APP && this.#metering) {
+          await this.#metering.record(emailHash, now);
+        }
         // record into the recent-post cache (still inside the lock) so the next post dedups against it.
         if (this.#recent) await this.#recent.record(emailHash, { text: norm.draft.text, postedAt: now });
         return {

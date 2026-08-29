@@ -3,7 +3,7 @@
 // SqlPool shape, so it runs against the real `pg` Pool AND pg-mem (offline tests). jsonb columns carry
 // SealedToken / resolved-tokens; bigint columns are read through Number() so a driver returning them as
 // strings (real pg default) or numbers (pg-mem) both work.
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import type { Lane, AccountStanding, OutboxJob, OutboxState, PostHistoryItem } from '@capx-cafe/core';
@@ -13,9 +13,11 @@ import type { AdmissionStore } from '../admission/index.ts';
 import type { OutboxStore } from '../outbox/index.ts';
 import type { PendingStore, PendingConnection, ResolvedConnection } from '../oauth/index.ts';
 import type { MeteringStore } from '../metering/index.ts';
+import type { PlanUsageStore, ThreadNode } from '../metering/plans.ts';
 import type { RecentPostStore } from '../recent/index.ts';
 import type { LoopStore, LoopRecord } from '../loops/index.ts';
 import type { Autonomy } from '@capx-cafe/core';
+import type { QuotaCategory } from '@capx-cafe/counter';
 
 /** Minimal pool shape satisfied by both the real `pg` Pool and pg-mem's adapter. */
 export interface SqlPool {
@@ -28,17 +30,22 @@ function asJson<T>(v: unknown): T {
 }
 
 export async function runMigrations(pool: SqlPool): Promise<void> {
-  const raw = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../migrations/001_init.sql'), 'utf8');
-  // Strip `--` line comments BEFORE splitting on ';' — comments may themselves contain semicolons.
-  const sql = raw.replace(/--[^\n]*/g, '');
-  for (const stmt of sql.split(';')) {
-    const s = stmt.trim();
-    if (s) await pool.query(s);
+  // Every migrations/*.sql, in filename order (001_, 002_, ...). All statements are idempotent
+  // (create table if not exists), so re-running the full set on boot is safe by construction.
+  const dir = join(dirname(fileURLToPath(import.meta.url)), '../../migrations');
+  for (const file of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
+    const raw = readFileSync(join(dir, file), 'utf8');
+    // Strip `--` line comments BEFORE splitting on ';' — comments may themselves contain semicolons.
+    const sql = raw.replace(/--[^\n]*/g, '');
+    for (const stmt of sql.split(';')) {
+      const s = stmt.trim();
+      if (s) await pool.query(s);
+    }
   }
 }
 
 export class PostgresStore
-  implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore, RecentPostStore, LoopStore
+  implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore, PlanUsageStore, RecentPostStore, LoopStore
 {
   readonly #pool: SqlPool;
 
@@ -182,6 +189,68 @@ export class PostgresStore
   }
 
   // ---- MeteringStore ----
+  // ---- PlanUsageStore (plan metering v2) ----
+  async getPlanUsage(emailHash: string, cycle: string): Promise<Partial<Record<QuotaCategory, number>> | null> {
+    const { rows } = await this.#pool.query(`select category, used from plan_usage where email_hash=$1 and cycle=$2`, [emailHash, cycle]);
+    if (!rows.length) return null;
+    const out: Partial<Record<QuotaCategory, number>> = {};
+    for (const r of rows) out[String(r.category) as QuotaCategory] = Number(r.used);
+    return out;
+  }
+  async bumpPlanUsage(emailHash: string, cycle: string, category: QuotaCategory): Promise<void> {
+    await this.#pool.query(
+      `insert into plan_usage (email_hash, cycle, category, used) values ($1,$2,$3,1)
+       on conflict (email_hash, cycle, category) do update set used = plan_usage.used + 1`,
+      [emailHash, cycle, category],
+    );
+  }
+  async getPackBalances(emailHash: string, cycle: string): Promise<Partial<Record<QuotaCategory, number>> | null> {
+    const { rows } = await this.#pool.query(`select category, remaining from pack_balance where email_hash=$1 and cycle=$2`, [emailHash, cycle]);
+    if (!rows.length) return null;
+    const out: Partial<Record<QuotaCategory, number>> = {};
+    for (const r of rows) out[String(r.category) as QuotaCategory] = Number(r.remaining);
+    return out;
+  }
+  async creditPackBalance(emailHash: string, cycle: string, category: QuotaCategory, units: number): Promise<void> {
+    await this.#pool.query(
+      `insert into pack_balance (email_hash, cycle, category, remaining) values ($1,$2,$3,$4)
+       on conflict (email_hash, cycle, category) do update set remaining = pack_balance.remaining + $4`,
+      [emailHash, cycle, category, units],
+    );
+  }
+  async debitPackBalance(emailHash: string, cycle: string, category: QuotaCategory): Promise<void> {
+    const { rows } = await this.#pool.query(
+      `update pack_balance set remaining = remaining - 1
+       where email_hash=$1 and cycle=$2 and category=$3 and remaining > 0
+       returning remaining`,
+      [emailHash, cycle, category],
+    );
+    if (!rows.length) throw new Error(`pack balance underflow: ${emailHash}:${cycle}:${category}`);
+  }
+  async getThreadNode(emailHash: string, platformPostId: string): Promise<ThreadNode | null> {
+    const { rows } = await this.#pool.query(`select root_id, depth from thread_index where email_hash=$1 and platform_post_id=$2`, [emailHash, platformPostId]);
+    return rows[0] ? { rootId: String(rows[0].root_id), depth: Number(rows[0].depth) } : null;
+  }
+  async putThreadNode(emailHash: string, platformPostId: string, node: ThreadNode): Promise<void> {
+    await this.#pool.query(
+      `insert into thread_index (email_hash, platform_post_id, root_id, depth) values ($1,$2,$3,$4)
+       on conflict (email_hash, platform_post_id) do update set root_id = excluded.root_id, depth = excluded.depth`,
+      [emailHash, platformPostId, node.rootId, node.depth],
+    );
+  }
+  async getUserPlan(emailHash: string): Promise<string | null> {
+    const { rows } = await this.#pool.query(`select plan from user_plan where email_hash=$1`, [emailHash]);
+    return rows[0] ? String(rows[0].plan) : null;
+  }
+  /** admin/P4-billing write: assign a user's plan (upsert). */
+  async setUserPlan(emailHash: string, plan: string): Promise<void> {
+    await this.#pool.query(
+      `insert into user_plan (email_hash, plan) values ($1,$2)
+       on conflict (email_hash) do update set plan = excluded.plan`,
+      [emailHash, plan],
+    );
+  }
+
   async postsToday(emailHash: string, dayIndex: number): Promise<number> {
     const { rows } = await this.#pool.query(`select count from metering where email_hash=$1 and day_index=$2`, [emailHash, dayIndex]);
     return rows[0] ? Number(rows[0].count) : 0;

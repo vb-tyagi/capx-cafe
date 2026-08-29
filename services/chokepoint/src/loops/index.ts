@@ -66,17 +66,39 @@ export function isValidTimezone(tz: string): boolean {
   }
 }
 
+export interface LoopsOptions {
+  /** plan cap on concurrently-active (unpaused) loops for this user; null = uncapped (BYO lane). */
+  activeCap?: (emailHash: string) => Promise<number | null>;
+}
+
 export class Loops {
   readonly #store: LoopStore;
   readonly #now: () => number;
+  readonly #activeCap?: (emailHash: string) => Promise<number | null>;
 
-  constructor(store: LoopStore, now: () => number) {
+  constructor(store: LoopStore, now: () => number, opts: LoopsOptions = {}) {
     this.#store = store;
     this.#now = now;
+    this.#activeCap = opts.activeCap;
   }
 
   async create(input: CreateLoopInput): Promise<{ loop?: LoopRecord; problems: string[] }> {
     const problems: string[] = [];
+    // Plan cap on ACTIVE loops (Short 0 / Tall 3 / Grande 21). Checked first so a capped user gets the
+    // real answer even alongside input mistakes; paused loops don't count (pausing frees a slot).
+    if (this.#activeCap) {
+      const cap = await this.#activeCap(input.emailHash);
+      if (cap !== null) {
+        const active = (await this.#store.listLoops(input.emailHash)).filter((l) => !l.paused).length;
+        if (active >= cap) {
+          problems.push(
+            cap === 0
+              ? 'scheduled loops are not available on your plan — upgrade to schedule'
+              : `active-loop limit reached (${active}/${cap}) — pause or delete a loop, or upgrade`,
+          );
+        }
+      }
+    }
     if (!isValidTimezone(input.timezone)) problems.push(`unknown timezone "${input.timezone}" (use an IANA zone like Asia/Kolkata)`);
     if (!Number.isInteger(input.timeOfDayMinutes) || input.timeOfDayMinutes < 0 || input.timeOfDayMinutes > 1439) {
       problems.push('timeOfDayMinutes must be 0..1439 (minutes past local midnight)');

@@ -22,17 +22,28 @@ export interface PublishResult {
 
 export interface PlatformClient {
   publish(req: PublishRequest): Promise<PublishResult>;
+  /** OPTIONAL read: who authored a platform post. Powers the replies-chain-onto-your-own-posts-only
+   *  policy (a reply whose parent we did not send is verified own-authored via one platform read).
+   *  null = post not found. Absent => the caller must fail closed on unknown parents. */
+  lookupPostAuthor?(channelId: string, postId: string): Promise<{ authorId: string } | null>;
 }
 
 /** Test/dev double for the open platform: records calls, returns canned ids. */
 export class FakePlatformClient implements PlatformClient {
   calls: PublishRequest[] = [];
+  /** seed postId -> authorId to simulate the platform's view of who wrote a post. */
+  postAuthors = new Map<string, string>();
   private seq = 0;
 
   async publish(req: PublishRequest): Promise<PublishResult> {
     this.calls.push(req);
     this.seq += 1;
     return { platformPostId: `fake-post-${this.seq}`, scheduledAtMs: req.scheduledAtMs };
+  }
+
+  async lookupPostAuthor(_channelId: string, postId: string): Promise<{ authorId: string } | null> {
+    const authorId = this.postAuthors.get(postId);
+    return authorId === undefined ? null : { authorId };
   }
 }
 

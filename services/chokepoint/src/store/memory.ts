@@ -7,13 +7,15 @@ import type { AdmissionStore } from '../admission/index.ts';
 import type { OutboxStore } from '../outbox/index.ts';
 import type { PendingStore, PendingConnection } from '../oauth/index.ts';
 import type { MeteringStore } from '../metering/index.ts';
+import type { PlanUsageStore, ThreadNode } from '../metering/plans.ts';
 import type { RecentPostStore } from '../recent/index.ts';
 import type { LoopStore, LoopRecord } from '../loops/index.ts';
 import { OutboxState } from '@capx-cafe/core';
 import type { OutboxJob, PostHistoryItem } from '@capx-cafe/core';
+import type { QuotaCategory } from '@capx-cafe/counter';
 
 export class InMemoryStore
-  implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore, RecentPostStore, LoopStore
+  implements VaultStore, AdmissionStore, OutboxStore, PendingStore, MeteringStore, PlanUsageStore, RecentPostStore, LoopStore
 {
   // vault
   readonly #vault = new Map<string, VaultRow>(); // vaultRef -> row
@@ -29,6 +31,11 @@ export class InMemoryStore
   readonly #pending = new Map<string, PendingConnection>(); // pendingId(state) -> pending
   // metering (lane B): posts per emailHash per day
   readonly #metering = new Map<string, number>(); // `${emailHash}:${dayIndex}` -> count
+  // plan metering v2: per-cycle usage + pack balances + the thread index + per-user plan assignment
+  readonly #planUsage = new Map<string, number>(); // `${emailHash}:${cycle}:${category}` -> used
+  readonly #packBalance = new Map<string, number>(); // `${emailHash}:${cycle}:${category}` -> remaining
+  readonly #threadIndex = new Map<string, ThreadNode>(); // `${emailHash}:${platformPostId}` -> node
+  readonly #userPlans = new Map<string, string>(); // emailHash -> plan id
   // recent-post cache: per-handle post history for casserole L2/L3
   readonly #recent = new Map<string, PostHistoryItem[]>(); // emailHash -> items
   // loops (scheduled posting)
@@ -118,6 +125,52 @@ export class InMemoryStore
   async recordPost(emailHash: string, dayIndex: number): Promise<void> {
     const key = `${emailHash}:${dayIndex}`;
     this.#metering.set(key, (this.#metering.get(key) ?? 0) + 1);
+  }
+
+  // ---- PlanUsageStore (plan metering v2) ----
+  async getPlanUsage(emailHash: string, cycle: string): Promise<Partial<Record<QuotaCategory, number>> | null> {
+    const out: Partial<Record<QuotaCategory, number>> = {};
+    for (const c of ['posts', 'urlPosts', 'mediaPosts', 'threads'] as const) {
+      const v = this.#planUsage.get(`${emailHash}:${cycle}:${c}`);
+      if (v !== undefined) out[c] = v;
+    }
+    return Object.keys(out).length ? out : null;
+  }
+  async bumpPlanUsage(emailHash: string, cycle: string, category: QuotaCategory): Promise<void> {
+    const key = `${emailHash}:${cycle}:${category}`;
+    this.#planUsage.set(key, (this.#planUsage.get(key) ?? 0) + 1);
+  }
+  async getPackBalances(emailHash: string, cycle: string): Promise<Partial<Record<QuotaCategory, number>> | null> {
+    const out: Partial<Record<QuotaCategory, number>> = {};
+    for (const c of ['posts', 'urlPosts', 'mediaPosts', 'threads'] as const) {
+      const v = this.#packBalance.get(`${emailHash}:${cycle}:${c}`);
+      if (v !== undefined) out[c] = v;
+    }
+    return Object.keys(out).length ? out : null;
+  }
+  async creditPackBalance(emailHash: string, cycle: string, category: QuotaCategory, units: number): Promise<void> {
+    const key = `${emailHash}:${cycle}:${category}`;
+    this.#packBalance.set(key, (this.#packBalance.get(key) ?? 0) + units);
+  }
+  async debitPackBalance(emailHash: string, cycle: string, category: QuotaCategory): Promise<void> {
+    const key = `${emailHash}:${cycle}:${category}`;
+    const cur = this.#packBalance.get(key) ?? 0;
+    if (cur <= 0) throw new Error(`pack balance underflow: ${key}`);
+    this.#packBalance.set(key, cur - 1);
+  }
+  async getThreadNode(emailHash: string, platformPostId: string): Promise<ThreadNode | null> {
+    const node = this.#threadIndex.get(`${emailHash}:${platformPostId}`);
+    return node ? { ...node } : null;
+  }
+  async putThreadNode(emailHash: string, platformPostId: string, node: ThreadNode): Promise<void> {
+    this.#threadIndex.set(`${emailHash}:${platformPostId}`, { ...node });
+  }
+  async getUserPlan(emailHash: string): Promise<string | null> {
+    return this.#userPlans.get(emailHash) ?? null;
+  }
+  /** test/admin helper (P4 billing writes plans in prod). */
+  async setUserPlan(emailHash: string, plan: string): Promise<void> {
+    this.#userPlans.set(emailHash, plan);
   }
 
   // ---- RecentPostStore ----

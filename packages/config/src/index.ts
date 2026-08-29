@@ -17,6 +17,7 @@ export const serverEnvSchema: EnvSchema = {
   OAUTH_CALLBACK_URL: { type: 'url', required: true, httpsOnly: true, description: 'hosted HTTPS callback (same redirect_uri for both lanes)' },
   X_CLIENT_ID: { type: 'string', required: false, description: 'capx-app (lane B) OAuth2 client id; absent for BYO-only / self-host' },
   X_CLIENT_SECRET: { type: 'string', required: false, secret: true, description: 'capx-app (lane B) confidential secret; HOSTED-ONLY, never in the open-source image' },
+  CAPX_APP_DEFAULT_PLAN: { type: 'string', required: false, description: 'plan metering v2: default plan (short|tall|grande) for capx-app users with no per-user assignment; unset = plan quotas off (legacy daily cap or uncapped)' },
   MOR_WEBHOOK_SECRET: { type: 'string', required: false, secret: true, description: 'MoR -> hashed-allowlist webhook signature (P4; stubbed in P1)' },
   REDIS_URL: { type: 'url', required: false, description: 'optional P3 hosted-scale queue driver; P1 uses a Postgres SKIP LOCKED poller' },
 };

@@ -7,19 +7,30 @@ import type { PlatformClient, PublishRequest, PublishResult } from '@capx-cafe/p
 import type { Vault } from '../vault/index.ts';
 
 export type XPoster = (input: { accessToken: string; text: string; inReplyToId?: string; mediaIds?: string[] }) => Promise<{ id: string }>;
+/** One metered X read ($0.005): the author of a post — powers the replies-onto-own-posts policy. */
+export type XPostAuthorLookup = (input: { accessToken: string; postId: string }) => Promise<{ authorId: string } | null>;
 
 export interface XAdapterDeps {
   vault: Vault;
   post: XPoster;
+  /** omit => the adapter exposes no lookup and the gate fails closed on replies to unknown parents. */
+  lookupAuthor?: XPostAuthorLookup;
 }
 
 export class XAdapter implements PlatformClient {
   readonly #vault: Vault;
   readonly #post: XPoster;
+  /** conditionally assigned: the PlatformClient contract treats an absent method as "no lookup". */
+  lookupPostAuthor?: (channelId: string, postId: string) => Promise<{ authorId: string } | null>;
 
   constructor(deps: XAdapterDeps) {
     this.#vault = deps.vault;
     this.#post = deps.post;
+    if (deps.lookupAuthor) {
+      const lookup = deps.lookupAuthor;
+      this.lookupPostAuthor = (channelId, postId) =>
+        this.#vault.withToken(channelId, async (accessToken) => lookup({ accessToken, postId }));
+    }
   }
 
   async publish(req: PublishRequest): Promise<PublishResult> {
@@ -63,6 +74,27 @@ export class XApiError extends Error {
 /** True iff the error is X rejecting the access token as unauthorized (HTTP 401) — the refresh trigger. */
 export function isXAuthError(e: unknown): boolean {
   return e instanceof XApiError && e.status === 401;
+}
+
+/** GET /2/tweets/:id?tweet.fields=author_id — a metered read used ONLY at reply/thread-start to verify
+ *  the parent is the caller's own post. 404 => null (deleted/never existed); 401 stays a typed XApiError
+ *  so the gate's refresh-and-retry logic could apply upstream if ever needed. */
+export function httpXPostAuthorLookup(fetchImpl: FetchLike, endpointBase = 'https://api.twitter.com/2/tweets'): XPostAuthorLookup {
+  return async ({ accessToken, postId }) => {
+    const res = await fetchImpl(`${endpointBase}/${encodeURIComponent(postId)}?tweet.fields=author_id`, {
+      method: 'GET',
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      const body = await res.text();
+      throw new XApiError(res.status, body, `X /2/tweets/:id failed: ${res.status} ${body}`);
+    }
+    const data = (await res.json()) as { data?: { author_id?: string }; errors?: unknown[] };
+    // X returns 200 with an `errors` array (and no data) for not-found/suspended posts.
+    if (!data.data?.author_id) return null;
+    return { authorId: data.data.author_id };
+  };
 }
 
 export function httpXPoster(fetchImpl: FetchLike, endpoint = 'https://api.twitter.com/2/tweets'): XPoster {

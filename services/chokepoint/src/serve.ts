@@ -7,7 +7,8 @@ import { createChokepoint, PostgresStore, runMigrations, createHttpServer } from
 import type { TokenExchange } from './index.ts';
 import { createPgPool } from './store/pg-pool.ts';
 import { httpTokenExchange, httpRefreshExchange, httpIdentity } from './xclient/x-api.ts';
-import { httpXPoster, httpXMediaUploader, type FetchLike } from './xclient/index.ts';
+import { httpXPoster, httpXMediaUploader, httpXPostAuthorLookup, type FetchLike } from './xclient/index.ts';
+import type { PlanId } from '@capx-cafe/counter';
 
 const realFetch: FetchLike = async (url, init) => {
   const r = await fetch(url, { method: init.method, headers: init.headers, body: init.body });
@@ -20,6 +21,14 @@ async function main(): Promise<void> {
   const callbackUrl = s('OAUTH_CALLBACK_URL');
   const capxClientId = env.X_CLIENT_ID !== undefined ? String(env.X_CLIENT_ID) : undefined;
   const capxClientSecret = env.X_CLIENT_SECRET !== undefined ? String(env.X_CLIENT_SECRET) : undefined;
+
+  // Plan metering v2 (Short/Tall/Grande) switches on when a default plan is configured; a wrong value
+  // must fail the boot loudly, not silently run an unmetered creator lane.
+  const rawPlan = env.CAPX_APP_DEFAULT_PLAN !== undefined ? String(env.CAPX_APP_DEFAULT_PLAN) : undefined;
+  if (rawPlan !== undefined && rawPlan !== 'short' && rawPlan !== 'tall' && rawPlan !== 'grande') {
+    throw new Error(`CAPX_APP_DEFAULT_PLAN must be short|tall|grande, got "${rawPlan}"`);
+  }
+  const capxAppDefaultPlan = rawPlan as PlanId | undefined;
 
   const pool = createPgPool(s('VAULT_DB_URL'));
   await runMigrations(pool);
@@ -49,6 +58,8 @@ async function main(): Promise<void> {
     identity: httpIdentity(realFetch),
     xPost: httpXPoster(realFetch),
     xMediaUpload: httpXMediaUploader(realFetch),
+    xLookupAuthor: httpXPostAuthorLookup(realFetch),
+    capxAppDefaultPlan,
     byoDefaultClientId: capxClientId,
     capxAppClientSecret: capxClientSecret,
     now: () => Date.now(),

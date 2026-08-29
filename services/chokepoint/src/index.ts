@@ -12,6 +12,7 @@ export * from './admission/index.ts';
 export * from './outbox/mutex.ts';
 export * from './outbox/index.ts';
 export * from './metering/index.ts';
+export * from './metering/plans.ts';
 export * from './recent/index.ts';
 export * from './loops/index.ts';
 export * from './oauth/pkce.ts';
@@ -35,10 +36,14 @@ import type { AdmissionStore } from './admission/index.ts';
 import { OAuthFlow, type OAuthConfig, type TokenExchange, type IdentityFetch } from './oauth/index.ts';
 import type { PendingStore } from './oauth/index.ts';
 import { Refresher, type RefreshExchange } from './oauth/refresh.ts';
-import { XAdapter, type XPoster } from './xclient/index.ts';
+import { XAdapter, type XPoster, type XPostAuthorLookup } from './xclient/index.ts';
 import { PublishGate } from './gate/index.ts';
 import { Metering } from './metering/index.ts';
 import type { MeteringStore } from './metering/index.ts';
+import { PlanMetering } from './metering/plans.ts';
+import type { PlanUsageStore } from './metering/plans.ts';
+import { Lane } from '@capx-cafe/core';
+import type { PlanId } from '@capx-cafe/counter';
 import { RecentPosts } from './recent/index.ts';
 import type { RecentPostStore } from './recent/index.ts';
 import { Outbox } from './outbox/index.ts';
@@ -56,6 +61,7 @@ export type ChokepointStore = VaultStore &
   OutboxStore &
   PendingStore &
   MeteringStore &
+  PlanUsageStore &
   RecentPostStore &
   LoopStore;
 
@@ -79,6 +85,13 @@ export interface ChokepointConfig {
   capxAppClientSecret?: string;
   /** lane-B (capx-app) per-day post cap; omit to leave the capx-app lane uncapped. */
   capxAppDailyCap?: number;
+  /** plan metering v2: default plan for capx-app users with no per-user assignment (P4 billing writes
+   *  those). Setting this switches on Short/Tall/Grande quotas + the replies-onto-own-posts policy,
+   *  REPLACING the legacy daily cap. */
+  capxAppDefaultPlan?: PlanId;
+  /** X post-author read (GET /2/tweets/:id) — required for replying onto posts capx didn't send;
+   *  omit and such replies fail closed. */
+  xLookupAuthor?: XPostAuthorLookup;
   now?: () => number;
 }
 
@@ -99,14 +112,34 @@ export function createChokepoint(store: ChokepointStore, cfg: ChokepointConfig) 
   const admission = new Admission(store, signer);
   const oauth = new OAuthFlow(store, cfg.oauth);
   const metering = cfg.capxAppDailyCap !== undefined ? new Metering(store, cfg.capxAppDailyCap) : undefined;
+  const planMetering = cfg.capxAppDefaultPlan !== undefined ? new PlanMetering(store, cfg.capxAppDefaultPlan) : undefined;
   const recentPosts = new RecentPosts(store);
   const outbox = new Outbox(store);
-  const loops = new Loops(store, now);
+  // Loop caps are plan-shaped and lane-gated: BYO users (their own X app, their own cost) stay uncapped.
+  const loops = new Loops(store, now, {
+    activeCap: planMetering
+      ? async (emailHash) => {
+          const row = await store.getByEmailHash(emailHash);
+          return row?.lane === Lane.CAPX_APP ? planMetering.maxActiveLoops(emailHash) : null;
+        }
+      : undefined,
+  });
   // The Refresher is built before the gate so the gate can refresh-and-retry a 401 send. It holds the
   // fallback client id (byoDefault) and the capx-app secret; per-connection client id + lane are read
   // from the vault at refresh time.
   const refresher = new Refresher({ vault, clientId: cfg.byoDefaultClientId ?? '', clientSecret: cfg.capxAppClientSecret });
-  const gate = new PublishGate({ admission, vault, client: new XAdapter({ vault, post: cfg.xPost }), now, metering, recentPosts, outbox, refresher, refreshExchange: cfg.refreshExchange });
+  const gate = new PublishGate({
+    admission,
+    vault,
+    client: new XAdapter({ vault, post: cfg.xPost, lookupAuthor: cfg.xLookupAuthor }),
+    now,
+    metering,
+    planMetering,
+    recentPosts,
+    outbox,
+    refresher,
+    refreshExchange: cfg.refreshExchange,
+  });
   const media = new MediaGateway({ admission, vault, upload: cfg.xMediaUpload ?? (async () => ({ mediaId: 'fake-media' })), now });
   const ticker = new LoopTicker({ loops, gate, now });
   const service = createService({
