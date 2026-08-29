@@ -153,8 +153,13 @@ good content easy and stops bad content regardless of which skill produced it.*
 
 ## Two lanes
 
-- **BYO** — bring your own X developer app. You're X's customer; you pay X; capx transports + guards.
-- **capx-app** (creator lane) — post through capx's X app, no developer account needed. Metered + capped.
+- **BYO** — bring your own X developer app. You're X's customer and **pay X directly** — since Feb 2026
+  that means pre-loading credits (no free X tier for new apps) at ~$0.015/post, **$0.20 if the post
+  contains a link**. Free on capx's side; heavy users can self-host the identical image.
+- **capx-app** (creator lane) — post through capx's X app, no developer account needed. Ships as a
+  **paid beta**: `Short $5` / `Tall $15` / `Grande $35` monthly tiers + top-up packs, quotas enforced
+  server-side at the gate. Full sheet + the math: **[docs/ECONOMICS.md](docs/ECONOMICS.md)** · policy
+  posture: [docs/X-COMPLIANCE.md](docs/X-COMPLIANCE.md).
 
 ## Self-host
 

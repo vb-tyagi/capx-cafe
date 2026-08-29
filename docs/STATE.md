@@ -88,7 +88,30 @@ scheduling / management happens **inside their agent session**, driven by the ha
     - **GTM launch shape = FEATURE-RICH** — build write-skills + media first, THEN publish + launch with a wow.
     - **GTM defaults locked** (were recommend-by-default, no objection): repo → a `capx` GitHub org before
       public; **CLA** before the first outside PR; register the **"capx café" trademark**; docs in-repo `/docs`
-      first, dedicated site at launch.
+      first, dedicated site at launch. *(2026-08-29 amendment: repo shipped public on personal `vb-tyagi`,
+      per the earlier repo-location lock — the "capx org before public" default is superseded.)*
+11. **✅ ROUND-3 LOCKS — 2026-08-29 (market re-check + creator-lane pricing + launch execution).** Full
+    detail: `docs/ECONOMICS.md`, `docs/X-COMPLIANCE.md`; enforcement in `packages/counter/src/plans.ts` +
+    the gate (plan metering v2). Context: X killed the free API tier (Feb 2026) and moved to pay-per-use
+    ($0.015/post, **$0.20/URL-post**, QRT Enterprise-only), and shipped its own hosted MCP (June 2026) —
+    which validated the category and sharpened our differentiation (token custody + enforced guardrail +
+    scheduling; landing/README now position against XMCP by name).
+    - **Creator-lane tiers (cost-floor pricing, beta, no trials/discounts):** Short **$5** (70 posts/mo,
+      URL posts BANNED, 10 media, no threads, 0 loops, 1 account) · Tall **$15** (200 posts, 25 URL,
+      10 threads/mo, 30 media, 3 active loops, 2 accounts) · Grande **$35** (500 posts, 50 URL, threads
+      within post quota, 100 media, "unlimited\*" = 21 active loops, 5 accounts). Quotas are MONTHLY
+      (UTC calendar cycles), no daily limit, one shared pool across a plan's accounts.
+    - **Universal rules:** a thread ≤ 10 posts; thread posts carry no URLs; no QRT (API wall); replies
+      chain ONLY onto the user's own posts (own-authored parents verified via one $0.005 read; enforced
+      both lanes — matches the binding use-case text).
+    - **Top-up packs** (cycle-scoped, stack by quantity, expire at cycle end): +50 posts $2 · +10 URL $3
+      (Tall/Grande) · +10 media $1 · +10 threads $1 (Tall/Grande). A pack never unlocks a structural ban.
+    - **Launch sequencing = two-stage:** dev/BYO lane launched now (repo public 2026-08-29, landing live
+      at capx-cafe.vercel.app with tier card + Tally waitlist); paid creator beta opens when P4 billing
+      rails exist. **MoR = Polar.** Hosted AI generation stays OFF. Heavy users → self-host.
+    - **Compliance (X 2026 policy):** binding use-case text approved + to be filed (X-COMPLIANCE §1);
+      bot-bio rule = surface + attest at onboarding and `create_loop`; AI-replies stay structurally
+      blocked pending X's written approval (also gates capx-scope).
 
 ## 6. 🔴 The critical flaw to get right (if this direction proceeds)
 "The harness writes, casserole decides what ships" is **false in a pure-local design**: a live X token in the
