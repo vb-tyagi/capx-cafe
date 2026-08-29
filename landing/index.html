@@ -21,7 +21,6 @@
     --ink:#2E2416; --ink-soft:#6B5C41; --line:#E4D3AE;
     --green:#5E8A2E; --green-deep:#456622; --green-tint:#EAF0DA;
     --coral:#E36A3A; --coral-tint:#FBE7DB;
-    --sky:#8FC7E8;
     --radius:16px; --maxw:1080px;
     --shadow:0 1px 0 rgba(0,0,0,.03), 0 18px 40px -24px rgba(70,50,20,.35);
     --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
@@ -38,6 +37,7 @@
   .muted{color:var(--ink-soft)}
   .accent{color:var(--coral)}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
   /* header */
   header{position:sticky;top:0;z-index:10;background:rgba(244,233,210,.82);
@@ -128,8 +128,8 @@
             border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;min-width:560px}
   .cmp th,.cmp td{padding:14px 18px;border-bottom:1px solid var(--line);text-align:left;font-size:.95rem;vertical-align:top}
   .cmp thead th{background:var(--cream-2);font-size:.9rem}
-  .cmp tr:last-child td{border-bottom:none}
-  .cmp td:first-child{font-weight:700;width:24%}
+  .cmp tr:last-child td,.cmp tr:last-child th{border-bottom:none}
+  .cmp tbody th{font-weight:700;width:24%}
   .cmp .good{color:var(--green-deep);font-weight:600}
   .cmp .meh{color:var(--ink-soft)}
 
@@ -199,7 +199,7 @@
         <span class="badge">Node ≥ 22.6</span>
         <span class="badge">beta</span>
       </div>
-      <div class="hero-img"><img src="assets/cover.png" alt="capx café — a cozy retro desk with the capx cafe screen"></div>
+      <div class="hero-img"><img src="assets/cover.jpg" width="1448" height="1086" alt="capx café — a cozy retro desk with the capx cafe screen"></div>
     </div>
   </section>
 
@@ -261,13 +261,13 @@
       </div>
       <div class="cmp-scroll">
       <table class="cmp">
-        <thead><tr><th></th><th>XMCP — X's official</th><th>capx café</th></tr></thead>
+        <thead><tr><th scope="col"><span class="sr-only">Compared feature</span></th><th scope="col">XMCP — X's official</th><th scope="col">capx café</th></tr></thead>
         <tbody>
-          <tr><td>Your credential</td><td class="meh">API keys pasted into the client config — right next to the agent</td><td class="good">Sealed in a server-side vault — never on your machine</td></tr>
-          <tr><td>Guardrail</td><td class="meh">None — every call posts instantly</td><td class="good">casserole: six deterministic layers, enforced at the only door</td></tr>
-          <tr><td>Scheduling</td><td class="meh">None — the X API has no scheduled posts</td><td class="good">Queued loops that post while your laptop is off</td></tr>
-          <tr><td>X developer account</td><td class="meh">Required — pay-per-use credits</td><td class="good">BYO lane: yours · creator lane: none needed</td></tr>
-          <tr><td>Reading &amp; research</td><td class="good">Excellent — 100+ read endpoints</td><td class="meh">Posting only, by design</td></tr>
+          <tr><th scope="row">Your credential</th><td class="meh">API keys pasted into the client config — right next to the agent</td><td class="good">Sealed in a server-side vault — never on your machine</td></tr>
+          <tr><th scope="row">Guardrail</th><td class="meh">None — every call posts instantly</td><td class="good">casserole: six deterministic layers, enforced at the only door</td></tr>
+          <tr><th scope="row">Scheduling</th><td class="meh">None — the X API has no scheduled posts</td><td class="good">Queued loops that post while your laptop is off</td></tr>
+          <tr><th scope="row">X developer account</th><td class="meh">Required — pay-per-use credits</td><td class="good">BYO lane: yours · creator lane: none needed</td></tr>
+          <tr><th scope="row">Reading &amp; research</th><td class="good">Excellent — 100+ read endpoints</td><td class="meh">Posting only, by design</td></tr>
         </tbody>
       </table>
       </div>
@@ -322,12 +322,12 @@
           <div><span class="name">Short</span></div>
           <div class="price">$5<small>/mo</small></div>
           <ul>
-            <li><span class="y">✓</span>70 posts a month</li>
-            <li><span class="y">✓</span>10 media posts</li>
-            <li><span class="y">✓</span>1 account</li>
-            <li><span class="n">✕</span>link posts</li>
-            <li><span class="n">✕</span>threads</li>
-            <li><span class="n">✕</span>scheduled loops</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>70 posts a month</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>10 media posts</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>1 account</li>
+            <li><span class="n" aria-hidden="true">✕</span><span class="sr-only">Not included: </span>link posts</li>
+            <li><span class="n" aria-hidden="true">✕</span><span class="sr-only">Not included: </span>threads</li>
+            <li><span class="n" aria-hidden="true">✕</span><span class="sr-only">Not included: </span>scheduled loops</li>
           </ul>
           <a class="btn btn-ghost" href="https://tally.so/r/gD6EGJ" target="_blank" rel="noopener">Join the beta →</a>
         </div>
@@ -335,12 +335,12 @@
           <div><span class="name">Tall</span><span class="tag">most popular</span></div>
           <div class="price">$15<small>/mo</small></div>
           <ul>
-            <li><span class="y">✓</span>200 posts a month</li>
-            <li><span class="y">✓</span>25 link posts</li>
-            <li><span class="y">✓</span>10 threads · up to 10 posts each</li>
-            <li><span class="y">✓</span>30 media posts</li>
-            <li><span class="y">✓</span>3 active loops</li>
-            <li><span class="y">✓</span>2 accounts, shared quota</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>200 posts a month</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>25 link posts</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>10 threads · up to 10 posts each</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>30 media posts</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>3 active loops</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>2 accounts, shared quota</li>
           </ul>
           <a class="btn btn-primary" href="https://tally.so/r/gD6EGJ" target="_blank" rel="noopener">Join the beta →</a>
         </div>
@@ -348,17 +348,17 @@
           <div><span class="name">Grande</span></div>
           <div class="price">$35<small>/mo</small></div>
           <ul>
-            <li><span class="y">✓</span>500 posts a month</li>
-            <li><span class="y">✓</span>50 link posts</li>
-            <li><span class="y">✓</span>Threads within your post quota</li>
-            <li><span class="y">✓</span>100 media posts</li>
-            <li><span class="y">✓</span>Unlimited* loops — up to 21 active</li>
-            <li><span class="y">✓</span>5 accounts, shared quota</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>500 posts a month</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>50 link posts</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>Threads within your post quota</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>100 media posts</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>Unlimited* loops — up to 21 active</li>
+            <li><span class="y" aria-hidden="true">✓</span><span class="sr-only">Includes: </span>5 accounts, shared quota</li>
           </ul>
           <a class="btn btn-ghost" href="https://tally.so/r/gD6EGJ" target="_blank" rel="noopener">Join the beta →</a>
         </div>
       </div>
-      <div class="packs"><strong>Top-up packs</strong> — need more this month? +50 posts <strong>$2</strong> · +10 link posts <strong>$3</strong> · +10 media posts <strong>$1</strong> · +10 threads <strong>$1</strong>. Stack as many as you want.</div>
+      <div class="packs"><strong>Top-up packs</strong> — need more this month? +50 posts <strong>$2</strong> · +10 link posts <strong>$3</strong> · +10 media posts <strong>$1</strong> · +10 threads <strong>$1</strong> <em>(link &amp; thread packs on Tall and Grande)</em>. Stack as many as you want.</div>
       <div class="byo-strip"><strong>Developer?</strong> The BYO lane is free — bring your own X app, pay X directly, self-host if you like. <a href="https://github.com/vb-tyagi/capx-cafe">Start on GitHub →</a></div>
       <p class="fine">Beta pricing · no trials, no lock-in · a thread = up to 10 posts, on every plan · link posts are limited because X bills a URL post ~13× a plain one — we pass that structure through honestly · quotas are per plan, shared across its accounts.</p>
     </div>
