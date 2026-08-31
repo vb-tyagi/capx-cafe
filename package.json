@@ -1,5 +1,5 @@
 {
-  "name": "capx-culture",
+  "name": "capx-cafe",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,7 +16,8 @@
     "guard:test": "node --test tools/boundary-guard.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "verify": "node --experimental-strip-types --test $(find packages services apps -name '*.test.ts' -not -path '*/node_modules/*') && tsc -p tsconfig.json --noEmit",
-    "gen:skills": "node tools/gen-skills.mjs"
+    "gen:skills": "node tools/gen-skills.mjs",
+    "demo": "node --experimental-strip-types tools/demo/guardrail-demo.ts"
   },
   "workspaces": [
     "packages/*",
