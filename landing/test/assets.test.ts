@@ -16,11 +16,14 @@ import { fileURLToPath } from 'node:url';
 const LANDING = join(dirname(fileURLToPath(import.meta.url)), '..');
 const html = readFileSync(join(LANDING, 'index.html'), 'utf8');
 
-/** width/height straight from the binary header — PNG IHDR or JPEG SOFn. */
+/** width/height straight from the binary header — PNG IHDR, GIF logical screen, or JPEG SOFn. */
 function imageDims(path: string): { w: number; h: number } | null {
   const buf = readFileSync(path);
   if (buf.length > 24 && buf.readUInt32BE(0) === 0x89504e47) {
     return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) };
+  }
+  if (buf.length > 10 && buf.toString('ascii', 0, 3) === 'GIF') {
+    return { w: buf.readUInt16LE(6), h: buf.readUInt16LE(8) };
   }
   if (buf.length > 4 && buf.readUInt16BE(0) === 0xffd8) {
     let off = 2;
