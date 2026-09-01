@@ -26,6 +26,10 @@
     --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   }
   *{box-sizing:border-box}
+  /* Global image guard: any <img> keeps its intrinsic aspect ratio no matter what width/height
+     attributes say (attrs stay useful for layout reservation; CSS height:auto wins at render).
+     Enforced by landing/test/assets.test.ts — do not remove. */
+  img{max-width:100%;height:auto}
   html{scroll-behavior:smooth}
   body{margin:0;font-family:var(--font);color:var(--ink);background:var(--cream);
        line-height:1.6;-webkit-font-smoothing:antialiased}
