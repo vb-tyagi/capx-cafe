@@ -64,7 +64,7 @@ statuses updated to current reality._
 | 0.2 | `npm publish capx-cafe` | `capx-cafe@0.1.0` LIVE on npm (2026-07-20); 0.1.1 staged, republish now unblocked (repo public) | ✅ done |
 | 0.3 | Repo public | **PUBLIC 2026-08-29** on personal `vb-tyagi` (org default superseded — STATE §5.10 amendment); secret-scan clean | ✅ done |
 | 0.4 | **Beast README** | Trust story FIRST, 60-sec quickstart, per-agent matrix (demo GIF slot pending 0.5) | ✅ done |
-| 0.5 | Demo GIF/video (30–60s) | connect X → ask agent to post → appears on X, with "token never touched my machine" on screen; record with the real product | to build |
+| 0.5 | Demo GIF/video | 20s vhs-scripted cut, real chokepoint code on screen (`tools/demo/`); sandbox cut is FINAL (founder, 2026-09-01 — no real-post re-record); embedded README top + landing How-it-works; `pnpm demo` replays | ✅ done |
 | 0.6 | Landing page | **LIVE at capx-cafe.vercel.app (2026-08-29)** — hook, XMCP comparison, tiers + waitlist, security, install | ✅ live |
 | 0.7 | Docs: per-agent install matrix (Claude Code/Cursor/Codex/Windsurf/Cline/Zed), `~/.capx/config.json` guide, BYO wizard link, self-host guide, troubleshooting | in-repo `/docs` first; docs site later | 🟡 partial (in-repo) |
 | 0.8 | **Security page** — the single highest-value marketing asset | `docs/SECURITY.md`: threat model, can/can't-see table, red-team tests linked to source, self-host | ✅ done |

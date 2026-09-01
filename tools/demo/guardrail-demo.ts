@@ -86,6 +86,7 @@ async function main(): Promise<void> {
   await sleep(2200);
 
   out(`  ${bold('Your X token never touched this machine.')}\n`);
+  out(`  ${green('$')} ${bold('npx capx-cafe')}\n`);
   out(`  ${dim('one MCP server · Claude Code / Cursor / Codex / Windsurf')}  ${cyan('capx-cafe.vercel.app')}\n\n`);
   await sleep(3000);
 }

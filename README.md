@@ -11,7 +11,13 @@
 ![license](https://img.shields.io/badge/license-MIT%20client%20%2F%20AGPL--3.0%20server-4c8bf5?style=flat-square)
 ![node](https://img.shields.io/badge/node-%E2%89%A5%2022.6-3fb950?style=flat-square)
 ![agents](https://img.shields.io/badge/agents-Claude%20Code%20·%20Cursor%20·%20Codex%20·%20Windsurf-14b8a6?style=flat-square)
-![status](https://img.shields.io/badge/status-private%20alpha-f59e0b?style=flat-square)
+![status](https://img.shields.io/badge/status-beta-f59e0b?style=flat-square)
+
+<br>
+
+<img src="landing/assets/demo.gif" alt="20-second demo: a prompt-injected scam draft is BLOCKED by casserole with live reasons; a real build update passes and posts; the token never leaves the server vault" width="820">
+
+*The guardrail, live — every verdict above is produced by the real chokepoint code (`pnpm demo` replays it).*
 
 </div>
 
