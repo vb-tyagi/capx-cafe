@@ -190,3 +190,25 @@ test('similarity: identical ~1, different low', () => {
   assert.ok(similarity('hello world foo bar', 'hello world foo bar') > 0.99);
   assert.ok(similarity('completely different text here', 'nothing alike over yonder') < 0.5);
 });
+
+test('L2 hourly velocity cap: 10 posts inside the rolling hour blocks; same 10 spread out passes', () => {
+  const HOUR = 60 * 60 * 1000;
+  // 10 posts 6..24 minutes old — inside the hour, outside the 5-min spacing window.
+  const burst = Array.from({ length: 10 }, (_, i) => ({
+    text: `burst post number ${i}`,
+    postedAt: NOW - (6 * 60_000 + i * 2 * 60_000),
+    loopId: 'other',
+  }));
+  const blocked = runGauntlet(makePost(), makeCtx({ history: burst, accountDailyCeiling: 40, accountHourlyCeiling: 10 }));
+  assert.equal(blocked.verdict, Verdict.BLOCK);
+  assert.ok(blocked.finalReasons.some((r) => r.includes('hourly velocity cap')));
+
+  // same volume spread across the day (all older than an hour) — hourly cap silent, daily has room.
+  const spread = burst.map((p, i) => ({ ...p, postedAt: NOW - (2 * HOUR + i * HOUR) }));
+  const ok = runGauntlet(makePost(), makeCtx({ history: spread, accountDailyCeiling: 40, accountHourlyCeiling: 10 }));
+  assert.equal(ok.verdict, Verdict.PASS);
+
+  // omitted ceiling (legacy callers) => no hourly check at all.
+  const legacy = runGauntlet(makePost(), makeCtx({ history: burst, accountDailyCeiling: 40 }));
+  assert.equal(legacy.verdict, Verdict.PASS);
+});

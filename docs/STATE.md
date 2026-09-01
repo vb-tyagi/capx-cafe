@@ -100,7 +100,9 @@ scheduling / management happens **inside their agent session**, driven by the ha
       URL posts BANNED, 10 media, no threads, 0 loops, 1 account) · Tall **$15** (200 posts, 25 URL,
       10 threads/mo, 30 media, 3 active loops, 2 accounts) · Grande **$35** (500 posts, 50 URL, threads
       within post quota, 100 media, "unlimited\*" = 21 active loops, 5 accounts). Quotas are MONTHLY
-      (UTC calendar cycles), no daily limit, one shared pool across a plan's accounts.
+      (UTC calendar cycles), no daily quota\* (\*2026-09-01: product-wide anti-spam velocity caps
+      locked — 10 posts/hour + 40/day rolling, both lanes, casserole L2; safety ceilings, not
+      billing — ECONOMICS §7), one shared pool across a plan's accounts.
     - **Universal rules:** a thread ≤ 10 posts; thread posts carry no URLs; no QRT (API wall); replies
       chain ONLY onto the user's own posts (own-authored parents verified via one $0.005 read; enforced
       both lanes — matches the binding use-case text).

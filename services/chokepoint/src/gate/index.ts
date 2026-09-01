@@ -86,8 +86,11 @@ export interface GateDeps {
   refreshExchange?: RefreshExchange;
 }
 
-/** A manual per-day cap (the loop 1/day + 5-min spacing do not apply to manual posts). */
-const MANUAL_DAILY_CEILING = 25;
+/** Anti-spam velocity caps (locked 2026-09-01, product-wide, both lanes): they protect the HANDLE
+ *  from X spam enforcement — bursts trip platforms, not totals. Plan quotas stay monthly-only; these
+ *  are safety ceilings, not billing. (Loop 1/day + 5-min spacing still apply only to loops.) */
+const ACCOUNT_DAILY_CEILING = 40;
+const ACCOUNT_HOURLY_CEILING = 10;
 
 export class PublishGate {
   readonly #admission: Admission;
@@ -150,7 +153,7 @@ export class PublishGate {
     const killSwitch = await this.#admission.resolveKillSwitch(emailHash, conn.xUserId);
     const ageDays = conn.createdAtMs > 0 ? Math.floor((now - conn.createdAtMs) / 86_400_000) : 0;
     const handle: Handle = { id: conn.xUserId, workspaceId: '', platform: Platform.X, username: conn.username, verified: conn.verified, ageDays, standing: conn.standing, connectedAt: conn.createdAtMs };
-    const g = runGauntlet(norm.draft, { tier: 'SOLO', handle, history, now, accountDailyCeiling: MANUAL_DAILY_CEILING, killSwitch });
+    const g = runGauntlet(norm.draft, { tier: 'SOLO', handle, history, now, accountDailyCeiling: ACCOUNT_DAILY_CEILING, accountHourlyCeiling: ACCOUNT_HOURLY_CEILING, killSwitch });
     return { verdict: g.verdict, requiresHumanReview: g.requiresHumanReview, finalReasons: g.finalReasons, wouldSend: g.verdict === Verdict.PASS && !g.requiresHumanReview };
   }
 
@@ -301,7 +304,8 @@ export class PublishGate {
         loop: loopCfg,
         history,
         now,
-        accountDailyCeiling: MANUAL_DAILY_CEILING,
+        accountDailyCeiling: ACCOUNT_DAILY_CEILING,
+        accountHourlyCeiling: ACCOUNT_HOURLY_CEILING,
         killSwitch,
       };
 

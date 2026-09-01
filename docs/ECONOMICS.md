@@ -80,11 +80,16 @@ noise next to X fees. Break-even on fixed costs ≈ a handful of Tall subscriber
   P4+ decision ever turns it on, its cost line gets its own margin — nothing else here changes.
 - **capx-scope** (read product) is out of scope and separately gated on X's written approval.
 
-## 7. Open flag — anti-burst ceiling (founder decision pending)
+## 7. Anti-spam velocity caps — ✅ RESOLVED (founder, 2026-09-01)
 
-Plan quotas are deliberately **monthly with no daily limit** (locked). Independently, a pre-existing
-product-wide safety ceiling (`MANUAL_DAILY_CEILING = 25/day` fed to casserole L2) still stands from
-P1. They conflict only at the margin (a Short user could legally burn 70 posts in 3 days; a spam-burst
-also looks bad to X on the shared app). Options: keep 25/day as an anti-abuse guard (status quo,
-technically "a daily limit"), raise it (e.g. 50), or remove it for quota-metered users. **Unchanged
-until the founder rules** — tracked as the anti-burst K-item.
+Plan quotas stay **monthly with no daily quota**\* — but two product-wide anti-spam velocity caps
+protect every handle (both lanes) from X's burst-sensitive spam enforcement, enforced in casserole
+L2 via the gate (`ACCOUNT_HOURLY_CEILING = 10/hour`, `ACCOUNT_DAILY_CEILING = 40/day`, rolling
+windows; replaces the P1-era 25/day):
+
+- **10 posts / rolling hour** and **40 posts / rolling 24h**, per handle.
+- These are *safety ceilings, not billing* — they never consume quota, and a capped post is simply
+  refused with the reason stated.
+- Marketing rule: anywhere "no daily limit" appears, carry the asterisk —
+  \* *Anti-spam velocity caps (10 posts/hour · 40/day) protect your account from X's spam
+  enforcement. Monthly quotas are the only billing limits.*

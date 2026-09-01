@@ -4,6 +4,7 @@ import type { LayerResult, GauntletContext } from './types.ts';
 import { GuardrailLayer, Verdict } from '@capx-cafe/core';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
 const MIN_SPACING_MS = 5 * 60 * 1000;
 const MAX_JITTER_MIN = 12;
 
@@ -33,6 +34,14 @@ export function layer2Rate(ctx: GauntletContext): LayerResult {
 
   if (recent.length >= ctx.accountDailyCeiling) {
     reasons.push(`account daily ceiling reached (${recent.length}/${ctx.accountDailyCeiling})`);
+  }
+  // Anti-spam velocity cap (rolling hour): protects the handle from X spam enforcement even when
+  // the daily ceiling still has room — a burst is what tripwires platforms, not the total.
+  if (ctx.accountHourlyCeiling !== undefined) {
+    const lastHour = ctx.history.filter((p) => now - p.postedAt < HOUR_MS);
+    if (lastHour.length >= ctx.accountHourlyCeiling) {
+      reasons.push(`hourly velocity cap reached (${lastHour.length}/${ctx.accountHourlyCeiling} in the last hour)`);
+    }
   }
   if (ctx.loop) {
     const loopToday = recent.filter((p) => p.loopId === ctx.loop!.id);

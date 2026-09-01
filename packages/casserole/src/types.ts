@@ -30,6 +30,9 @@ export interface GauntletContext {
   now: number;
   /** max AI/scheduled posts per 24h across ALL loops + manual (closes the multi-loop loophole). */
   accountDailyCeiling: number;
+  /** anti-spam velocity cap: max posts per rolling hour (locked 2026-09-01: 10/h product-wide).
+   *  Optional so pre-existing callers/tests keep compiling; omitted = no hourly check. */
+  accountHourlyCeiling?: number;
   /**
    * REQUIRED (§6 hardening): the live revocation signal. The chokepoint always populates it from the
    * live kill-list; making it non-optional turns an omitted kill-switch into a compile error rather
