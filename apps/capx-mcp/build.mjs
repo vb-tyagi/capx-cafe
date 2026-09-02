@@ -43,7 +43,9 @@ const publishPkg = {
   description:
     'Agent-native X posting for Claude Code / Cursor / Codex / Windsurf. Connect X, post, and schedule from inside your agent — every post passes a server-side guardrail; the token never touches your machine.',
   type: 'module',
-  bin: { 'capx-cafe': './capx-cafe.mjs' },
+  // npm 12 rejects a leading './' in bin paths ("script name was invalid") and would strip the
+  // bin entirely at publish — breaking `npx capx-cafe`. Bare relative path is the valid form.
+  bin: { 'capx-cafe': 'capx-cafe.mjs' },
   dependencies: {
     '@modelcontextprotocol/sdk': pkg.dependencies['@modelcontextprotocol/sdk'],
     zod: pkg.dependencies.zod,
