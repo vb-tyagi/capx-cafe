@@ -41,4 +41,6 @@ jobs:
 
       - name: publish to npm (provenance attached automatically)
         working-directory: apps/capx-mcp/dist
-        run: npm publish
+        # --loglevel http surfaces the OIDC token exchange in the log (or its absence) — kept on
+        # deliberately: publish runs are rare and the visibility is worth the noise.
+        run: npm publish --loglevel http
