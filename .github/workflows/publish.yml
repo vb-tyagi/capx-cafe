@@ -1,0 +1,42 @@
+# npm publish via OIDC trusted publishing (no tokens, no TOTP — npm trusts this repo+workflow
+# directly; npm mints a short-lived credential per run and attaches provenance automatically).
+# One-time npm-side setup: package capx-cafe -> Settings -> Trusted Publisher -> GitHub Actions
+# (repository vb-tyagi/capx-cafe, workflow publish.yml). Manual trigger only — publishing a
+# version is a deliberate act, never a side effect of a push.
+name: publish
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # the OIDC token npm exchanges for the publish credential
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # reads the version from package.json "packageManager"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      # OIDC trusted publishing needs npm >= 11.5.1; node 22 bundles npm 10.x.
+      - run: npm install -g npm@latest && npm --version
+
+      - run: pnpm install --frozen-lockfile
+
+      # verify gate: never publish a red build (unit tests + typecheck, same as local).
+      - run: pnpm run verify
+
+      # build the standalone bundle (apps/capx-mcp/dist carries its own package.json + README).
+      - run: pnpm --filter @capx-cafe/mcp build
+
+      - name: publish to npm (provenance attached automatically)
+        working-directory: apps/capx-mcp/dist
+        run: npm publish
