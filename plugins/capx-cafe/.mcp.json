@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "capx": {
+      "command": "npx",
+      "args": ["-y", "capx-cafe"],
+      "env": {
+        "CAPX_CHOKEPOINT_URL": "https://capx-chokepoint-saptrlsyiq-el.a.run.app"
+      }
+    }
+  }
+}
