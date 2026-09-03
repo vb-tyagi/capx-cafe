@@ -1,4 +1,37 @@
-# Launch Listings — verified submission runbook (2026-07-20)
+# Launch Listings — verified submission runbook
+
+> **STATUS 2026-09-03 — ✅ OFFICIAL MCP REGISTRY: PUBLISHED.** `io.github.vb-tyagi/capx-cafe` v0.1.3,
+> status `active`, website `https://capx-cafe.vercel.app`. Verify:
+> `curl "https://registry.modelcontextprotocol.io/v0.1/servers?search=capx-cafe"`.
+> Registry metadata is IMMUTABLE + CC0 — changes require publishing a new version.
+> Glama, PulseMCP, GitHub/VS Code and others ingest from the registry automatically.
+>
+> **Verdicts locked by the founder after a full re-investigation (2026-09-03):**
+> - **mcp.so — SKIP the site.** Not just the $39: every one of 60 listings created since 2026-07-26 is
+>   `paidSubmission:true`, and 0 of 20 aged free GitHub-issue submissions ever went live. Do NOT hand-craft
+>   the `plan:'free'` API call — that circumvents their paywall.
+> - **Smithery — DON'T.** URL/hosted listings proxy through Smithery's gateway (breaks the "our vault, our
+>   guardrail, only door" thesis); the safe local-MCPB path is broken (no description/homepage/repo, "No
+>   capabilities found"), distributes a frozen copy of our binary from their storage, has ~zero traffic, and
+>   Smithery was acquired 2026-08-05 by Arcade.dev — a direct competitor. Revisit only if the MCPB metadata
+>   pipeline is fixed.
+> - **cursor.directory — list ALL 25 components** (1 MCP server + 24 skills).
+> - **Anything paid — skip.** Every remaining target below is free.
+>
+> **Free targets still to do (ranked by reach):** Docker MCP Registry (ships inside Docker Desktop) ·
+> LobeHub (94k servers) · Glama (81k; also auto-ingests the registry) · cursor.directory ·
+> Cline marketplace · mcpservers.org (free is the DEFAULT — see the WebMCP warning below) ·
+> mcp.directory (+ /submit-skill) · appcypher/awesome-mcp-servers · punkpeye/awesome-mcp-servers
+> (gated on a Glama score). PulseMCP + GitHub/VS Code arrive free via registry propagation.
+>
+> ⚠️ **mcpservers.org safety note:** that page ships a live Chrome WebMCP origin trial with
+> `toolautosubmit` enabled — an attached agent can submit with NO human click. Open it in a plain browser
+> tab with no agent connected so the founder's click stays the founder's.
+>
+> ⚠️ **Blocker before cursor.directory:** the root `.mcp.json` scanners look for is gitignored (it holds a
+> real email, client id and machine path) and 404s on GitHub — a sanitized one must be committed, or the
+> scan finds skills only. Founder decision pending.
+
 
 Repo: https://github.com/vb-tyagi/capx-cafe · npm: **`capx-cafe`** (live) · install: `npx -y capx-cafe`
 
