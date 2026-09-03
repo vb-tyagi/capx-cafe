@@ -25,6 +25,9 @@ await build({
   // Keep public npm deps external; everything else (incl. @capx-cafe/* workspace deps) is inlined.
   external: ['@modelcontextprotocol/sdk', 'zod'],
   legalComments: 'none',
+  // Stamp pkg.version into the bundle so `initialize` reports the real published version (src/version.ts).
+  // The bundle can't read its own package.json reliably once installed, so this is the ONE source at build.
+  define: { __CAPX_VERSION__: JSON.stringify(pkg.version) },
 });
 
 // esbuild preserves the entry file's shebang (src/server.ts uses --experimental-strip-types, which is
@@ -32,6 +35,10 @@ await build({
 // byte 0 — Node only honors #! on line 1, and the bundle is already plain JS so no strip-types flag.
 const outPath = new URL('./dist/capx-cafe.mjs', here);
 let code = readFileSync(outPath, 'utf8').replace(/^(#![^\n]*\n)+/, '');
+// Guard the version stamp: a bundle that still carries the raw token would report the dev fallback.
+if (code.includes('__CAPX_VERSION__') || !code.includes(JSON.stringify(pkg.version))) {
+  throw new Error(`build: __CAPX_VERSION__ was not replaced with ${pkg.version} — check the esbuild define`);
+}
 writeFileSync(outPath, '#!/usr/bin/env node\n' + code);
 chmodSync(outPath, 0o755);
 

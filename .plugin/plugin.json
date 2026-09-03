@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "capx-cafe",
+  "version": "0.1.2",
+  "description": "Agent-native X (Twitter) posting as one MCP server for Claude Code / Cursor / Codex / Windsurf. Your X token never touches the agent; every post clears a server-side guardrail before it ships.",
+  "author": {
+    "name": "Vaibhav Tyagi",
+    "url": "https://github.com/vb-tyagi"
+  },
+  "homepage": "https://capx-cafe.vercel.app",
+  "repository": "https://github.com/vb-tyagi/capx-cafe",
+  "license": "MIT",
+  "keywords": ["x", "twitter", "social", "mcp", "posting", "guardrail"]
+}
