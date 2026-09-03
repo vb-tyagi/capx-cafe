@@ -58,7 +58,7 @@ const publishPkg = {
     zod: pkg.dependencies.zod,
   },
   engines: { node: '>=22' },
-  files: ['capx-cafe.mjs', 'README.md'],
+  files: ['capx-cafe.mjs', 'README.md', 'LICENSE'],
   license: 'MIT',
   homepage: 'https://github.com/vb-tyagi/capx-cafe#readme',
   repository: { type: 'git', url: 'git+https://github.com/vb-tyagi/capx-cafe.git' },
@@ -67,6 +67,9 @@ const publishPkg = {
 };
 writeFileSync(new URL('./dist/package.json', here), JSON.stringify(publishPkg, null, 2) + '\n');
 copyFileSync(new URL('./README.md', here), new URL('./dist/README.md', here));
+// MIT requires the license text + copyright notice to travel with every distributed copy — the
+// published tarball had neither until 0.1.3. Ship apps/capx-mcp/LICENSE alongside the bundle.
+copyFileSync(new URL('./LICENSE', here), new URL('./dist/LICENSE', here));
 
 console.log('bundled -> dist/capx-cafe.mjs');
 console.log('publish package -> dist/package.json  (name: capx-cafe, deps: sdk+zod only)');

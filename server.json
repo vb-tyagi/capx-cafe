@@ -8,13 +8,13 @@
     "url": "https://github.com/vb-tyagi/capx-cafe",
     "source": "github"
   },
-  "version": "0.1.2",
+  "version": "0.1.3",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "capx-cafe",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
@@ -37,7 +37,10 @@
           "description": "Connection lane: 'byo' (bring your own X app) or 'capx-app' (capx-managed app)",
           "isRequired": false,
           "isSecret": false,
-          "choices": ["byo", "capx-app"]
+          "choices": [
+            "byo",
+            "capx-app"
+          ]
         },
         {
           "name": "X_CLIENT_ID",

@@ -4,7 +4,7 @@
 FROM node:22-alpine
 
 # Pin bumps with each release — keep in step with apps/capx-mcp/package.json + server.json.
-RUN npm install -g capx-cafe@0.1.2
+RUN npm install -g capx-cafe@0.1.3
 
 # No env vars are needed to START: the server boots and answers initialize / tools/list unconfigured. Only a
 # tool call needs CAPX_CHOKEPOINT_URL + CAPX_EMAIL (pass them with `docker run -e ...` for real use).
