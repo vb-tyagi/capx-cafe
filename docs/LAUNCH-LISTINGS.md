@@ -18,6 +18,19 @@
 > - **cursor.directory — list ALL 25 components** (1 MCP server + 24 skills).
 > - **Anything paid — skip.** Every remaining target below is free.
 >
+> **SUBMITTED 2026-09-03:**
+> - **Glama** — submitted via Add Server (name `capx café`, repo URL, locked short description). Awaiting
+>   their review ("Public submissions are reviewed before becoming publicly visible"); the page 404s until
+>   it clears. NOTE: no explicit receipt page was shown — the dialog closing cleanly was the only signal.
+>   FOLLOW-UPS once live: claim ownership (glama.json already lists `vb-tyagi`, should auto-link) + set
+>   category **Social Media**. punkpeye/awesome-mcp-servers is gated on a Glama score, so it waits on this.
+> - **cursor.directory** — ✅ PUBLISHED to https://cursor.directory/plugins/capx-cafe (ghost logo, homepage +
+>   source links, keywords from `.plugin/plugin.json`). Detected **25 components = 1 MCP server + 24 skills**,
+>   exactly the locked shape. Currently "Scanning your plugin… it will appear publicly once the security agent
+>   finishes" — a `safe` verdict auto-publishes it. The MCP-server component was ONLY detectable because the
+>   sanitized root `.mcp.json` was committed the same day; before that the scan would have found skills only.
+>   NOTE: cursor.directory sits behind a Vercel anti-bot wall — curl gets 429; check it in a real browser.
+>
 > **Free targets still to do (ranked by reach):** Docker MCP Registry (ships inside Docker Desktop) ·
 > LobeHub (94k servers) · Glama (81k; also auto-ingests the registry) · cursor.directory ·
 > Cline marketplace · mcpservers.org (free is the DEFAULT — see the WebMCP warning below) ·
