@@ -8,7 +8,7 @@ before copying, redistributing, or self-hosting any part of it.
 
 ## MIT (permissive) — the client and everything it bundles, plus skills & docs
 
-Copyright (c) 2026 capx. Licensed under the MIT License (see each directory's `LICENSE`).
+Copyright (c) 2026 Vaibhav Tyagi. Licensed under the MIT License (see each directory's `LICENSE`).
 
 | Component | Path | Why MIT |
 |---|---|---|
