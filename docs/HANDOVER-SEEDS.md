@@ -56,7 +56,7 @@ can install it" is one `npm publish` of the `capx-cafe` bundle (needs your npm l
 
 ### P4 — Monetization (⏸ EXPLICITLY DEFERRED 2026-07-18, at founder's call)
 Turns "founder curls `/admin/allow` per person" into "pay → in, cancel → out."
-- **MoR choice is UNMADE — decide first.** Lemon Squeezy vs Polar (bake-off deferred per decision §5.8).
+- **MoR choice is UNMADE — decide first.** Lemon Squeezy vs Polar (bake-off deferred per decision §5.8). (superseded: MoR = Polar, 2026-08-29)
   The choice gates the code: each MoR signs webhooks differently, so the signature-verification impl can't
   be written until it's picked. (Founder chose to punt the decision on 2026-07-18.)
 - Then wire the MoR webhook → `ingestAllowlist`. **Today `ingestAllowlist`'s signature check is a STUB and
@@ -123,7 +123,7 @@ completed shortly after. Lesson: to audit exposure, check `valueFrom` vs `value`
 
 ## 🗺️ Operational facts (for the eventual runbook)
 
-- **Service URL:** `https://capx-chokepoint-saptrlsyiq-el.a.run.app` (temp `.run.app`; migrate to `api.capx.ai` = one DNS record + update `OAUTH_CALLBACK_URL` + the X app callback).
+- **Service URL:** `https://capx-chokepoint-saptrlsyiq-el.a.run.app` (temp `.run.app`; migrate to a custom domain (TBD; `capx.ai` superseded — individual operator) = one DNS record + update `OAUTH_CALLBACK_URL` + the X app callback).
 - **GCP project:** `capx-cafe` · **billing:** `012D9E-67C8F4-DAE129` (shared with capxcloud/capx-internal/personal) · **region:** asia-south1.
 - **Cloud SQL:** `capx-chokepoint-db` (POSTGRES_17, ENTERPRISE, db-f1-micro).
 - **Cron:** Cloud Scheduler `capx-loop-tick`, `*/5 * * * *` → `POST /internal/tick` (proven landing, 200).

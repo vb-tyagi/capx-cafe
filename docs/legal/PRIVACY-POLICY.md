@@ -1,26 +1,29 @@
 # capx café — Privacy Policy
 
-> **Status: FINAL — locked 2026-07-19 (counsel-reviewed).** The bracketed `[CONFIRM: …]` fields hold
-> company-specific values (data-controller entity, applicable privacy regimes) to slot in before public
-> launch; everything else is locked. The "what we can and cannot see" table (§3) is the whole trust story —
-> keep it accurate as the code evolves.
+> **Status: FINAL (counsel-reviewed 2026-07-19) — operator details revised 2026-09-02 to an individual
+> operator (Vaibhav Tyagi, Dubai, UAE); counsel re-review of the revised jurisdiction/entity clauses
+> recommended before paid plans launch.** The "what we can and cannot see" table (§3) is the whole trust
+> story — keep it accurate as the code evolves.
 
-**Effective date:** 2026-07-19 · **Data controller:** [CONFIRM: legal entity + registered address] ·
-**Contact / DPO:** privacy@capx.ai
+**Effective date:** 2026-09-02 (operator details revised; original counsel-reviewed version 2026-07-19) ·
+**Data controller:** Vaibhav Tyagi, an individual developer based in Dubai, United Arab Emirates ("we", "us",
+"our") · **Address for notices:** Dubai, United Arab Emirates ·
+**Contact (privacy, legal & security notices):** tyagi@intothebuilderness.com
 
 ---
 
 ## 1. Scope
 
-This policy covers the **hosted capx café chokepoint** operated by capx. It does **not** cover:
+This policy covers the **hosted capx café chokepoint** (the "Service") operated by Vaibhav Tyagi as an
+individual. It does **not** cover:
 
 - **Self-hosted instances** — if you or someone else runs their own chokepoint, that operator is the
-  controller; capx receives no data from it.
+  controller; we receive no data from it.
 - **The client (`npx capx-cafe`)** — it runs on your machine and holds no credentials; it only passes a
   session handle to the chokepoint.
 - **X** — your use of X is governed by X's own privacy policy.
 - **Your own media-generation tools** (higgsfield, fal, kling, etc.) — you connect these to your agent
-  yourself; their data practices are theirs, not capx's. capx only receives the finished asset you attach.
+  yourself; their data practices are theirs, not ours. The Service only receives the finished asset you attach.
 
 ## 2. What we collect and why
 
@@ -30,18 +33,18 @@ This policy covers the **hosted capx café chokepoint** operated by capx. It doe
 | **X access + refresh tokens** | To post on your instruction; stored **encrypted** (AES-256-GCM envelope, key in Google Cloud KMS / Secret Manager) | **Highest** |
 | **X account metadata** (user id, username, verified flag, account age/standing) | Guardrail checks (authenticity, kill-switch, caps) | Medium |
 | **Post content that passes through** (the text, and media bytes in transit) | To guard, schedule, and deliver it to X | Medium |
-| **Audit records** (what was posted, when, and the guardrail verdict + reasons) | Trust/accountability — so you can see exactly what capx did on your behalf | Medium |
+| **Audit records** (what was posted, when, and the guardrail verdict + reasons) | Trust/accountability — so you can see exactly what the Service did on your behalf | Medium |
 | **Operational logs & minimal telemetry** (timestamps, error states, rate counters) | Reliability, abuse prevention, debugging | Low |
-| **Billing data (capx-app lane, future)** | Payment, handled by a merchant-of-record | Medium |
+| **Billing data (capx-app lane; only if and when paid plans are offered)** | Payment, handled by a merchant-of-record (see §5) | Medium |
 
 We do **not** collect your X password (OAuth never exposes it), your browsing history, your repository
-contents, or data from other apps. capx does not read your mentions, DMs, timeline, or analytics — the
+contents, or data from other apps. The Service does not read your mentions, DMs, timeline, or analytics — the
 current scopes are `tweet.read`, `tweet.write`, `users.read`, `offline.access` (write-side only). Any future
 read/analytics product is **separate** ("capx-scope") with its own consent and policy.
 
 ## 3. What we CAN and CANNOT see (the trust table)
 
-| capx **can** see | capx **cannot** see |
+| capx café **can** see | capx café **cannot** see |
 |---|---|
 | The text of posts you route through it | The content of media you attach (uploaded un-inspected) |
 | Your X username and public account metadata | Your X password (OAuth flow never exposes it) |
@@ -56,7 +59,7 @@ microseconds it takes to call X, then is discarded. It is never logged and never
 
 - **Envelope encryption:** each token is encrypted with a data key; the data key is wrapped by a master key
   held in Google Cloud KMS. The database stores only ciphertext.
-- **Secret isolation:** all secrets (KMS key, DB URL, signing keys, the capx X app secret) live in Google
+- **Secret isolation:** all secrets (KMS key, DB URL, signing keys, the capx café X app secret) live in Google
   Secret Manager; the running service reads them via a least-privilege identity that can reach the database
   and those secrets and **nothing else**.
 - **Single decryption path:** code is structured so the token is reachable **only** after the guardrail
@@ -67,27 +70,34 @@ microseconds it takes to call X, then is discarded. It is never logged and never
 - **Hosting & database:** Google Cloud (Cloud Run + Cloud SQL Postgres + KMS + Secret Manager), region
   asia-south1 (Mumbai).
 - **X Corp.:** the destination of your posts.
-- **Merchant of record (capx-app lane, future):** [CONFIRM: Lemon Squeezy / Polar — undecided] for payments.
+- **Merchant of record (capx-app lane):** paid plans are **not yet offered**. If and when paid plans are
+  offered, payments are processed by **Polar Software Inc.** as merchant of record, and Polar's own terms and
+  refund policy apply to the payment; plan tiers are monthly subscriptions plus optional top-up packs, and
+  there are no free trials.
 
 We do **not** sell your data, and we do not use your post content to train any model.
 
 ## 6. Retention and deletion
 
 - **Tokens:** kept while your account is connected; on disconnect or allowlist removal they are deleted
-  within 30 days, after which capx can no longer post for you.
+  within 30 days, after which the Service can no longer post for you.
 - **Audit records & logs:** kept for 12 months for security and accountability, then deleted or anonymized.
 - **On request:** you can ask us to disconnect X and delete your stored data (see §8).
 
 ## 7. Legal bases (where applicable)
 
-[CONFIRM: applicable regimes — likely India DPDP + GDPR for EU users.] Processing is based on: performance
-of our agreement with you (posting on your instruction), our legitimate interest in security and
+The operator is based in the United Arab Emirates, so our home data-protection regime is **UAE Federal
+Decree-Law No. 45 of 2021 (Personal Data Protection Law)**. If you are in the European Economic Area or the
+United Kingdom, the **GDPR / UK GDPR** also apply to our processing of your data and you have the rights they
+grant. Users elsewhere keep whatever statutory rights their local law provides. Processing is based on:
+performance of our agreement with you (posting on your instruction), our legitimate interest in security and
 abuse-prevention, your consent for the X connection, and legal obligations where they apply.
 
 ## 8. Your rights
 
 Depending on your jurisdiction you may access, correct, export, or delete your data, withdraw consent, or
-object to processing. To exercise any of these, or to disconnect and be forgotten, contact privacy@capx.ai.
+object to processing. To exercise any of these, or to disconnect and be forgotten, contact
+tyagi@intothebuilderness.com.
 You can also disconnect X at any time from within the tool.
 
 ## 9. Security, breaches, children
@@ -96,7 +106,7 @@ You can also disconnect X at any time from within the tool.
   perfectly secure; use of alpha software is at your own risk.
 - **Breach notice:** in the event of a personal-data breach we will notify affected users and any regulator
   without undue delay, as required by applicable law.
-- capx is **not** intended for anyone under 18; we do not knowingly collect their data.
+- capx café is **not** intended for anyone under 18; we do not knowingly collect their data.
 
 ## 10. Changes
 

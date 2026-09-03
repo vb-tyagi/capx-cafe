@@ -63,7 +63,8 @@ of `main`).
 1. **The single live redeploy** — founder chose "deploy once after Phase 4." It's due. See `DEPLOY-RUNBOOK.md`.
    It's also the **first real tweet ever** (`POST /2/tweets` never exercised live). **Founder-gated.**
 2. **Legal** — `docs/legal/{TERMS-OF-SERVICE,PRIVACY-POLICY}.md` are final except 4 `[CONFIRM]` values: legal
-   entity + address, governing-law jurisdiction/venue, liability cap, MoR pick.
+   entity + address, governing-law jurisdiction/venue, liability cap, MoR pick — filled 2026-09-02 (individual
+   operator, Dubai/UAE; cap = greater of 12-mo fees / USD 100; MoR = Polar).
 3. **Live-service risks** — lane-B metering cap is UNSET (set `capxAppDailyCap` before real creators);
    consumer product holds tokens; shared-app blast radius (kill-switch is the defense).
 4. **Launch prep** — beast README, landing page, security page, demo GIF, `npm publish capx-cafe` (needs npm
@@ -86,5 +87,6 @@ of `main`).
 1. **Review `DEPLOY-RUNBOOK.md`** → on your go, build the image + `gcloud run deploy` (migration auto-runs) →
    verify `/health` → the first real `post_now`.
 2. Set `capxAppDailyCap` before any real creator uses lane B.
-3. Fill the 4 legal `[CONFIRM]` values.
+3. Fill the 4 legal `[CONFIRM]` values — filled 2026-09-02 (individual operator, Dubai/UAE; cap = greater of
+   12-mo fees / USD 100; MoR = Polar).
 4. Launch prep per `GTM-PLAN.md` §2 (README, security page, npm publish, directory listings).

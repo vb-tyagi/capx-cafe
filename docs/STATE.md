@@ -46,7 +46,7 @@ scheduling / management happens **inside their agent session**, driven by the ha
 5. **✅ Fork: cold-archive** — stop the Docker stack, `pg_dump` the dev schema to a shelf file, keep `../capx-conductor` cold on disk (own git repo, zero upkeep); excise the monorepo AGPL apparatus at P0; delete volumes only after the chokepoint posts for real.
 6. **✅ Onboarding: full BYO wizard early (P1–P2)** — hosted guided page (screenshots, deep links, pre-filled callback — the chokepoint serves it) + in-flow preflight validation with specific fix messages. The creator lane needs no wizard (no registration at all).
 7. **✅ OAuth: hosted-callback only** — the chokepoint holds the PKCE verifier + HTTPS callback; consent works from any browser on any device; **the token never touches the user's machine** — no keychain, no pinned port, no loopback flow at all. Cross-harness promise = identical tool surface; capability detection only picks auto-open-browser vs print-URL.
-8. **✅ License verification folds into the chokepoint** — MoR webhooks → allowlist of email hashes + subscription state; short-TTL session creds with a cached grace window. The separate Ed25519 offline edge fn (an Option-A artifact) is dropped. MoR pick (Lemon Squeezy vs Polar) deferred to a P4 bake-off; creator-lane pricing must cover capx's metered X API cost.
+8. **✅ License verification folds into the chokepoint** — MoR webhooks → allowlist of email hashes + subscription state; short-TTL session creds with a cached grace window. The separate Ed25519 offline edge fn (an Option-A artifact) is dropped. MoR pick (Lemon Squeezy vs Polar) deferred to a P4 bake-off *(superseded 2026-08-29: MoR = Polar — §5.11)*; creator-lane pricing must cover capx's metered X API cost.
 9. **✅ SOFTWARE LICENSING — LOCKED 2026-07-18.** Two-license split by half:
    - **Permissive (client + everything it bundles + skills/docs/guides):** the published `capx-cafe`
      package (`apps/capx-mcp`), and the shared packages it inlines — `@capx-cafe/core`, `@capx-cafe/config`,
@@ -90,6 +90,8 @@ scheduling / management happens **inside their agent session**, driven by the ha
       public; **CLA** before the first outside PR; register the **"capx café" trademark**; docs in-repo `/docs`
       first, dedicated site at launch. *(2026-08-29 amendment: repo shipped public on personal `vb-tyagi`,
       per the earlier repo-location lock — the "capx org before public" default is superseded.)*
+      *(2026-09-02 amendment: trademark registration NOT pursued (founder); CLA/DCO = yes; operator =
+      individual developer, see `docs/legal/`.)*
 11. **✅ ROUND-3 LOCKS — 2026-08-29 (market re-check + creator-lane pricing + launch execution).** Full
     detail: `docs/ECONOMICS.md`, `docs/X-COMPLIANCE.md`; enforcement in `packages/counter/src/plans.ts` +
     the gate (plan metering v2). Context: X killed the free API tier (Feb 2026) and moved to pay-per-use

@@ -36,7 +36,7 @@ your machine (assume fully compromised)     ── trust boundary ──     the
                                                                                    X API
 ```
 
-- **OAuth completes on the server.** capx uses hosted-callback PKCE OAuth: you authorize in a browser, X
+- **OAuth completes on the server.** capx café uses hosted-callback PKCE OAuth: you authorize in a browser, X
   redirects to the *chokepoint's* HTTPS callback, and the token is written straight into the server vault. **It
   never transits your machine** — no keychain, no loopback port, no local file.
 - **The client holds a session handle, not a credential.** The MCP server on your machine can only *ask* the
@@ -77,16 +77,16 @@ you own what you attach, and your skill sets the AI-content label. (See the Priv
 - **One decryption boundary:** plaintext exists only inside a single function (`vault.withToken`) for the
   microseconds it takes to call X, then is discarded. It is **never logged, never returned to the client, never
   written in the clear.**
-- **Secret isolation:** all secrets (KMS key, DB URL, signing keys, the capx app secret) live in a secret
+- **Secret isolation:** all secrets (KMS key, DB URL, signing keys, the capx café app secret) live in a secret
   manager; the running service reads them via a least-privilege identity that can reach the database and those
   secrets and **nothing else**.
-- **Refresh, crash-consistent:** X rotates the refresh token on every use; capx serializes refreshes per
+- **Refresh, crash-consistent:** X rotates the refresh token on every use; capx café serializes refreshes per
   connection, and a rejected refresh flags the connection **needs-reauth** rather than leaving a silently dead
   or double-spent token. An expired access token is refreshed on demand (on a 401) and the send retried once.
 
-## 5. What capx can and cannot see
+## 5. What the Service can and cannot see
 
-| capx **can** see | capx **cannot** see |
+| the Service **can** see | the Service **cannot** see |
 |---|---|
 | The text of posts you route through it | The content of media you attach (uploaded un-inspected) |
 | Your X username + public account metadata | **Your X password** (OAuth never exposes it) |
@@ -109,7 +109,7 @@ The security claims are enforced by an adversarial test suite, not just asserted
 ## 7. Self-hosting: the guarantee is per-operator
 
 The chokepoint is open source (AGPL-3.0). Run the identical image with your own X app, keys, database, and
-domain (`CAPX_DEPLOY_MODE=self-host`, zero telemetry to capx). You become the operator, and the guarantee
+domain (`CAPX_DEPLOY_MODE=self-host`, zero telemetry to us). You become the operator, and the guarantee
 holds for **your** instance and **your** users. (A self-hoster *could* strip casserole from their own
 instance — that only endangers their own account; the guarantee is per-operator, by design.)
 
@@ -117,8 +117,9 @@ instance — that only endangers their own account; the guarantee is per-operato
 
 - **You, authorizing a bad post.** casserole reduces bad *automated* posts; it is a limit, not a promise that
   every post is compliant or wise. You're responsible for what's posted from your account.
-- **A compromised chokepoint operator.** If you use capx's hosted service, you trust capx (or your self-host
-  operator) with the vault — same trust model as any hosted OAuth app. The mitigations are least-privilege,
+- **A compromised chokepoint operator.** If you use the hosted capx café service, you trust its operator —
+  Vaibhav Tyagi, an individual developer (Dubai, UAE) — or your own self-host operator, with the vault — same
+  trust model as any hosted OAuth app. The mitigations are least-privilege,
   encryption, open source, and the kill-switch — not "trust no one."
 - **X-side account issues** (suspension, policy, rate limits) are X's domain.
 - **Media content** is not inspected (§3).
@@ -126,7 +127,7 @@ instance — that only endangers their own account; the guarantee is per-operato
 ## Responsible disclosure
 
 Found a way to reach the token without a PASS, bypass the guard, or escalate a session handle? Please report it
-privately to **security@capx.ai** [CONFIRM contact] before disclosing publicly. We'll acknowledge, fix, and
+privately to **tyagi@intothebuilderness.com** before disclosing publicly. We'll acknowledge, fix, and
 credit you. The codebase is open — `services/chokepoint/src/vault/`, `.../gate/`, and the red-team tests are the
 places to look first.
 

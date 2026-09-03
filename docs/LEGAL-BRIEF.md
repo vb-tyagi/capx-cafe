@@ -68,3 +68,27 @@ schedule, and manage posts from inside their agent session. Key architectural fa
 Written sign-off, or a list of required changes, on Lanes A and B — before any automated posting is
 enabled beyond the founder's own accounts. Flag anything above that changes materially if capx also
 posts to platforms other than X in the future (roadmap item, not v1).
+
+---
+
+## Addendum — 2026-09-02 (operator + decisions since review)
+
+_The original brief above is preserved as written on 2026-07-14. The following facts were locked by the
+founder on 2026-09-02 and supersede any conflicting assumptions in §1–§4._
+
+- **Operator.** The Service ("capx café", npm `capx-cafe`) is operated by **Vaibhav Tyagi**, an
+  **individual developer** based in **Dubai, UAE** — not a company. There is no "capx" legal entity;
+  references to "capx" above should be read as the Service / its individual operator.
+- **Governing law / venue.** Laws of the **UAE** as applied in the Emirate of Dubai; **Dubai courts**.
+- **Liability cap.** The **greater of** the fees paid in the **12 months** preceding the claim or
+  **USD 100**.
+- **Merchant of record.** **Polar Software Inc.** (the "Lemon Squeezy or Polar — TBD" in §1 is resolved).
+  **Paid plans are conditional and not yet offered**; the MoR/billing clauses apply only if and when they
+  launch.
+- **Trademark.** **No trademark registration is pursued or claimed.** The "capx café" name and logo
+  identify the Service and may not be used to imply endorsement or affiliation.
+- **Data protection.** **UAE PDPL** as the home regime, plus **GDPR / UK GDPR** for users in the EEA / UK.
+- **Contact.** tyagi@intothebuilderness.com.
+- **Status.** `docs/legal/*` (Terms of Service, Privacy Policy) were revised accordingly on 2026-09-02.
+  **Counsel re-review of the jurisdiction and entity clauses is recommended before any paid plans
+  launch.**

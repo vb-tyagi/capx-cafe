@@ -38,7 +38,7 @@ Every other "let your AI post" tool has the same flaw: to let an agent post, you
 plaintext config **right next to an autonomous agent that reads untrusted web pages, issues, and code.** One
 prompt-injection and your account tweets a scam. **capx café is the only one that structurally can't be.**
 
-- 🔒 **Your X token never touches your machine.** OAuth completes on capx's hosted callback; the token lives
+- 🔒 **Your X token never touches your machine.** OAuth completes on capx café's hosted callback; the token lives
   **encrypted in a server-side vault.** Your agent holds only a short-TTL, revocable session handle.
 - 🛡️ **casserole** — a *deterministic (non-AI)* six-layer guardrail — runs **server-side at the only door to X**
   and checks **every** post. A blocked post never even decrypts your token (proven by an adversarial test suite).
@@ -161,9 +161,9 @@ good content easy and stops bad content regardless of which skill produced it.*
 
 - **BYO** — bring your own X developer app. You're X's customer and **pay X directly** — since Feb 2026
   that means pre-loading credits (no free X tier for new apps) at ~$0.015/post, **$0.20 if the post
-  contains a link**. Free on capx's side; heavy users can self-host the identical image.
-- **capx-app** (creator lane) — post through capx's X app, no developer account needed. Ships as a
-  **paid beta**: `Short $5` / `Tall $15` / `Grande $35` monthly tiers + top-up packs, quotas enforced
+  contains a link**. Free on capx café's side; heavy users can self-host the identical image.
+- **capx-app** (creator lane) — post through capx café's shared X app, no developer account needed. Opening as a
+  **paid beta** (waitlist): `Short $5` / `Tall $15` / `Grande $35` monthly tiers + top-up packs, quotas enforced
   server-side at the gate. Full sheet + the math: **[docs/ECONOMICS.md](docs/ECONOMICS.md)** · policy
   posture: [docs/X-COMPLIANCE.md](docs/X-COMPLIANCE.md).
 

@@ -25,7 +25,7 @@ Copyright (c) 2026 capx. Licensed under the MIT License (see each directory's `L
 ## AGPL-3.0 (copyleft) — the server half / the moat
 
 The hosted chokepoint and the server-only packages it compiles in. A network-service user must offer their
-modified source. (capx is never bound by its own license — dual-licensing stays available to the owner.)
+modified source. (The copyright holder is never bound by their own license — dual-licensing stays available to the holder.)
 
 | Component | Path |
 |---|---|
@@ -41,8 +41,8 @@ Public License v3.0.
 
 ## Notes
 
-- The copyright holder shown as "capx" should be finalized to the registered legal entity before public
-  launch (same `[CONFIRM]` as `docs/legal/`).
-- Trademark: "capx café" and the capx marks are **not** granted by either license — the name is protected
-  separately.
+- The project is operated by an individual developer (see `docs/legal/` for operator details); the
+  copyright-holder line is being finalized to the individual's name.
+- Trademark: the "capx café" name and logo are **not** granted by either license; they identify the Service
+  and may not be used to imply endorsement or affiliation. No registration is claimed.
 - Contributions are accepted under the project CLA (keeps relicensing possible).

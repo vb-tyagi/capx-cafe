@@ -1,11 +1,11 @@
 {
   "name": "capx-cafe",
   "displayName": "capx café",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Agent-native X posting: connect X, then post and schedule from inside Claude Code / Cursor / Codex. Every post passes a guardrail at the X boundary, and your X token never touches your machine.",
   "author": {
-    "name": "capx",
-    "url": "https://capx.ai"
+    "name": "Vaibhav Tyagi",
+    "url": "https://github.com/vb-tyagi"
   },
   "homepage": "https://github.com/vb-tyagi/capx-cafe",
   "repository": "https://github.com/vb-tyagi/capx-cafe",

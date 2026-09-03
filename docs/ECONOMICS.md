@@ -7,7 +7,7 @@ this doc explains them), and `docs/GTM-PLAN.md`.
 ## 1. What X charges capx (pay-per-use, verified 2026-08)
 
 X discontinued the free tier for new developers (Feb 2026) and auto-migrated Basic (Jun 2026).
-New developer apps — including capx's own app powering the creator lane — pay per request:
+New developer apps — including capx café's own X app powering the creator lane — pay per request:
 
 | X action | Cost to capx |
 |---|---|
@@ -66,7 +66,7 @@ nothing on that lane. Since Feb 2026 that means: a credit card + pre-loaded cred
 developer console **before the first post**, then $0.015/post ($0.20 with a link). A daily
 build-in-public post linking your repo runs **≈ $6/month paid to X** — say it plainly in onboarding;
 never imply a free X on-ramp. Heavy/self-host users: run the identical AGPL chokepoint image with
-your own app — capx's hosted costs stay out of your path entirely.
+your own app — capx café's hosted costs stay out of your path entirely.
 
 ## 5. Fixed costs (context, not per-user pricing inputs)
 

@@ -13,13 +13,13 @@ _Created 2026-07-18. Strategy of record for launching + marketing the capx-cafe 
 | **Launch shape** | **Feature-rich** — build all write-skills + media FIRST, then publish + launch with a wow |
 | **Repo** | Move to a **`capx` GitHub org** before going public (off personal `vb-tyagi`) |
 | **Contributor terms** | **CLA** required before the first outside PR (keeps relicensing possible) |
-| **Trademark** | Register **"capx café"** (the un-forkable moat; founder's legal to action) |
+| **Trademark** | **NOT pursued** (founder, 2026-09-02) — name/logo identify the Service; no registration claimed |
 | **Docs home** | In-repo `/docs` first; a dedicated docs/landing site at launch |
 | **Flagship launch skill** | **build-in-public** (git log → a week of posts) |
 | **Analytics/replies** | **Spun out** to a separate read-side product ("capx-scope", TBD) — not in this launch |
 
 Remaining pre-launch actions (not decisions — execution): `npm publish` the bundle, ship the "beast" README +
-landing page + demo video, set up the CLA bot, file the trademark, list in the MCP directories.
+landing page + demo video, set up the CLA bot, list in the MCP directories.
 
 ---
 
