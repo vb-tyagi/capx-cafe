@@ -3,7 +3,7 @@
   "name": "io.github.vb-tyagi/capx-cafe",
   "title": "capx café",
   "description": "Agent-native X (Twitter) posting as one MCP server; every post clears a server-side guardrail.",
-  "websiteUrl": "https://github.com/vb-tyagi/capx-cafe/blob/main/docs/SECURITY.md",
+  "websiteUrl": "https://capx-cafe.vercel.app",
   "repository": {
     "url": "https://github.com/vb-tyagi/capx-cafe",
     "source": "github"
