@@ -20,3 +20,6 @@ apps/capx-mcp/dist/
 
 # session handoffs (internal, never publish)
 .ai/
+
+# listing watchdog state (per-machine run history)
+tools/listings/state.json
