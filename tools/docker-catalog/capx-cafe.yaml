@@ -1,7 +1,7 @@
 name: capx-cafe
 title: capx café
 type: server
-image: capx-cafe:0.1.3
+image: ghcr.io/vb-tyagi/capx-cafe:0.1.3
 description: >-
   Post and schedule to X (Twitter) from your coding agent. The X token is held in a
   server-side vault instead of the agent's config, and every post clears a deterministic

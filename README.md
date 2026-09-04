@@ -117,6 +117,7 @@ Set `CAPX_EMAIL` (your whitelisted email) and, for the BYO lane, `X_CLIENT_ID` (
 | **Codex** | add to your MCP config; prompt pack in `plugins/capx-cafe/adapters/codex/` |
 | **Windsurf** | add to MCP config; workflows in `plugins/capx-cafe/adapters/windsurf/` |
 | **Any MCP agent** | point it at `npx -y capx-cafe` |
+| **Docker Desktop** | `docker mcp catalog pull ghcr.io/vb-tyagi/capx-catalog:latest` → MCP Toolkit → enable **capx café** |
 
 ## What your agent can do
 
