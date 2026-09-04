@@ -47,9 +47,12 @@
 >   once mid-handshake and the Refresh-Metadata dialog would not submit — expect flakiness. (d) The page header
 >   still shows a phantom crawler version 1.0.0 + "Unvalidated" + repo-level AGPL, while the API correctly reports
 >   latestVersion 0.1.3; enrichment is async.
-> - **appcypher/awesome-mcp-servers** — branch `add-capx-cafe` pushed to the founder's fork; PR NOT yet opened
->   (the gh CLI token cannot create PRs on repos the user does not own — 404). Founder opens it via the pre-filled
->   compare URL.
+> - **appcypher/awesome-mcp-servers** — ❌ **DEAD, DO NOT RETRY.** The repo was ARCHIVED by its owner on
+>   2026-08-01: read-only, "An owner of this repository has disabled the ability to open pull requests", last
+>   push 2026-05-06. This is the real cause of the `gh pr create` 404 (an earlier note in this session wrongly
+>   blamed CLI token scopes). The 2026-09-03 research brief listing it as "still accepts PRs" was also wrong.
+>   Fork + branch discarded. **Use punkpeye/awesome-mcp-servers instead** — active (pushed 2026-09-01) and 94k
+>   stars vs appcypher's 5.7k — but its CI requires a Glama badge + quality score first, so it waits on Glama.
 >
 > **Free targets still to do (ranked by reach):** Docker MCP Registry (ships inside Docker Desktop) ·
 > LobeHub (94k servers) · Glama (81k; also auto-ingests the registry) · cursor.directory ·
