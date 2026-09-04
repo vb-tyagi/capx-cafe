@@ -98,6 +98,20 @@ const CHECKS = {
       ? { state: 'LIVE', detail: 'merged into the list' }
       : { state: 'PENDING', detail: 'not listed — PR gated on a Glama score' };
   },
+  async 'docker-ghcr'() {
+    // Anonymous manifest fetch — proves the ghcr packages are still PUBLIC (they default to private,
+    // and a visibility flip is easy to lose on a re-push).
+    const tok = await http('https://ghcr.io/token?scope=repository:vb-tyagi/capx-catalog:pull&service=ghcr.io');
+    if (tok.status !== 200) return { state: 'UNKNOWN', detail: `token endpoint ${tok.status}` };
+    const t = JSON.parse(tok.body).token;
+    const r = await fetch('https://ghcr.io/v2/vb-tyagi/capx-catalog/manifests/latest', {
+      headers: { authorization: `Bearer ${t}`, accept: 'application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json' },
+    }).catch(() => null);
+    if (!r) return { state: 'UNKNOWN', detail: 'manifest fetch failed' };
+    return r.status === 200
+      ? { state: 'LIVE', detail: 'catalog public + pullable anonymously' }
+      : { state: 'BLOCKED', detail: `manifest ${r.status} — package may have gone private` };
+  },
   async npm() {
     const { status, body } = await http('https://registry.npmjs.org/capx-cafe/latest');
     if (status !== 200) return { state: 'UNKNOWN', detail: `npm ${status}` };

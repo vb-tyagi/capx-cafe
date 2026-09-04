@@ -54,6 +54,15 @@
 >   Fork + branch discarded. **Use punkpeye/awesome-mcp-servers instead** — active (pushed 2026-09-01) and 94k
 >   stars vs appcypher's 5.7k — but its CI requires a Glama badge + quality score first, so it waits on Glama.
 >
+> - **Docker Desktop (MCP Toolkit)** — ✅ **LIVE via a custom catalog**, not docker/mcp-registry.
+>   `ghcr.io/vb-tyagi/capx-catalog:latest` + `ghcr.io/vb-tyagi/capx-cafe:0.1.3`, both PUBLIC. Users run
+>   `docker mcp catalog pull ghcr.io/vb-tyagi/capx-catalog:latest` -> MCP Toolkit -> enable capx café.
+>   Verified fully anonymously (logged out of ghcr, deleted the local image, re-pulled, ran it: 11 tools).
+>   The official docker/mcp-registry is deliberately SKIPPED — see tools/docker-catalog/README.md for the
+>   two reasons (an automated agpl-prefix licence gate we cannot pass without weakening the moat, and a
+>   registry that has merged no new server since 2026-04-30). The watchdog's `docker-ghcr` check will flag
+>   it if either package ever flips back to private.
+>
 > **Free targets still to do (ranked by reach):** Docker MCP Registry (ships inside Docker Desktop) ·
 > LobeHub (94k servers) · Glama (81k; also auto-ingests the registry) · cursor.directory ·
 > Cline marketplace · mcpservers.org (free is the DEFAULT — see the WebMCP warning below) ·
