@@ -31,6 +31,26 @@
 >   sanitized root `.mcp.json` was committed the same day; before that the scan would have found skills only.
 >   NOTE: cursor.directory sits behind a Vercel anti-bot wall — curl gets 429; check it in a real browser.
 >
+> **SUBMITTED/LIVE 2026-09-03..04 (second wave):**
+> - **mcpservers.org** — ✅ submitted by the founder in a plain tab (free path; ≤12h review).
+> - **mcp.directory** — ✅ submitted (repo + npm `capx-cafe` + 93-char description + founder email); publishes within 24h.
+> - **Cline marketplace** — ✅ issue https://github.com/cline/mcp-marketplace/issues/2421 (repo, 400x400 logo at
+>   docs/assets/logo-400.png, both testing boxes ticked after the founder tested the Cline setup). `llms-install.md`
+>   added to the repo root for this.
+> - **LobeHub** — ✅ PUBLISHED https://lobehub.com/mcp/vb-tyagi-capx-cafe (`vb-tyagi-capx-cafe@0.1.3`, display name
+>   "capx café", category Social Media, all 11 tools). Flow: `lhm login` (OIDC) -> `lhm github connect` (OAuth) ->
+>   `lhm plugin init --stdio "capx-cafe"` -> `lhm plugin publish <repo>` -> `lhm plugin update`. NOTES: (a) their
+>   GitHub OAuth app demands gist RW + workflow write + ALL repos public/private — far beyond the documented
+>   "repository access checks"; founder granted it deliberately and should REVOKE at GitHub > Settings >
+>   Applications > Authorized OAuth Apps (the listing survives revocation). (b) `plugin init` needs the binary on
+>   PATH (npx cold-start exceeds their inspector timeout) -> `npm i -g capx-cafe`. (c) Their auth backend failed
+>   once mid-handshake and the Refresh-Metadata dialog would not submit — expect flakiness. (d) The page header
+>   still shows a phantom crawler version 1.0.0 + "Unvalidated" + repo-level AGPL, while the API correctly reports
+>   latestVersion 0.1.3; enrichment is async.
+> - **appcypher/awesome-mcp-servers** — branch `add-capx-cafe` pushed to the founder's fork; PR NOT yet opened
+>   (the gh CLI token cannot create PRs on repos the user does not own — 404). Founder opens it via the pre-filled
+>   compare URL.
+>
 > **Free targets still to do (ranked by reach):** Docker MCP Registry (ships inside Docker Desktop) ·
 > LobeHub (94k servers) · Glama (81k; also auto-ingests the registry) · cursor.directory ·
 > Cline marketplace · mcpservers.org (free is the DEFAULT — see the WebMCP warning below) ·
