@@ -30,6 +30,9 @@
 >   finishes" — a `safe` verdict auto-publishes it. The MCP-server component was ONLY detectable because the
 >   sanitized root `.mcp.json` was committed the same day; before that the scan would have found skills only.
 >   NOTE: cursor.directory sits behind a Vercel anti-bot wall — curl gets 429; check it in a real browser.
+>   **2026-09-05: SCAN CLEARED / LIVE** — verified in a real browser while SIGNED OUT: the page renders in full
+>   with no "Scanning your plugin…" or hidden/unpublished banner, and the profile card carries no pending badge.
+>   Caveat: it does not yet surface in cursor.directory's own search for "capx" — index lag, not a hold.
 >
 > **SUBMITTED/LIVE 2026-09-03..04 (second wave):**
 > - **mcpservers.org** — ✅ submitted by the founder in a plain tab (free path; ≤12h review).
