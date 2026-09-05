@@ -33,6 +33,7 @@
 >
 > **SUBMITTED/LIVE 2026-09-03..04 (second wave):**
 > - **mcpservers.org** — ✅ submitted by the founder in a plain tab (free path; ≤12h review).
+>   **2026-09-05: LIVE** — watchdog saw PENDING -> LIVE at https://mcpservers.org/servers/vb-tyagi/capx-cafe
 > - **mcp.directory** — ✅ submitted (repo + npm `capx-cafe` + 93-char description + founder email); publishes within 24h.
 > - **Cline marketplace** — ✅ issue https://github.com/cline/mcp-marketplace/issues/2421 (repo, 400x400 logo at
 >   docs/assets/logo-400.png, both testing boxes ticked after the founder tested the Cline setup). `llms-install.md`
