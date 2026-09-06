@@ -24,6 +24,14 @@
 >   it clears. NOTE: no explicit receipt page was shown — the dialog closing cleanly was the only signal.
 >   FOLLOW-UPS once live: claim ownership (glama.json already lists `vb-tyagi`, should auto-link) + set
 >   category **Social Media**. punkpeye/awesome-mcp-servers is gated on a Glama score, so it waits on this.
+>   **2026-09-06: LIVE** — watchdog saw PENDING -> LIVE at https://glama.ai/mcp/servers/vb-tyagi/capx-cafe
+>   (HTTP 200, full README rendered). Category already reads **Social Media / App Automation** — auto-set, no
+>   edit needed. Score tab: **profile completion 33%**, Maintenance **B**, License **A** (AGPL 3.0, permissive,
+>   CI passing, no vuln alerts); Server Coherence + Tool Definition Quality are both blank because they require
+>   a *Glama release* (claim the server -> Dockerfile admin page -> configure build spec -> Build -> Make Release).
+>   Schema tab shows env vars but **"No tools"** / capabilities "not inspected yet" for the same reason.
+>   FOUNDER ACTIONS: (1) claim ownership at the listing URL, (2) build + publish a Glama release to unlock the
+>   two blank score sections and the tool catalog. punkpeye PR stays parked until a real score shows.
 > - **cursor.directory** — ✅ PUBLISHED to https://cursor.directory/plugins/capx-cafe (ghost logo, homepage +
 >   source links, keywords from `.plugin/plugin.json`). Detected **25 components = 1 MCP server + 24 skills**,
 >   exactly the locked shape. Currently "Scanning your plugin… it will appear publicly once the security agent
