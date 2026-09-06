@@ -32,6 +32,27 @@
 >   Schema tab shows env vars but **"No tools"** / capabilities "not inspected yet" for the same reason.
 >   FOUNDER ACTIONS: (1) claim ownership at the listing URL, (2) build + publish a Glama release to unlock the
 >   two blank score sections and the tool catalog. punkpeye PR stays parked until a real score shows.
+>   **2026-09-06: CLAIMED + RELEASE v0.1.3 PUBLISHED.** Ownership needed no action — `glama.json` auto-linked,
+>   so signing in as `vb-tyagi` already exposed the **Admin** + **Analytics** tabs ("Author verified" ✓).
+>   The build spec Glama auto-inferred was WRONG and had failed on 2026-09-05: it ran `pnpm run build`, but this
+>   repo has **no `build` script** (TS runs natively via `--experimental-strip-types`) -> `ERR_PNPM_NO_SCRIPT`.
+>   FIXED SPEC (saved on the Dockerfile admin page) — build from the *published npm artifact*, mirroring the
+>   repo's own root `Dockerfile`, so Glama tests exactly what `npx -y capx-cafe` users get:
+>   - base image `debian:bookworm-slim` · nodeVersion `24` · pinnedCommit empty (latest)
+>   - buildSteps `["npm install -g capx-cafe@0.1.3"]`
+>   - cmdArguments `["mcp-proxy","--","capx-cafe"]`
+>   - placeholderArguments `{"CAPX_EMAIL":"user@example.com"}` (unchanged — the server boots unconfigured)
+>   GOTCHA: two builds on `debian:trixie-slim` died at exactly 2m with `failed to resolve source metadata for
+>   docker.io/library/debian:trixie-slim … context deadline exceeded` — a Glama-side Docker Hub pull timeout,
+>   NOT our config. Switching the base image to `bookworm-slim` built green in **13.5s**. If a future build
+>   hangs on "load metadata", swap the base image rather than debugging the spec.
+>   RESULT: release **v0.1.3** published (changelog points at the npm + registry artifact). Profile completion
+>   **33% -> 58%**, "Has a Glama release ✓", and the overview's "This server **cannot be installed**" is gone —
+>   **Install Server** is now a live button. Server Coherence + Tool Definition Quality were still recomputing
+>   at the time of writing (their inspection job runs async after a release), though the build's own instance
+>   log did enumerate all 11 tools. Maintenance stays **B** ("no stable releases found" — that counts GitHub
+>   releases, which this repo has none of; tagging one is the remaining cheap win). punkpeye PR: recheck the
+>   score once coherence lands, then it is unblocked.
 > - **cursor.directory** — ✅ PUBLISHED to https://cursor.directory/plugins/capx-cafe (ghost logo, homepage +
 >   source links, keywords from `.plugin/plugin.json`). Detected **25 components = 1 MCP server + 24 skills**,
 >   exactly the locked shape. Currently "Scanning your plugin… it will appear publicly once the security agent
