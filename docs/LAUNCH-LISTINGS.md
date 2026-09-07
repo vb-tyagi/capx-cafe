@@ -66,6 +66,10 @@
 > **SUBMITTED/LIVE 2026-09-03..04 (second wave):**
 > - **mcpservers.org** — ✅ submitted by the founder in a plain tab (free path; ≤12h review).
 >   **2026-09-05: LIVE** — watchdog saw PENDING -> LIVE at https://mcpservers.org/servers/vb-tyagi/capx-cafe
+>   **2026-09-07: now a BLIND SPOT, not a regression.** The whole domain (homepage included) began returning
+>   403 to non-browser clients, so the watchdog briefly read LIVE -> PENDING. Confirmed site-wide, not our page:
+>   `curl https://mcpservers.org/` is also 403, with and without a browser UA. The checker now reports 403 as
+>   UNKNOWN (same treatment as cursor.directory's 429). Verify in a real browser when the founder is around.
 > - **mcp.directory** — ✅ submitted (repo + npm `capx-cafe` + 93-char description + founder email); publishes within 24h.
 > - **Cline marketplace** — ✅ issue https://github.com/cline/mcp-marketplace/issues/2421 (repo, 400x400 logo at
 >   docs/assets/logo-400.png, both testing boxes ticked after the founder tested the Cline setup). `llms-install.md`

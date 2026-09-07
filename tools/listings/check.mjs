@@ -62,10 +62,15 @@ const CHECKS = {
       : { state: 'PENDING', detail: `page ${status} (in review)` };
   },
   async 'mcpservers-org'() {
+    let blocked = false;
     for (const u of ['https://mcpservers.org/servers/vb-tyagi/capx-cafe', 'https://mcpservers.org/servers/capx-cafe']) {
       const { status } = await http(u);
       if (status === 200) return { state: 'LIVE', detail: u };
+      if (status === 403) blocked = true;
     }
+    // 2026-09-07: the whole domain (homepage included) started 403-ing non-browser clients.
+    // That is anti-bot, not a delisting — don't let it masquerade as a regression to PENDING.
+    if (blocked) return { state: 'UNKNOWN', detail: '403 anti-bot site-wide (check in a browser)' };
     return { state: 'PENDING', detail: 'not published yet (≤12h review stated)' };
   },
   async 'mcp-directory'() {
