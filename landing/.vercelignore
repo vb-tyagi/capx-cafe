@@ -1,0 +1,7 @@
+src/
+test/
+build.mjs
+assets/cover.png
+assets/square.png
+assets/logo.png
+**/.DS_Store

@@ -1,0 +1,16 @@
+<section class="section workflow wrap" id="how" aria-labelledby="workflow-title">
+  <div class="section-intro"><p class="eyebrow">01 / From work to words</p><div><h2 id="workflow-title">You’ve already done<br><em>the interesting part.</em></h2><p>The commits. The late-night fixes. The small wins. Your agent has the context. Give it a way to turn that work into something worth sharing.</p></div></div>
+  <div class="workflow-stage">
+    <div class="workflow-toolbar"><div class="tabs" role="tablist" aria-label="Explore an example workflow"><button type="button" role="tab" id="workflow-release" aria-selected="true" aria-controls="workflow-panel" data-workflow="release">A release</button><button type="button" role="tab" id="workflow-week" tabindex="-1" aria-selected="false" aria-controls="workflow-panel" data-workflow="week">A week of work</button><button type="button" role="tab" id="workflow-readme" tabindex="-1" aria-selected="false" aria-controls="workflow-panel" data-workflow="readme">A README</button></div><span class="small">Your agent writes. capx café handles publishing.</span></div>
+    <div class="workflow-content" id="workflow-panel" role="tabpanel" aria-labelledby="workflow-release" tabindex="0">
+      <div class="context-box"><div><p class="eyebrow" id="context-label">The change you shipped</p><pre class="context-lines" id="context-text">fix: handle expired X access tokens
+  refresh the token on the server
+  retry the original send once
+  keep credentials out of the client</pre></div><div class="prompt-box"><p class="eyebrow">You ask your agent</p><p id="workflow-prompt">“Turn this token-refresh fix into a short build update. Keep it specific. Preview it before posting.”</p><button class="copy-button" type="button" data-copy-target="workflow-prompt"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="11" rx="1.5" stroke="currentColor"/><path d="M12 4V2H2v11h2" stroke="currentColor"/></svg>Copy this prompt</button></div></div>
+      <article class="post-example" aria-label="Illustrative X draft"><div class="post-heading"><img src="assets/logo-64.png" width="64" height="64" alt=""><div>From your agent<span class="muted">Example draft · ready for review</span></div><span class="x-mark" aria-hidden="true">𝕏</span></div><p class="post-body" id="workflow-draft">Shipped a small fix for an annoying edge case: expired X tokens.
+
+capx café now refreshes the token on the server and retries the send once. The credential still never touches the agent.</p><div class="post-foot"><span id="workflow-skill">Made with ship-note</span><span>Draft → preview → publish</span></div></article>
+    </div>
+  </div>
+  <div class="workflow-caption"><p>Illustrative workflows based on capx café features. Nothing is posted from this page.</p><a href="#install">Try it with your own work <span aria-hidden="true">↗</span></a></div>
+</section>

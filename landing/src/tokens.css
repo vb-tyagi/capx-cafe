@@ -1,0 +1,10 @@
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('assets/fonts/dm-sans-latin.woff2') format('woff2')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url('assets/fonts/instrument-serif-italic.woff2') format('woff2')}
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url('assets/fonts/instrument-serif-regular.woff2') format('woff2')}
+:root{
+  --paper:#f7f5ec;--white:#fffef9;--ink:#24231d;--muted:#67675b;--line:#d9d9ca;
+  --dark:#201c16;--dark-soft:#302b22;--lime:#d3e48b;--green:#4d6719;--amber:#edb651;
+  --sans:'DM Sans','Avenir Next',Avenir,sans-serif;--serif:'Instrument Serif',Georgia,'Times New Roman',serif;
+  --mono:'SFMono-Regular',Consolas,'Liberation Mono',monospace;
+  --max:1376px;--gutter:clamp(22px,4.2vw,72px);--radius:18px;
+}
