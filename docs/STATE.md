@@ -97,7 +97,9 @@ scheduling / management happens **inside their agent session**, driven by the ha
     the gate (plan metering v2). Context: X killed the free API tier (Feb 2026) and moved to pay-per-use
     ($0.015/post, **$0.20/URL-post**, QRT Enterprise-only), and shipped its own hosted MCP (June 2026) —
     which validated the category and sharpened our differentiation (token custody + enforced guardrail +
-    scheduling; landing/README now position against XMCP by name).
+    scheduling; landing/README now position against XMCP by name). *(2026-09-16 amendment: the landing was
+    redesigned by the founder — it leads with the developer-workflow framing and the safety thesis as the trust
+    line; the XMCP comparison now lives in the README only. Directory listings keep the original one-liner.)*
     - **Creator-lane tiers (cost-floor pricing, beta, no trials/discounts):** Short **$5** (70 posts/mo,
       URL posts BANNED, 10 media, no threads, 0 loops, 1 account) · Tall **$15** (200 posts, 25 URL,
       10 threads/mo, 30 media, 3 active loops, 2 accounts) · Grande **$35** (500 posts, 50 URL, threads
@@ -111,7 +113,7 @@ scheduling / management happens **inside their agent session**, driven by the ha
     - **Top-up packs** (cycle-scoped, stack by quantity, expire at cycle end): +50 posts $2 · +10 URL $3
       (Tall/Grande) · +10 media $1 · +10 threads $1 (Tall/Grande). A pack never unlocks a structural ban.
     - **Launch sequencing = two-stage:** dev/BYO lane launched now (repo public 2026-08-29, landing live
-      at capx-cafe.vercel.app with tier card + Tally waitlist); paid creator beta opens when P4 billing
+      at capx-cafe.vercel.app with tier card + Tally waitlist — since 2026-09-16 at `/pricing/`); paid creator beta opens when P4 billing
       rails exist. **MoR = Polar.** Hosted AI generation stays OFF. Heavy users → self-host.
     - **Compliance (X 2026 policy):** binding use-case text approved + to be filed (X-COMPLIANCE §1);
       bot-bio rule = surface + attest at onboarding and `create_loop`; AI-replies stay structurally
