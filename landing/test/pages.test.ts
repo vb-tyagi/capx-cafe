@@ -50,8 +50,8 @@ test('every page has unique metadata, one primary heading, and the correct canon
 });
 
 test('desktop and mobile navigation preserve the agreed labels and order on every page', () => {
-  const labels = ['How it works', 'Built-in-Safety', 'Pricing', 'Blog', 'Set up capx café'];
-  const links = ['/#how', '/#security', '/pricing/', '/blog/', '/#install'];
+  const labels = ['How it works', 'Built-in-Safety', 'Pricing', 'Blog', 'GitHub', 'Set up capx café'];
+  const links = ['/#how', '/#security', '/pricing/', '/blog/', 'https://github.com/vb-tyagi/capx-cafe', '/#install'];
   for (const [route, html] of pages) {
     for (const name of ['Main navigation', 'Mobile navigation']) {
       const nav = new RegExp(`<nav[^>]*aria-label="${name}"[^>]*>([\\s\\S]*?)<\\/nav>`).exec(html)![1];

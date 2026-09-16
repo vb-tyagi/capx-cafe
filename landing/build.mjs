@@ -20,7 +20,7 @@ function metadata(title, description, route, article) {
     .replace(/(<meta (?:property="og:title"|name="twitter:title") content=")[^"]*(">)/g, `$1${esc(title)}$2`)
     .replace(/(<meta property="og:url" content=")[^"]*(">)/, `$1${url}$2`)
     .replace('content="website"', `content="${article ? 'article' : 'website'}"`)
-    + `\n<link rel="canonical" href="${url}">\n`;
+    + `\n<link rel="canonical" href="${url}">\n` + (article ? '<meta name="author" content="Vaibhav Tyagi">\n' : '');
 }
 async function render(route, title, description, content, article) {
   let nav = header;
@@ -29,8 +29,8 @@ async function render(route, title, description, content, article) {
   const schema = article ? `<script type="application/ld+json">${JSON.stringify({
     '@context': 'https://schema.org', '@type': 'BlogPosting', headline: article.title,
     description: article.deck, url: origin + route, mainEntityOfPage: origin + route,
-    author: { '@type': 'Organization', name: 'capx café', url: origin },
-    publisher: { '@type': 'Organization', name: 'capx café', url: origin },
+    author: { '@type': 'Person', name: 'Vaibhav Tyagi', url: origin },
+    publisher: { '@type': 'Person', name: 'Vaibhav Tyagi', url: origin },
     dateModified: '2026-09-16', image: origin + '/assets/social-preview.jpg', inLanguage: 'en',
   }).replaceAll('<', '\\u003c')}</script>` : '';
   const html = rootAssets([
@@ -62,7 +62,7 @@ for (const post of posts) {
     if (!item) throw new Error(`Unknown related post: ${slug}`);
     return `<article><p class="eyebrow">${item.category} · ${readingTime(item)} min read</p><h3><a href="${postLink(item)}">${esc(item.title)}</a></h3></article>`;
   }).join('');
-  const body = `<article><header class="article-hero wrap"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/blog/">Blog</a><span aria-hidden="true">/</span><span>${post.category}</span></nav><p class="eyebrow">${post.category}</p><h1>${esc(post.title)}</h1><p class="article-deck">${esc(post.deck)}</p><div class="article-byline"><span>By capx café</span><span>Updated <time datetime="2026-09-16">16 September 2026</time></span><span>${readingTime(post)} min read</span></div></header>
+  const body = `<article><header class="article-hero wrap"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/blog/">Blog</a><span aria-hidden="true">/</span><span>${post.category}</span></nav><p class="eyebrow">${post.category}</p><h1>${esc(post.title)}</h1><p class="article-deck">${esc(post.deck)}</p><div class="article-byline"><span>By Vaibhav Tyagi</span><span>Updated <time datetime="2026-09-16">16 September 2026</time></span><span>${readingTime(post)} min read</span></div></header>
 <div class="article-layout wrap"><nav class="article-toc" aria-label="On this page"><p class="eyebrow">In this article</p>${headings.map(([,id,title]) => `<a href="#${id}">${title}</a>`).join('')}</nav><div class="article-body">${post.body}<section class="article-sources" aria-labelledby="sources-title"><h2 id="sources-title">Sources &amp; further reading</h2><ul>${post.sources.map(([label,href]) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`).join('')}</ul></section><aside class="article-next"><h3>Try it with your own work.</h3><p>Choose your agent, connect capx café, and start with a preview of one real change.</p><a class="button lime" href="/#install">Set up capx café <span aria-hidden="true">↗</span></a></aside></div></div></article><section class="related-posts wrap" aria-labelledby="related-title"><h2 id="related-title">Keep reading.</h2><div class="related-grid">${related}</div></section>`;
   await render(postLink(post), `${post.title} | capx café`, post.deck, body, post);
 }
