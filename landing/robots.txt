@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://capx-cafe.vercel.app/sitemap.xml

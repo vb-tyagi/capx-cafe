@@ -88,11 +88,11 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { $('copy-status').textContent = ''; }, 4500);
   }));
-  $('demo-start').addEventListener('click', () => {
-    $('guardrail-demo').hidden = false; $('guardrail-demo').src = 'assets/demo.gif';
+  $('demo-start')?.addEventListener('click', () => {
+    $('guardrail-demo').hidden = false; $('guardrail-demo').src = '/assets/demo.gif';
     $('demo-start').hidden = true; $('demo-stop').hidden = false; $('demo-stop').focus({ preventScroll: true });
   });
-  $('demo-stop').addEventListener('click', () => {
+  $('demo-stop')?.addEventListener('click', () => {
     $('guardrail-demo').hidden = true; $('demo-start').hidden = false; $('demo-stop').hidden = true; $('demo-start').focus({ preventScroll: true });
   });
   document.querySelectorAll('.mobile-menu a').forEach((link) => link.addEventListener('click', () => { link.closest('details').open = false; }));

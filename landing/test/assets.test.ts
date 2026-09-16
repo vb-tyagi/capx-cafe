@@ -14,7 +14,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const LANDING = join(dirname(fileURLToPath(import.meta.url)), '..');
-const html = readFileSync(join(LANDING, 'index.html'), 'utf8');
+const routes = [...readFileSync(join(LANDING, 'sitemap.xml'), 'utf8').matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => new URL(m[1]).pathname);
+const html = routes.map((route) => readFileSync(join(LANDING, route.slice(1), 'index.html'), 'utf8')).join('\n');
 
 /** width/height straight from the binary header — PNG IHDR, GIF logical screen, or JPEG SOFn. */
 function imageDims(path: string): { w: number; h: number } | null {
