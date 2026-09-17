@@ -61,3 +61,36 @@ test('desktop and mobile navigation preserve the agreed labels and order on ever
     }
   }
 });
+
+test('social/SEO metadata follows src/meta.mjs and the share image really is what the tags claim', async () => {
+  const { meta, site } = await import('../src/meta.mjs');
+  const imgPath = join(root, site.image.path);
+  assert.ok(existsSync(imgPath), `share image missing: ${site.image.path}`);
+  assert.ok(statSync(imgPath).size <= 600 * 1024, 'share image over the 600 KB raster cap');
+  const buf = readFileSync(imgPath);
+  assert.equal(buf.readUInt16BE(0), 0xffd8, 'share image must be a JPEG (og:image:type says so)');
+  let off = 2, dims: { w: number; h: number } | null = null;
+  while (off + 9 < buf.length && buf[off] === 0xff) {
+    const marker = buf[off + 1], size = buf.readUInt16BE(off + 2);
+    if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) { dims = { h: buf.readUInt16BE(off + 5), w: buf.readUInt16BE(off + 7) }; break; }
+    off += 2 + size;
+  }
+  assert.deepEqual(dims, { w: site.image.width, h: site.image.height }, 'og:image:width/height must match the file');
+  assert.equal(site.image.url, `${origin}/${site.image.path}`);
+  for (const [route, html] of pages) {
+    const m = meta[route];
+    assert.ok(m, `no metadata entry for ${route}`);
+    const attr = (v: string) => v.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+    assert.ok(html.includes(`<title>${attr(m.title)}</title>`), `${route}: title`);
+    assert.ok(html.includes(`<meta name="description" content="${attr(m.description)}">`), `${route}: description`);
+    assert.ok(html.includes(`<meta property="og:title" content="${attr(m.socialTitle)}">`), `${route}: og:title`);
+    assert.ok(html.includes(`<meta property="og:description" content="${attr(m.socialDescription)}">`), `${route}: og:description`);
+    assert.ok(html.includes(`<meta property="og:type" content="${m.type}">`), `${route}: og:type`);
+    assert.ok(html.includes(`<meta property="og:image" content="${site.image.url}">`), `${route}: og:image`);
+    assert.ok(html.includes(`<meta name="twitter:image" content="${site.image.url}">`), `${route}: twitter:image`);
+    assert.ok(html.includes(`<meta name="robots" content="${site.robots}">`), `${route}: robots`);
+    assert.ok(html.includes(`<meta property="og:site_name" content="${site.name}">`), `${route}: og:site_name`);
+    assert.ok(!html.includes('social-preview.jpg'), `${route}: old share image still referenced`);
+    assert.ok(!/twitter:(site|creator)/.test(html), `${route}: twitter:site/creator must stay omitted until handles are confirmed`);
+  }
+});
